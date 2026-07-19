@@ -41,8 +41,8 @@ function showToast(msg, type = 'success') {
 // same origin the page is served from otherwise.
 const _isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
 //const API_ORIGIN = window.BLOOMBARK_API_ORIGIN || (_isLocal ? 'http://localhost:3001' : location.origin);
-const PORT = process.env.PORT;
-const API_ORIGIN = process.env.VITE_API_URL || 'https://be-bloombark.onrender.com';
+const PORT = import.meta.env.PORT;
+const API_ORIGIN = import.meta.env.VITE_API_URL || 'https://be-bloombark.onrender.com';
 const API_BASE = API_ORIGIN + '/api';
 const WS_URL   = API_ORIGIN.replace(/^http/, 'ws');
 
