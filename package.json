@@ -1,0 +1,14 @@
+{
+  "name": "bloomberg-terminal-frontend",
+  "version": "1.0.0",
+  "description": "Bloomberg Terminal Apps Frontend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@privy-io/js-sdk-core": "^0.67.3",
+    "esbuild": "^0.28.1",
+    "express": "^4.18.2"
+  }
+}

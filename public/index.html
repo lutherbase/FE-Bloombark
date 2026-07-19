@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bloombark Terminal Apps</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23E86C3A'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23F5A623'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%2327C97F'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%234a90d9'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="2" width="9" height="9" rx="2" fill="#E86C3A"/>
+            <rect x="13" y="2" width="9" height="9" rx="2" fill="#F5A623"/>
+            <rect x="2" y="13" width="9" height="9" rx="2" fill="#27C97F"/>
+            <rect x="13" y="13" width="9" height="9" rx="2" fill="#4a90d9"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-main">BLOOMBARK</span>
+          <span class="brand-sub">TERMINAL APPS</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-page="landing">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Landing Page
+        </a>
+        <a href="#" class="nav-item" data-page="ai-analyzer">
+          <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          AI Analyzer
+        </a>
+        <a href="#" class="nav-item" data-page="trade">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+          Trade
+        </a>
+        <a href="#" class="nav-item" data-page="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          Market Overview
+        </a>
+        <a href="#" class="nav-item" data-page="wallet-tracker">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1"/><polyline points="15 3 9 3 9 21 15 21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+          Wallet Tracker
+        </a>
+        <a href="#" class="nav-item" data-page="smart-money">
+          <svg class="nav-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Smart Money
+        </a>
+        <a href="#" class="nav-item" data-page="insider-scan">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Insider Scan
+        </a>
+        <a href="#" class="nav-item" data-page="narrative">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Narrative
+        </a>
+        <a href="#" class="nav-item" data-page="community">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Community
+          <span id="chatOnlineBadge" style="display:none;margin-left:auto;background:#27c97f;color:#000;font-size:9px;font-weight:800;padding:1px 5px;border-radius:99px">0</span>
+        </a>
+        <a href="#" class="nav-item" data-page="ai-trading">
+          <svg class="nav-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          AI Trading Agent
+        </a>
+        <a href="#" class="nav-item" data-page="auto-research">
+          <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Auto Research
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <a href="#" class="nav-item" data-page="alerts">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Alerts
+          <span class="nav-badge">3</span>
+        </a>
+        <a href="#" class="nav-item" data-page="watchlist">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Watchlist
+        </a>
+        <a href="#" class="nav-item" data-page="portfolio">
+          <svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Portfolio
+        </a>
+        <a href="#" class="nav-item" data-page="leaderboard">
+          <svg class="nav-icon" viewBox="0 0 24 24"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>
+          Leaderboard
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <a href="#" class="nav-item" data-page="settings" style="display:none">
+          Settings
+        </a>
+        <a href="#" class="nav-item" data-page="docs" style="display:none">
+          Docs
+        </a>
+      </nav>
+
+      <div class="sidebar-footer" style="padding:12px">
+        <div id="sidebarProfile" onclick="toggleProfilePopup()" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 10px;border-radius:10px;transition:background 0.15s" onmouseover="this.style.background='#1e2235'" onmouseout="this.style.background='transparent'">
+          <div id="sidebarAvatar" style="width:34px;height:34px;border-radius:50%;background:#27c97f22;border:1px solid #27c97f44;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#27c97f;flex-shrink:0">P</div>
+          <div style="overflow:hidden;flex:1">
+            <div style="font-size:12px;font-weight:600;color:#e2e8f0">Profile</div>
+            <div id="sidebarWallet" style="font-size:10px;color:#6b7280;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Not connected</div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <h1 class="page-title" id="pageTitle">AI ANALYZER</h1>
+        <p class="page-subtitle" id="pageSubtitle">Analyze token risk, insider activity & wallet behavior from contract address</p>
+        <div class="topbar-right">
+          <span id="testnetBadge" title="Backend NETWORK_ENV=testnet — trade/RPC calls target testnet chains" style="display:none;font-size:9px;font-weight:800;letter-spacing:1px;padding:4px 10px;border-radius:20px;background:#f5a62320;color:#f5a623;border:1px solid #f5a62350;white-space:nowrap">⚠ TESTNET MODE</span>
+          <div class="network-selector" id="networkSelector" style="cursor:default">
+            <span class="network-icon" id="networkIcon">🌐</span>
+            <span id="networkLabel">Auto</span>
+          </div>
+          <div class="live-indicator">
+            <span class="live-dot"></span>
+            Live
+            <span class="update-time" id="updateTime">Updated 0s ago</span>
+          </div>
+          <button class="export-btn" id="exportBtn">Export Report</button>
+          <button class="connect-wallet-btn" id="connectWalletBtn" onclick="openWalletModal()">
+            <div id="walletBtnAvatar" style="display:none;width:20px;height:20px;border-radius:50%;overflow:hidden;flex-shrink:0;border:1px solid #27c97f55;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#27c97f;background:#27c97f22"></div>
+            <svg id="walletBtnIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/><circle cx="17" cy="14" r="1.5" fill="currentColor"/></svg>
+            <span id="connectWalletLabel">Connect Wallet</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Wallet Modal -->
+      <div id="walletModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+        <div style="background:#1a1d27;border:1px solid #2d3144;border-radius:16px;padding:28px 24px;width:360px;max-width:90vw;box-shadow:0 24px 64px rgba(0,0,0,0.5)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:#e2e8f0">CONNECT WALLET</span>
+            <button onclick="closeWalletModal()" style="background:none;border:none;color:#8b92a8;cursor:pointer;font-size:18px;line-height:1">✕</button>
+          </div>
+          <div id="walletModalBody">
+            <!-- default: choose method -->
+            <button id="mmBtn" onclick="privyConnectMM()" style="width:100%;display:flex;align-items:center;gap:12px;background:#13161d;border:1px solid #2d3144;border-radius:10px;padding:14px 16px;cursor:pointer;margin-bottom:10px;transition:border-color 0.15s">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" width="28" height="28"/>
+              <div style="text-align:left">
+                <div style="font-size:12px;font-weight:700;color:#e2e8f0;font-family:monospace">MetaMask</div>
+                <div style="font-size:10px;color:#8b92a8">Browser extension wallet</div>
+              </div>
+            </button>
+            <div style="text-align:center;font-size:10px;color:#8b92a8;padding:8px 0">EVM wallets · MetaMask</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Page Content -->
+      <div class="page-content" id="pageContent">
+        <!-- AI Analyzer Page (default) -->
+        <div class="page ai-analyzer-page" id="page-ai-analyzer">
+          <!-- Search Bar -->
+          <div class="search-section">
+            <label class="search-label">PASTE TOKEN ADDRESS / CONTRACT</label>
+            <div class="search-bar">
+              <input type="text" id="contractInput" placeholder="Enter token contract address (e.g. 7xKX...pump)" class="search-input" autocomplete="off" spellcheck="false" />
+              <button class="copy-btn" id="copyBtn" title="Copy">
+                <svg width="16" height="16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+              <button class="scan-btn" id="scanBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                SCAN ADDRESS
+              </button>
+            </div>
+          </div>
+
+          <!-- Token Header (hidden until scan) -->
+          <div class="token-header" id="tokenHeader" style="display:none">
+            <div class="token-identity">
+              <div class="token-logo" id="tokenLogo">?</div>
+              <div class="token-info">
+                <div class="token-name-row">
+                  <span class="token-name" id="tokenName">-</span>
+                  <button id="watchlistBtn" onclick="toggleWatchlist()" title="Add to watchlist" style="background:none;border:none;cursor:pointer;padding:0 0 0 6px;line-height:1;display:flex;align-items:center;opacity:0.6;transition:opacity 0.2s,transform 0.15s">
+                    <svg id="watchlistHeart" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff6b8a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  </button>
+                </div>
+                <div class="token-symbol-row">
+                  <span class="token-symbol" id="tokenSymbol">-</span>
+                  <span class="token-network" id="tokenNetwork">
+                    <svg width="12" height="12" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                    <span id="tokenNetworkLabel">-</span>
+                  </span>
+                </div>
+              </div>
+              <button id="analyzerTradeBtn" onclick="goToTrade()" title="Trade this token"
+                style="margin-left:14px;display:flex;align-items:center;gap:6px;background:#27c97f;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;color:#000;font-size:11px;font-weight:800;letter-spacing:0.5px;white-space:nowrap;flex-shrink:0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                TRADE
+              </button>
+            </div>
+            <div class="token-stats">
+              <div class="stat-item">
+                <span class="stat-label">MARKET CAP</span>
+                <span class="stat-value" id="marketCap">-</span>
+                <span class="stat-change positive" id="mcChange">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">LIQUIDITY</span>
+                <span class="stat-value" id="liquidity">-</span>
+                <span class="stat-change positive" id="liqLock" style="display:none"></span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">24H VOLUME</span>
+                <span class="stat-value" id="volume24h">-</span>
+                <span class="stat-change positive" id="volChange">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">HOLDERS</span>
+                <span class="stat-value" id="holders">-</span>
+                <span class="stat-change positive" id="holdersChange">-</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">CREATED</span>
+                <span class="stat-value" id="created">-</span>
+              </div>
+              <!-- Social Sentiment inline -->
+              <div class="stat-item" id="headerSocialItem" style="display:none;border-left:1px solid var(--border-light);padding-left:16px;min-width:160px">
+                <span class="stat-label">SENTIMENT</span>
+                <div id="headerSentimentLabel" style="font-size:12px;font-weight:800;margin-bottom:4px">—</div>
+                <div style="height:4px;border-radius:99px;background:var(--bg-secondary);overflow:hidden;display:flex;width:100%">
+                  <div id="headerBullBar" style="background:#27c97f;transition:width .5s ease;width:50%"></div>
+                  <div id="headerBearBar" style="background:#ef4444;transition:width .5s ease;width:50%"></div>
+                </div>
+                <div id="headerSentimentSub" style="font-size:9px;color:var(--text-muted);margin-top:3px">—</div>
+              </div>
+              <!-- Social Links inline -->
+              <div class="stat-item" id="headerSocialLinks" style="display:none;border-left:1px solid var(--border-light);padding-left:16px">
+                <span class="stat-label">COMMUNITY</span>
+                <div id="headerLinksRow" style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analysis Grid (hidden until scan) -->
+          <div class="analysis-grid" id="analysisGrid" style="display:none">
+
+            <!-- Row 1: Risk Score + Alerts + Price Chart -->
+            <div class="grid-row row-3col">
+              <!-- Risk Score -->
+              <div class="card risk-card">
+                <div class="card-header">
+                  <h3>BLOOMBARK RISK SCORE</h3>
+                  <span class="info-icon" title="AI-calculated risk based on wallet behavior">ⓘ</span>
+                </div>
+                <div class="risk-gauge-container">
+                  <canvas id="riskGauge" width="200" height="120"></canvas>
+                  <div class="risk-score-display">
+                    <span class="risk-number" id="riskNumber">-</span>
+                    <span class="risk-denom">/100</span>
+                  </div>
+                </div>
+                <div class="risk-label" id="riskLabel">-</div>
+                <div class="confidence-bar">
+                  <span class="confidence-text">Confidence: <span id="confidence">-</span>%</span>
+                  <div class="conf-bar-track">
+                    <div class="conf-bar-fill" id="confBarFill" style="width:0%"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Insider Alerts -->
+              <div class="card alerts-card">
+                <div class="card-header">
+                  <h3>INSIDER ALERTS</h3>
+                  <a href="#" class="view-full">View Full Report →</a>
+                </div>
+                <div class="alerts-grid" id="alertsGrid"></div>
+              </div>
+
+              <!-- Price Chart -->
+              <div class="card price-card">
+                <div class="card-header">
+                  <h3>PRICE CHART (REALTIME)</h3>
+                  <div class="chart-controls">
+                    <button class="chart-interval active" data-interval="5m">5m</button>
+                    <button class="chart-interval" data-interval="15m">15m</button>
+                    <button class="chart-interval" data-interval="1h">1h</button>
+                    <button class="chart-interval" data-interval="4h">4h</button>
+                    <button id="chartScreenshot" title="Copy chart as image" style="background:none;border:1px solid #2a2f45;border-radius:4px;color:#8b92a8;cursor:pointer;padding:2px 7px;font-size:10px;margin-left:4px;white-space:nowrap;" onclick="captureChart()">Copy</button>
+                  </div>
+                </div>
+                <div class="price-info-row">
+                  <span class="current-price" id="currentPrice">$-</span>
+                  <span class="price-change" id="priceChange">-</span>
+                </div>
+                <div id="priceChart" style="height:220px; width:100%;"></div>
+              </div>
+            </div>
+
+            <!-- Row 2: Wallet Map + Recent Activity — same grid as row-3col -->
+            <div class="grid-row" style="grid-template-columns: 220px 1fr 1fr; gap: 12px; display: grid;">
+              <!-- Wallet Relationship Map spans first 2 columns -->
+              <div class="card wallet-map-card" style="grid-column: 1 / 3;">
+                <div class="card-header">
+                  <h3>HOLDER CONCENTRATION</h3>
+                  <span id="holderConcentrationBadge" style="font-size:10px;color:var(--text-muted);margin-left:auto"></span>
+                </div>
+                <div id="holderConcentrationContainer" style="width:100%;padding:4px 0;overflow-y:auto;max-height:320px">
+                  <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b92a8;font-size:12px;padding:40px 0">Scan a token to load holder data</div>
+                </div>
+              </div>
+
+              <!-- Recent Insider Activity -->
+              <div class="card activity-card">
+                <div class="card-header">
+                  <h3>TOKEN ACTIVITY</h3>
+                  <span class="info-icon">ⓘ</span>
+                </div>
+                <div class="activity-list" id="activityList" style="overflow-y:auto;max-height:320px"></div>
+              </div>
+            </div>
+
+            <!-- Row 3: Token Distribution + Team Allocation + Launch Pattern -->
+            <div class="grid-row row-3col">
+              <!-- Token Distribution -->
+              <div class="card distribution-card">
+                <div class="card-header">
+                  <h3>TOKEN DISTRIBUTION</h3>
+                  <span class="info-icon">ⓘ</span>
+                </div>
+                <div class="donut-container">
+                  <canvas id="distributionChart" width="140" height="140"></canvas>
+                  <div class="donut-center">
+                    <span class="donut-label">Total Supply</span>
+                    <span class="donut-value">1.0B</span>
+                    <span class="donut-symbol" id="donutSymbol">TOKEN</span>
+                  </div>
+                </div>
+                <div class="dist-legend" id="distLegend"></div>
+                <div class="dist-warning" id="distWarning" style="display:none">
+                  <svg width="12" height="12" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                  High concentration detected in team/insider wallets
+                </div>
+              </div>
+
+              <!-- Security Details -->
+              <div class="card allocation-card">
+                <div class="card-header">
+                  <h3>SECURITY DETAILS</h3>
+                  <span id="securityBadge" style="font-size:10px;margin-left:auto"></span>
+                </div>
+                <div id="securityDetails" style="overflow-y:auto;max-height:320px">
+                  <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px">Scan a token to load security data</div>
+                </div>
+              </div>
+
+              <!-- Launch Pattern Analysis -->
+              <div class="card launch-card">
+                <div class="card-header">
+                  <h3>LAUNCH PATTERN ANALYSIS</h3>
+                  <span class="info-icon">ⓘ</span>
+                </div>
+                <div class="launch-table" id="launchTable"></div>
+                <a href="#" class="view-pattern-btn">View Pattern Details →</a>
+              </div>
+            </div>
+
+            <!-- Row 4: Potential Insider Wallets + AI Summary -->
+            <div class="grid-row row-2col">
+              <!-- Potential Insider Wallets -->
+              <div class="card wallets-card">
+                <div class="card-header">
+                  <h3>TOP HOLDERS & WHALE WALLETS</h3>
+                  <span class="info-icon">ⓘ</span>
+                  <button class="filter-btn">
+                    <svg width="12" height="12" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                    Filter
+                  </button>
+                </div>
+                <div class="wallets-table">
+                  <div class="wallets-thead wallets-thead-v2">
+                    <span>WALLET ADDRESS</span>
+                    <span>TYPE</span>
+                    <span>ALLOCATION</span>
+                    <span>ACTIVITY (7D)</span>
+                    <span>ENTRY / LAST ACTIVE</span>
+                    <span>RISK</span>
+                  </div>
+                  <div class="wallets-tbody" id="walletsTable"></div>
+                </div>
+                <a href="#" class="view-all-wallets" id="viewAllWallets">View All 23 Potential Wallets →</a>
+              </div>
+
+              <!-- Wallet Relationship Map -->
+              <div class="card ai-summary-card" style="display:flex;flex-direction:column;">
+                <div class="card-header">
+                  <h3>WALLET RELATIONSHIP MAP</h3>
+                  <span class="info-icon">ⓘ</span>
+                  <div style="display:flex;gap:8px;margin-left:auto;align-items:center">
+                    <span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#8b92a8"><span style="width:7px;height:7px;border-radius:50%;background:#e86c3a;display:inline-block"></span>Creator</span>
+                    <span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#8b92a8"><span style="width:7px;height:7px;border-radius:50%;background:#27c97f;display:inline-block"></span>Pool</span>
+                    <span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#8b92a8"><span style="width:7px;height:7px;border-radius:50%;background:#f5a623;display:inline-block"></span>Whale</span>
+                    <span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#8b92a8"><span style="width:7px;height:7px;border-radius:50%;background:#ff6b8a;display:inline-block"></span>Insider</span>
+                    <span style="display:flex;align-items:center;gap:3px;font-size:10px;color:#8b92a8"><span style="width:7px;height:7px;border-radius:50%;background:#60a5fa;display:inline-block"></span>Trader</span>
+                  </div>
+                </div>
+                <div style="position:relative;flex:1;min-height:300px;">
+                  <canvas id="walletRelMap" style="width:100%;height:100%;display:block;border-radius:8px;"></canvas>
+                  <div id="walletRelMapEmpty" style="display:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#6b7280;font-size:12px">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><line x1="8.59" y1="10.51" x2="15.42" y2="7.49"/><line x1="8.59" y1="13.51" x2="15.42" y2="16.51"/></svg>
+                    Scan a token to view wallet relationships
+                  </div>
+                  <div id="walletRelMapTooltip" style="display:none;position:absolute;background:#1a1d2e;border:1px solid #2d3144;border-radius:6px;padding:6px 10px;font-size:11px;color:#e2e8f0;pointer-events:none;z-index:10;max-width:200px;word-break:break-all;"></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;font-size:10px;color:#6b7280;justify-content:center" id="wrmStats"></div>
+              </div>
+            </div>
+
+            <!-- Holder Analysis Row -->
+            <div class="grid-row row-2col">
+              <!-- Holder Stats -->
+              <div class="card holder-stats-card">
+                <div class="card-header">
+                  <h3>HOLDER ANALYSIS</h3>
+                  <span class="info-icon">ⓘ</span>
+                </div>
+                <div class="holder-stats-grid" id="holderStatsGrid"></div>
+                <div style="height:200px; margin-top:12px;">
+                  <canvas id="holderChart"></canvas>
+                </div>
+              </div>
+
+              <!-- Volume Profile -->
+              <div class="card volume-card">
+                <div class="card-header">
+                  <h3>VOLUME PROFILE (24H)</h3>
+                  <span class="info-icon">ⓘ</span>
+                </div>
+                <div style="height:250px;">
+                  <canvas id="volumeChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Token Prediction Row -->
+            <div class="grid-row" style="grid-template-columns:1fr;display:grid">
+              <div class="card" id="predictionCard" style="min-height:200px">
+                <div class="card-header">
+                  <h3>🤖 AI TOKEN PREDICTION</h3>
+                  <span style="font-size:9px;color:var(--text-muted);margin-left:8px;font-style:italic">Not financial advice</span>
+                  <button id="predictionBtn" onclick="runPrediction()" style="margin-left:auto;background:#27c97f15;border:1px solid #27c97f40;color:#27c97f;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:var(--font);letter-spacing:.5px">
+                    ▶ ANALYZE
+                  </button>
+                </div>
+                <div id="predictionContent" style="padding:12px 0">
+                  <div style="text-align:center;color:var(--text-muted);font-size:12px;padding:40px 0">Click ANALYZE to generate AI prediction for this token</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Empty state -->
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </div>
+            <h2>Enter a Contract Address to Analyze</h2>
+            <p>Paste any token contract address above and click SCAN ADDRESS to get AI-powered risk analysis, insider detection, and wallet behavior patterns.</p>
+          </div>
+        </div>
+
+        <!-- Other pages (placeholder) -->
+        <div class="page" id="page-dashboard">
+          <div class="dashboard-wrap">
+            <!-- Chain Filter -->
+            <div class="dash-filter-bar" id="dashFilterBar">
+              <button class="dash-filter-btn active" data-chain="all">All Chains</button>
+            </div>
+            <!-- Best Volume -->
+            <div class="dash-section">
+              <div class="dash-section-header">
+                <span class="dash-section-title">🏆 BEST VOLUME TOP 10</span>
+                <span class="dash-section-sub" id="dashVolSub">All Chains · 24h</span>
+              </div>
+              <div class="dash-vol-wrap">
+                <div class="dash-volume-grid" id="dashVolumeGrid">
+                  <div class="dash-loading">Loading…</div>
+                </div>
+              </div>
+            </div>
+            <!-- Trending (full-width, same layout as Best Volume) -->
+            <div class="dash-section">
+              <div class="dash-section-header">
+                <span class="dash-section-title">🔥 TRENDING TOKENS</span>
+                <span class="dash-section-sub" id="dashTrendSub">All Chains</span>
+              </div>
+              <div class="dash-vol-wrap">
+                <div class="dash-volume-grid" id="dashTrendingList">
+                  <div class="dash-loading">Loading…</div>
+                </div>
+              </div>
+            </div>
+            <!-- New Pairs (only shown on per-chain) -->
+            <div class="dash-section" id="dashNewPairsSection" style="display:none">
+              <div class="dash-section-header">
+                <span class="dash-section-title">🆕 NEW PAIRS</span>
+                <span class="dash-section-sub" id="dashNewSub"></span>
+              </div>
+              <div class="dash-vol-wrap">
+                <div class="dash-volume-grid" id="dashNewPairsList"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="page ai-analyzer-page" id="page-trade">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start">
+
+            <!-- ═══ LEFT COLUMN: token loader + swap ═══ -->
+            <div style="min-width:0">
+
+              <!-- Token loader -->
+              <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent-orange);margin-bottom:8px">PASTE TOKEN ADDRESS TO TRADE · EVM ONLY</div>
+                <div style="display:flex;gap:8px">
+                  <input id="tradeTokenInput" placeholder="0x… token contract address"
+                    style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--text-primary);font-family:monospace;outline:none;min-width:0"
+                    onkeydown="if(event.key==='Enter') tradeLoadToken()"
+                    onfocus="this.style.borderColor='#27c97f'" onblur="this.style.borderColor='var(--border-light)'">
+                  <button onclick="tradeLoadToken()" style="background:#27c97f;border:none;border-radius:10px;padding:11px 22px;cursor:pointer;color:#000;font-size:11px;font-weight:800;letter-spacing:1px;white-space:nowrap;flex-shrink:0">LOAD</button>
+                </div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px">
+                  <span style="font-size:9px;color:var(--text-muted);align-self:center;margin-right:2px">Supported:</span>
+                  <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-muted)">Ethereum</span>
+                  <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-muted)">Base</span>
+                  <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-muted)">Arbitrum</span>
+                  <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-muted)">Polygon</span>
+                  <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-muted)">Optimism</span>
+                  <span style="font-size:9px;padding:2px 8px;border-radius:20px;background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-muted)">Robinhood</span>
+                </div>
+              </div>
+
+              <!-- Token info bar -->
+              <div id="tradeTokenBar" style="display:none;align-items:center;gap:12px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                <img id="tradeTokenLogo" src="" style="width:38px;height:38px;border-radius:50%;display:none;flex-shrink:0">
+                <div style="min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span id="tradeTokenSymbol" style="font-size:15px;font-weight:800;color:var(--text-primary)">—</span>
+                    <span id="tradeChainBadge" style="font-size:9px;padding:2px 8px;border-radius:20px;font-weight:700;letter-spacing:0.5px;background:#27c97f20;color:#27c97f;border:1px solid #27c97f40"></span>
+                  </div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="tradeTokenName">—</div>
+                  <div style="font-size:10px;color:var(--text-muted);font-family:monospace;margin-top:2px" id="tradeTokenAddr">—</div>
+                </div>
+                <div style="margin-left:auto;text-align:right;flex-shrink:0">
+                  <div id="tradeTokenPrice" style="font-size:15px;font-weight:800;color:#27c97f;font-family:monospace">—</div>
+                  <div id="tradeTokenChange" style="font-size:11px;font-weight:700">—</div>
+                </div>
+              </div>
+
+              <!-- Empty state -->
+              <div id="tradeEmptyState" style="text-align:center;padding:56px 20px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;color:var(--text-muted)">
+                <div style="width:56px;height:56px;border-radius:50%;background:#27c97f15;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:6px">Bloombark Trade</div>
+                <div style="font-size:12px;line-height:1.6">Paste an EVM token contract address above to get live quotes<br>and swap directly with your connected MetaMask wallet.</div>
+              </div>
+
+              <!-- Swap panel -->
+              <div id="swapPanel" class="card" style="display:none;padding:0;overflow:hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border-light)">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                    <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-primary)">SWAP</span>
+                  </div>
+                  <div id="swapWalletStatus" style="font-size:10px;color:var(--text-muted)">—</div>
+                </div>
+                <div style="display:flex;gap:0;flex-wrap:wrap">
+                  <!-- Left: swap form -->
+                  <div style="flex:1;min-width:280px;padding:16px;border-right:1px solid var(--border-light)">
+                    <div style="display:flex;gap:6px;margin-bottom:14px;background:var(--bg-secondary);border-radius:10px;padding:3px">
+                      <button id="swapTabBuy"  onclick="swapSetSide('buy')"  style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;background:#27c97f;border:none;color:#000;letter-spacing:0.5px;transition:background .15s">BUY</button>
+                      <button id="swapTabSell" onclick="swapSetSide('sell')" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;background:transparent;border:none;color:var(--text-muted);letter-spacing:0.5px;transition:background .15s">SELL</button>
+                    </div>
+                    <div style="margin-bottom:6px">
+                      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                        <span style="font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:0.5px">YOU PAY</span>
+                        <span id="swapBalanceLabel" style="font-size:9px;color:var(--text-muted)"></span>
+                      </div>
+                      <div style="display:flex;gap:8px;align-items:center;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;padding:4px">
+                        <div id="swapFromLabel" style="background:var(--bg-card);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:var(--text-primary);white-space:nowrap;text-align:center;flex-shrink:0">ETH</div>
+                        <input id="swapAmountIn" type="number" min="0" step="any" placeholder="0.0"
+                          style="flex:1;background:transparent;border:none;padding:8px 12px 8px 6px;font-size:15px;color:var(--text-primary);font-family:monospace;outline:none;min-width:0;text-align:right;-moz-appearance:textfield"
+                          oninput="swapScheduleQuote()">
+                      </div>
+                      <div id="swapPresets" style="display:flex;gap:4px;margin-top:8px">
+                        <button onclick="swapPresetPct(10)"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">10%</button>
+                        <button onclick="swapPresetPct(25)"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">25%</button>
+                        <button onclick="swapPresetPct(50)"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">50%</button>
+                        <button onclick="swapPresetPct(75)"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">75%</button>
+                        <button onclick="swapPresetPct(100)" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px;font-size:10px;font-weight:700;color:#27c97f;cursor:pointer">MAX</button>
+                      </div>
+                    </div>
+                    <div style="display:flex;justify-content:center;margin:2px 0">
+                      <div style="width:30px;height:30px;border-radius:50%;background:var(--bg-secondary);border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;z-index:1;margin:-6px 0">↓</div>
+                    </div>
+                    <div style="margin-bottom:14px">
+                      <div style="font-size:9px;color:var(--text-muted);font-weight:700;margin-bottom:6px;letter-spacing:0.5px">YOU RECEIVE (est.)</div>
+                      <div style="display:flex;gap:8px;align-items:center;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;padding:4px">
+                        <div id="swapToLabel" style="background:var(--bg-card);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;color:#27c97f;white-space:nowrap;text-align:center;flex-shrink:0">TOKEN</div>
+                        <div id="swapAmountOut" style="flex:1;padding:8px 12px 8px 6px;font-size:15px;color:var(--text-muted);font-family:monospace;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+                      </div>
+                    </div>
+                    <button id="swapExecBtn" onclick="swapExecute()" style="width:100%;padding:13px;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:0.5px">BUY</button>
+                  </div>
+                  <!-- Right: details -->
+                  <div style="width:210px;min-width:190px;padding:16px;display:flex;flex-direction:column;gap:12px">
+                    <div>
+                      <div style="font-size:9px;color:var(--text-muted);font-weight:700;margin-bottom:7px;letter-spacing:0.5px">SLIPPAGE TOLERANCE</div>
+                      <div style="display:flex;gap:4px;flex-wrap:wrap">
+                        <button onclick="swapSetSlippage(0.5)" id="slipBtn05" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">0.5%</button>
+                        <button onclick="swapSetSlippage(1)"   id="slipBtn1"  style="flex:1;background:#27c97f20;border:1px solid #27c97f60;border-radius:6px;padding:5px 2px;font-size:10px;font-weight:700;color:#27c97f;cursor:pointer;min-width:38px">1%</button>
+                        <button onclick="swapSetSlippage(3)"   id="slipBtn3"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">3%</button>
+                        <button onclick="swapSetSlippage(5)"   id="slipBtn5"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">5%</button>
+                      </div>
+                    </div>
+                    <div style="height:1px;background:var(--border-light)"></div>
+                    <div style="display:flex;flex-direction:column;gap:8px;font-size:10px">
+                      <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text-muted)">Price impact</span><span id="swapImpact" style="font-weight:700;color:#27c97f">—</span></div>
+                      <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text-muted)">Min received</span><span id="swapMinOut" style="font-weight:700;color:var(--text-primary)">—</span></div>
+                      <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text-muted)">Rate</span><span id="swapRate" style="font-weight:700;color:var(--text-primary);text-align:right;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span></div>
+                      <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text-muted)">Est. gas</span><span id="swapGas" style="font-weight:700;color:var(--text-primary)">—</span></div>
+                      <div style="display:flex;justify-content:space-between;align-items:center"><span style="color:var(--text-muted)">Route</span><span id="swapRoute" style="font-weight:700;color:var(--text-muted);font-size:9px;text-align:right;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</span></div>
+                    </div>
+                    <div id="swapQuoteStatus" style="font-size:9px;color:var(--text-muted);margin-top:auto;line-height:1.5">Enter amount to get quote</div>
+                    <div id="swapTxStatus" style="font-size:10px;display:none;word-break:break-all;line-height:1.5"></div>
+                  </div>
+                </div>
+                <div style="padding:9px 16px;border-top:1px solid var(--border-light);text-align:right;background:var(--bg-secondary)"><span style="font-size:9px;color:var(--text-muted)">Best route via KyberSwap Aggregator</span></div>
+              </div>
+
+              <!-- Live price chart -->
+              <div id="tradeChartCard" class="card" style="display:none;padding:0;overflow:hidden;margin-top:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-light)">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-primary)">PRICE CHART</span>
+                    <span id="tradeChartLive" style="display:inline-flex;align-items:center;gap:4px;font-size:9px;color:#27c97f;font-weight:700"><span style="width:6px;height:6px;border-radius:50%;background:#27c97f;display:inline-block"></span>LIVE</span>
+                  </div>
+                  <div style="display:flex;gap:4px">
+                    <button class="trade-chart-int" data-int="1s"  onclick="tradeSetInterval('1s')"  style="background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">1s</button>
+                    <button class="trade-chart-int" data-int="30s" onclick="tradeSetInterval('30s')" style="background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">30s</button>
+                    <button class="trade-chart-int active" data-int="1m" onclick="tradeSetInterval('1m')" style="background:#27c97f20;border:1px solid #27c97f60;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:700;color:#27c97f;cursor:pointer">1m</button>
+                    <button class="trade-chart-int" data-int="5m"  onclick="tradeSetInterval('5m')"  style="background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:3px 10px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer">5m</button>
+                  </div>
+                </div>
+                <div id="tradeChart" style="height:260px;width:100%"></div>
+              </div>
+
+              <!-- Recent transactions -->
+              <div id="tradeTxCard" class="card" style="display:none;padding:0;overflow:hidden;margin-top:14px">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border-light)">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-primary)">RECENT TRANSACTIONS</span>
+                  </div>
+                  <span id="tradeTxUpdated" style="font-size:9px;color:var(--text-muted)"></span>
+                </div>
+                <div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 62px 34px;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border-light);font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text-muted)">
+                  <span>TYPE</span><span style="text-align:right">PRICE</span><span style="text-align:right">VALUE</span><span>WALLET</span><span style="text-align:right">TIME</span><span style="text-align:right">TX</span>
+                </div>
+                <div id="tradeTxList" style="max-height:300px;overflow-y:auto"></div>
+              </div>
+            </div>
+
+            <!-- ═══ RIGHT COLUMN: wallet holdings (sticky) ═══ -->
+            <div style="position:sticky;top:0">
+              <div id="tradeHoldingsCard" class="card" style="display:none;padding:0;overflow:hidden">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:1px solid var(--border-light)">
+                  <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2" style="flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
+                    <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-primary);white-space:nowrap">HOLDINGS</span>
+                  </div>
+                  <button onclick="tradeLoadHoldings(true)" title="Refresh" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:4px 7px;cursor:pointer;color:var(--text-muted);font-size:11px;flex-shrink:0">↻</button>
+                </div>
+                <div id="tradeHoldingsTotal" style="padding:12px 16px;font-size:20px;font-weight:800;color:var(--text-primary);font-family:monospace;border-bottom:1px solid var(--border-light)"></div>
+                <div id="tradeHoldingsList" style="max-height:520px;overflow-y:auto"></div>
+              </div>
+              <div id="tradeHoldingsEmpty" class="card" style="padding:28px 18px;text-align:center">
+                <div style="width:38px;height:38px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:4px">No wallet connected</div>
+                <div style="font-size:10px;color:var(--text-muted);line-height:1.5">Connect MetaMask to see your token holdings here.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="page ai-analyzer-page" id="page-wallet-tracker">
+          <div class="search-section">
+            <label class="search-label">PASTE WALLET ADDRESS</label>
+            <div class="search-bar">
+              <input id="wtInput" type="text" placeholder="Enter wallet address (0x...)" class="search-input" autocomplete="off" spellcheck="false"/>
+              <div id="wtChainSelectWrap" style="display:none;position:relative;border-left:1px solid var(--border-light);align-self:stretch;flex-shrink:0">
+                <select id="wtChainSelect" style="background:#1a1d26;border:none;padding:10px 28px 10px 14px;color:var(--text-primary);font-size:13px;font-family:var(--font);font-weight:600;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;height:100%;width:100%">
+                  <option value="ethereum">Ethereum</option>
+                  <option value="base">Base</option>
+                  <option value="robinhood">Robinhood</option>
+                </select>
+                <svg style="position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none" width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+              <button id="wtCopyBtn" class="copy-btn" title="Copy address">
+                <svg width="16" height="16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+              <button id="wtScanBtn" class="scan-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                TRACK WALLET
+              </button>
+            </div>
+            <div id="wtChainDetect" style="font-size:10px;color:var(--text-muted);margin-top:6px;min-height:14px;padding:0 2px"></div>
+          </div>
+
+          <div id="wtContent" style="padding:0 24px 24px;display:none">
+            <!-- Summary row -->
+            <div id="wtSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <!-- Holdings -->
+              <div class="card">
+                <div class="card-header"><h3>HOLDINGS</h3><span id="wtHoldingCount" style="font-size:10px;color:var(--text-muted)"></span></div>
+                <div id="wtHoldings" style="overflow-y:auto;max-height:400px"></div>
+              </div>
+              <!-- Transactions -->
+              <div class="card">
+                <div class="card-header"><h3>TRANSACTION HISTORY</h3><span id="wtTxCount" style="font-size:10px;color:var(--text-muted)"></span></div>
+                <div id="wtTxList" style="overflow-y:auto;max-height:400px"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="wtEmpty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;color:var(--text-muted)">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom:16px;opacity:.4"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+            <p style="font-size:13px;margin:0">Paste a wallet address above to start tracking</p>
+          </div>
+          <div id="wtLoading" style="display:none;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;color:var(--text-muted)">
+            <div style="width:32px;height:32px;border:2px solid var(--border-light);border-top-color:#27C97F;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px"></div>
+            <p style="font-size:13px;margin:0" id="wtLoadingMsg">Fetching wallet data…</p>
+          </div>
+        </div>
+        <div class="page placeholder-page" id="page-smart-money">
+          <div class="placeholder-content"><h2>Smart Money</h2><p>Follow smart money wallets and their moves.</p></div>
+        </div>
+        <div class="page placeholder-page" id="page-insider-scan">
+          <div class="placeholder-content"><h2>Insider Scan</h2><p>Batch scan tokens for insider activity.</p></div>
+        </div>
+        <div class="page ai-analyzer-page" id="page-narrative">
+          <div style="padding:0 0 20px">
+            <!-- Header -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+              <div>
+                <div style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Narrative Tracker</div>
+                <div style="font-size:20px;font-weight:800;color:var(--text-primary)">Market Narratives</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Track sector rotation & trending themes · Updated every 5 min</div>
+              </div>
+              <button onclick="loadNarrative()" style="background:var(--bg-card);border:1px solid var(--border-light);color:var(--text-muted);font-size:11px;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:var(--font);font-weight:600">↻ Refresh</button>
+            </div>
+            <!-- Sort bar -->
+            <div style="display:flex;gap:8px;margin-bottom:16px" id="narrativeSortBar">
+              <button class="narr-sort-btn active" data-sort="change">🔥 Top Gainers</button>
+              <button class="narr-sort-btn" data-sort="mcap">💰 Market Cap</button>
+              <button class="narr-sort-btn" data-sort="losers">📉 Top Losers</button>
+            </div>
+            <!-- Grid -->
+            <div id="narrativeGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+              <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted);font-size:13px">Loading narratives…</div>
+            </div>
+          </div>
+        </div>
+        <!-- Community Chat Page -->
+        <div class="page ai-analyzer-page" id="page-community" style="height:100%;padding:0">
+          <div style="display:flex;height:100%;overflow:hidden">
+
+            <!-- Sidebar: rooms + online users -->
+            <div style="width:200px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border-light);display:flex;flex-direction:column;overflow:hidden">
+              <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border-light)">
+                <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px">CHANNELS</div>
+                <div id="chatRoomList" style="display:flex;flex-direction:column;gap:2px"></div>
+              </div>
+              <div style="padding:12px 14px;flex:1;overflow-y:auto">
+                <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px">
+                  ONLINE — <span id="chatOnlineCount" style="color:#27c97f">0</span>
+                </div>
+                <div id="chatUserList" style="display:flex;flex-direction:column;gap:6px"></div>
+              </div>
+            </div>
+
+            <!-- Main chat area -->
+            <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+              <!-- Room header -->
+              <div style="padding:14px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;flex-shrink:0">
+                <span id="chatRoomIcon" style="font-size:18px">💬</span>
+                <div>
+                  <div id="chatRoomName" style="font-size:14px;font-weight:800;color:var(--text-primary)">General</div>
+                  <div id="chatRoomDesc" style="font-size:11px;color:var(--text-muted)">General discussion</div>
+                </div>
+                <div style="margin-left:auto;font-size:11px;color:var(--text-muted)">
+                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#27c97f;margin-right:4px"></span>
+                  <span id="chatOnlineHeader">0 online</span>
+                </div>
+              </div>
+
+              <!-- Messages -->
+              <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:2px"></div>
+
+              <!-- Image preview -->
+              <div id="chatImgPreview" style="display:none;padding:8px 18px;border-top:1px solid var(--border-light);background:var(--bg-secondary);flex-shrink:0">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <img id="chatImgThumb" style="height:60px;border-radius:6px;object-fit:cover;max-width:120px">
+                  <div style="flex:1;font-size:11px;color:var(--text-muted)">Image ready to send</div>
+                  <button onclick="chatClearImg()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;line-height:1">✕</button>
+                </div>
+              </div>
+
+              <!-- Emoji picker -->
+              <div id="emojiPicker" style="display:none;padding:10px 18px;border-top:1px solid var(--border-light);background:var(--bg-card);flex-shrink:0;flex-wrap:wrap;gap:4px"></div>
+
+              <!-- Input -->
+              <div id="chatInputBar" style="padding:10px 18px;border-top:1px solid var(--border-light);display:flex;gap:8px;flex-shrink:0;align-items:center">
+                <!-- Emoji toggle -->
+                <button onclick="toggleEmojiPicker()" title="Emoji"
+                  style="background:none;border:1px solid var(--border-light);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;color:var(--text-muted);transition:border-color .15s"
+                  onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-light)'">😀</button>
+                <!-- Image upload -->
+                <label title="Upload image" style="background:none;border:1px solid var(--border-light);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;color:var(--text-muted);display:flex;align-items:center;transition:border-color .15s"
+                  onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-light)'">
+                  🖼️<input id="chatImgInput" type="file" accept="image/*" style="display:none" onchange="chatLoadImg(this)">
+                </label>
+                <input id="chatInput" maxlength="500" placeholder="Message #general…"
+                  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--text-primary);font-family:var(--font);outline:none"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend()}">
+                <button onclick="chatSend()"
+                  style="background:#27c97f;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;color:#000;font-size:12px;font-weight:800;font-family:var(--font);flex-shrink:0">SEND</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="page placeholder-page" id="page-ai-trading">
+          <div class="placeholder-content"><h2>AI Trading Agent</h2><p>Automated trading signals powered by AI.</p></div>
+        </div>
+        <div class="page placeholder-page" id="page-auto-research">
+          <div class="placeholder-content"><h2>Auto Research</h2><p>Automated token research and reports.</p></div>
+        </div>
+        <div class="page placeholder-page" id="page-alerts">
+          <div class="placeholder-content"><h2>Alerts</h2><p>Your configured alerts and notifications.</p></div>
+        </div>
+        <div class="page ai-analyzer-page" id="page-watchlist">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">WATCHLIST</div>
+              <div style="font-size:13px;color:#9ca3af">Tokens you've saved</div>
+            </div>
+            <button onclick="renderWatchlistPage()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+          </div>
+          <div id="watchlistContent" style="display:flex;flex-direction:column;gap:8px">
+            <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Connect wallet to see your watchlist</div>
+          </div>
+        </div>
+        <div class="page placeholder-page" id="page-portfolio">
+          <div class="placeholder-content"><h2>Portfolio</h2><p>Your portfolio performance and holdings.</p></div>
+        </div>
+        <div class="page placeholder-page" id="page-leaderboard">
+          <div class="placeholder-content"><h2>Leaderboard</h2><p>Top traders and wallets by performance.</p></div>
+        </div>
+        <div class="page placeholder-page" id="page-settings">
+          <div class="placeholder-content"><h2>Settings</h2><p>Configure your Bloombark Terminal preferences.</p></div>
+        </div>
+        <div class="page placeholder-page" id="page-docs">
+          <div class="placeholder-content"><h2>Documentation</h2><p>API docs and usage guides.</p></div>
+        </div>
+        <div class="page active" id="page-landing" style="padding:32px;overflow-y:auto;height:100%">
+          <!-- Hero -->
+          <div style="text-align:center;padding:48px 24px 40px;border-bottom:1px solid #1e2235">
+            <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:#27c97f;margin-bottom:16px">BLOOMBARK TERMINAL</div>
+            <h1 style="font-size:36px;font-weight:800;color:#e2e8f0;margin:0 0 16px;line-height:1.2">The All-in-One<br><span style="color:#27c97f">Token Intelligence</span> Platform</h1>
+            <p style="font-size:14px;color:#9ca3af;max-width:560px;margin:0 auto 28px;line-height:1.7">Bloombark gives traders and researchers real-time on-chain intelligence — from insider detection to wallet tracking — all in one terminal.</p>
+            <!-- Ticker + CA Box -->
+            <div style="display:inline-flex;flex-direction:column;align-items:center;gap:12px">
+              <div style="font-size:28px;font-weight:900;letter-spacing:2px;color:#27c97f">$BLOOM</div>
+              <div style="display:inline-flex;align-items:center;gap:10px;background:#0d0f1a;border:1px solid #27c97f33;border-radius:12px;padding:12px 20px">
+                <div style="text-align:left">
+                  <div style="font-size:9px;font-weight:700;letter-spacing:2px;color:#6b7280;margin-bottom:5px">CONTRACT ADDRESS</div>
+                  <div id="landingCA" style="font-size:12px;font-weight:700;font-family:monospace;color:#4b5563;letter-spacing:1.5px">Loading…</div>
+                </div>
+                <button id="landingCACopy" onclick="__copyCA()" style="display:none;background:#27c97f;border:none;border-radius:8px;color:#000;font-size:11px;font-weight:700;padding:6px 14px;cursor:pointer;white-space:nowrap">COPY CA</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Grid -->
+          <div style="max-width:900px;margin:40px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#27c97f18;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">AI Token Analyzer</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Deep-scan any EVM token contract. Get risk scores, honeypot detection, tax analysis, and holder breakdowns in seconds.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#4a90e218;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Wallet Relationship Map</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Visualize on-chain connections between wallets. Detect insider clusters, coordinated buys, and hidden team wallets through live bubble-map graphs.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#f5a62318;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Smart Money Tracking</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Follow wallets with a proven track record. Monitor smart money flows in real time and get alerted when they enter or exit a position.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#ff6b8a18;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b8a" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Insider Scan</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Identify team wallets, early insiders, and suspicious accumulation patterns before they dump. Cross-reference wallet activity across multiple tokens.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#9b59b618;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b59b6" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Market Overview</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Real-time market data across Ethereum, Base, Robinhood Chain, and more. Track trending tokens, top volume pairs, and new launches in one dashboard.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#27c97f18;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Wallet Tracker</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Track any wallet's holdings, PnL, and full transaction history across chains. See exactly what tokens they hold and how they're performing.</div>
+            </div>
+
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#e86c3a18;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e86c3a" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Narrative</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Stay ahead of the market by tracking emerging narratives and sector rotations in real time. Know which themes are gaining traction before the crowd.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#27c97f18;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">AI Trading Agent</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Let AI analyze market conditions and execute strategies on your behalf. Set parameters, define risk tolerance, and let the agent work 24/7 while you sleep.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#4a90e218;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4a90e2" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:8px">Auto Research</div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">Automated deep-dive research on any token. Aggregates on-chain data, social signals, and sentiment into a concise report — in seconds, not hours.</div>
+            </div>
+
+          </div>
+
+          <!-- Footer note -->
+          <div style="text-align:center;padding:48px 24px 32px;color:#374151;font-size:11px">
+            © 2025 Bloombark Terminal · Built for on-chain traders
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-steps" id="loadingSteps">
+        <div class="loading-step active">Fetching token data...</div>
+        <div class="loading-step">Analyzing wallet clusters...</div>
+        <div class="loading-step">Running AI risk model...</div>
+        <div class="loading-step">Generating report...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Modal (centered) -->
+  <div id="profileModalOverlay" onclick="toggleProfilePopup()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;backdrop-filter:blur(2px)"></div>
+  <div id="profilePopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;background:#161822;border:1px solid #1e2235;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.7);z-index:9999;overflow:hidden">
+    <!-- Title bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid #1e2235">
+      <span style="font-size:11px;font-weight:800;letter-spacing:2px;color:#e2e8f0">WALLET PROFILE</span>
+      <button onclick="toggleProfilePopup()" style="background:none;border:none;cursor:pointer;color:#6b7280;padding:2px;line-height:1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- Status -->
+    <div style="padding:18px 18px 14px;text-align:center;border-bottom:1px solid #1e2235">
+      <!-- Avatar: click to upload -->
+      <div style="position:relative;width:64px;height:64px;margin:0 auto 10px;cursor:pointer" onclick="document.getElementById('profileAvatarInput').click()" title="Click to change photo">
+        <div id="popupAvatar" style="width:64px;height:64px;border-radius:50%;background:#27c97f22;border:2px solid #27c97f55;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#27c97f;overflow:hidden">P</div>
+        <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#27c97f;display:flex;align-items:center;justify-content:center;border:2px solid #13161d">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+      </div>
+      <input id="profileAvatarInput" type="file" accept="image/*" style="display:none" onchange="profileAvatarPicked(this)">
+      <div id="profileAvatarStatus" style="font-size:9px;color:#6b7280;margin-bottom:6px">Click photo to change</div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:#27c97f15;border:1px solid #27c97f30;border-radius:20px;padding:3px 12px;margin-bottom:10px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#27c97f;display:inline-block;flex-shrink:0"></span>
+        <span style="font-size:10px;color:#27c97f;font-weight:600">CONNECTED</span>
+      </div>
+      <div style="background:#27c97f10;border:1px solid #27c97f30;border-radius:10px;padding:8px 12px;text-align:center">
+        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#27c97f;margin-right:6px;vertical-align:middle;flex-shrink:0"></span><span id="popupWalletFull" style="font-size:10px;font-family:monospace;color:#27c97f;font-weight:600;word-break:break-all;line-height:1.6">—</span>
+      </div>
+    </div>
+    <!-- Community display name (hidden entirely when wallet is disconnected) -->
+    <div id="usernameSection" style="display:none;padding:14px 18px;border-bottom:1px solid #1e2235">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#6b7280">USERNAME</div>
+        <div id="chatNameEditsLeft" style="font-size:9px;color:#6b7280"></div>
+      </div>
+      <!-- View state: grey text + edit button -->
+      <div id="chatNameView" style="display:none;align-items:center;gap:8px">
+        <div id="chatNameDisplay" style="flex:1;background:#13161d;border:1px solid #1e2235;border-radius:10px;padding:10px 12px;font-size:12px;color:#6b7280;font-family:monospace"></div>
+        <button id="chatNameEditBtn" onclick="chatNameStartEdit()"
+          style="background:#1e2235;border:1px solid #2d3748;border-radius:10px;padding:10px 14px;cursor:pointer;color:#8b92a8;font-size:11px;font-weight:800;font-family:monospace;white-space:nowrap">
+          EDIT
+        </button>
+      </div>
+      <!-- Edit state: input + save + cancel -->
+      <div id="chatNameEdit" style="display:flex;gap:8px">
+        <input id="chatNameInput" maxlength="24" placeholder="Set your chat name…"
+          style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;padding:10px 12px;font-size:12px;color:#e2e8f0;font-family:monospace;outline:none;min-width:0"
+          onkeydown="if(event.key==='Enter') chatSetName(); else if(event.key==='Escape') chatNameCancel()"
+          onfocus="this.style.borderColor='#27c97f'" onblur="this.style.borderColor='#2d3748'">
+        <button onclick="chatSetName()"
+          style="background:#27c97f15;border:1px solid #27c97f40;border-radius:10px;padding:10px 14px;cursor:pointer;color:#27c97f;font-size:11px;font-weight:800;font-family:monospace;white-space:nowrap">
+          SAVE
+        </button>
+        <button id="chatNameCancelBtn" onclick="chatNameCancel()" style="display:none;background:#1e2235;border:1px solid #2d3748;border-radius:10px;padding:10px 12px;cursor:pointer;color:#8b92a8;font-size:11px;font-weight:800;font-family:monospace;white-space:nowrap">
+          ✕
+        </button>
+      </div>
+      <div id="chatNameStatus" style="font-size:10px;color:#27c97f;margin-top:5px;display:none">✓ Name updated</div>
+    </div>
+    <!-- Copy button -->
+    <div style="padding:14px 18px;border-bottom:1px solid #1e2235">
+      <button onclick="__profileCopy()" style="width:100%;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#e2e8f0;font-size:12px;font-weight:700;padding:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.5px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Address
+      </button>
+    </div>
+    <!-- Disconnect -->
+    <div style="padding:14px 18px">
+      <button onclick="__profileDisconnect()" style="width:100%;background:#ff4d4d12;border:1px solid #ff4d4d44;border-radius:10px;color:#ff6b6b;font-size:12px;font-weight:700;padding:10px;cursor:pointer;letter-spacing:0.5px">
+        DISCONNECT
+      </button>
+    </div>
+    <div style="padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
+  </div>
+
+  <script src="js/app.js?v=108"></script>
+</body>
+</html>
