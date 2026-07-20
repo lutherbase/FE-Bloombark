@@ -515,16 +515,6 @@
                 </div>
               </div>
             </div>
-            <!-- New Pairs (only shown on per-chain) -->
-            <div class="dash-section" id="dashNewPairsSection" style="display:none">
-              <div class="dash-section-header">
-                <span class="dash-section-title">🆕 NEW PAIRS</span>
-                <span class="dash-section-sub" id="dashNewSub"></span>
-              </div>
-              <div class="dash-vol-wrap">
-                <div class="dash-volume-grid" id="dashNewPairsList"></div>
-              </div>
-            </div>
           </div>
         </div>
         <div class="page ai-analyzer-page" id="page-trade">
@@ -1026,20 +1016,20 @@
     </div>
     <!-- Status -->
     <div style="padding:18px 18px 14px;text-align:center;border-bottom:1px solid #1e2235">
-      <!-- Avatar: click to upload -->
-      <div style="position:relative;width:64px;height:64px;margin:0 auto 10px;cursor:pointer" onclick="document.getElementById('profileAvatarInput').click()" title="Click to change photo">
+      <!-- Avatar: click to upload (disabled while wallet is disconnected) -->
+      <div id="profileAvatarWrap" style="position:relative;width:64px;height:64px;margin:0 auto 10px;cursor:pointer" onclick="profileAvatarClick()" title="Click to change photo">
         <div id="popupAvatar" style="width:64px;height:64px;border-radius:50%;background:#27c97f22;border:2px solid #27c97f55;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#27c97f;overflow:hidden">P</div>
-        <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#27c97f;display:flex;align-items:center;justify-content:center;border:2px solid #13161d">
+        <div id="profileAvatarEditDot" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#27c97f;display:flex;align-items:center;justify-content:center;border:2px solid #13161d">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
       </div>
       <input id="profileAvatarInput" type="file" accept="image/*" style="display:none" onchange="profileAvatarPicked(this)">
-      <div id="profileAvatarStatus" style="font-size:9px;color:#6b7280;margin-bottom:6px">Click photo to change</div>
-      <div style="display:inline-flex;align-items:center;gap:5px;background:#27c97f15;border:1px solid #27c97f30;border-radius:20px;padding:3px 12px;margin-bottom:10px">
-        <span style="width:6px;height:6px;border-radius:50%;background:#27c97f;display:inline-block;flex-shrink:0"></span>
-        <span style="font-size:10px;color:#27c97f;font-weight:600">CONNECTED</span>
+      <div id="profileAvatarStatus" style="font-size:9px;color:#6b7280;margin-bottom:6px">Connect wallet to set a photo</div>
+      <div id="popupStatusBadge" style="display:inline-flex;align-items:center;gap:5px;background:#6b728015;border:1px solid #6b728030;border-radius:20px;padding:3px 12px;margin-bottom:10px">
+        <span id="popupStatusDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;display:inline-block;flex-shrink:0"></span>
+        <span id="popupStatusText" style="font-size:10px;color:#8b92a8;font-weight:600">NOT CONNECTED</span>
       </div>
-      <div style="background:#27c97f10;border:1px solid #27c97f30;border-radius:10px;padding:8px 12px;text-align:center">
+      <div id="popupWalletBox" style="display:none;background:#27c97f10;border:1px solid #27c97f30;border-radius:10px;padding:8px 12px;text-align:center">
         <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#27c97f;margin-right:6px;vertical-align:middle;flex-shrink:0"></span><span id="popupWalletFull" style="font-size:10px;font-family:monospace;color:#27c97f;font-weight:600;word-break:break-all;line-height:1.6">—</span>
       </div>
     </div>
@@ -1080,15 +1070,10 @@
         Copy Address
       </button>
     </div>
-    <!-- Disconnect -->
-    <div style="padding:14px 18px">
-      <button onclick="__profileDisconnect()" style="width:100%;background:#ff4d4d12;border:1px solid #ff4d4d44;border-radius:10px;color:#ff6b6b;font-size:12px;font-weight:700;padding:10px;cursor:pointer;letter-spacing:0.5px">
-        DISCONNECT
-      </button>
-    </div>
-    <div style="padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
+    <!-- Disconnect is done from the top-right wallet popup only -->
+    <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=108"></script>
+  <script src="js/app.js?v=114"></script>
 </body>
 </html>
