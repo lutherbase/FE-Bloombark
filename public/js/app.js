@@ -2640,37 +2640,15 @@ function renderNarrativeGrid() {
 }
 
 async function loadLandingCA() {
+  // $BBRK contract not deployed yet — keep the static "Not Live Yet" label,
+  // don't fetch or overwrite it with a real/masked address.
   const el = document.getElementById('landingCA');
   const copyBtn = document.getElementById('landingCACopy');
   if (!el) return;
-  if (_cachedCA) { _renderCA(el, copyBtn, _cachedCA); return; }
-  el.textContent = 'Loading…';
-  try {
-    const res = await fetch(`${API_BASE}/config/public`);
-    const data = await res.json();
-    _cachedCA = data.contractAddress || 'coming_soon';
-    _renderCA(el, copyBtn, _cachedCA);
-  } catch(_) { el.textContent = 'Coming Soon'; }
-}
-function _renderCA(el, copyBtn, ca) {
-  const isComingSoon = ca === 'coming_soon' || !ca;
-  if (isComingSoon) {
-    // Mask as an EVM-style address (0x + 40 hex chars) with X's
-    const mask = '0xXX' + 'X'.repeat(34) + 'xxxx';
-    el.innerHTML = `<span style="opacity:0.35;letter-spacing:1.5px">${mask}</span>`;
-    el.style.color = '#4b5563';
-    el.title = 'Contract address will be revealed at launch';
-  } else {
-    el.textContent = ca;
-    el.style.color = '#27c97f';
-    el.title = '';
-  }
-  if (copyBtn) {
-    copyBtn.style.display = 'inline-block';
-    copyBtn.disabled = isComingSoon;
-    copyBtn.style.opacity = isComingSoon ? '0.35' : '1';
-    copyBtn.style.cursor = isComingSoon ? 'not-allowed' : 'pointer';
-  }
+  el.textContent = 'Not Live Yet';
+  el.style.color = '#4b5563';
+  el.title = 'Contract address will be revealed at launch';
+  if (copyBtn) copyBtn.style.display = 'none';
 }
 window.__copyCA = () => {
   if (!_cachedCA || _cachedCA === 'coming_soon') return;
