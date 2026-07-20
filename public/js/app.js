@@ -3442,7 +3442,10 @@ function _fromRaw(raw, decimals) {
 function _fmtAmt(n) {
   if (!isFinite(n)) return '—';
   if (n === 0) return '0';
-  if (n < 0.0001) return n.toExponential(3);
+  if (n < 0.0001) {
+    const leadZeros = (n.toFixed(20).match(/^0\.(0*)/) || [,''])[1].length;
+    return n.toFixed(Math.min(leadZeros + 4, 18));
+  }
   if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
   if (n >= 1e6) return (n/1e6).toFixed(2) + 'M';
   if (n >= 1000) return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
@@ -3492,7 +3495,7 @@ async function tradeLoadToken() {
       $('tradeTokenName').textContent   = _tradeToken.name;
       $('tradeChainBadge').textContent  = chain.toUpperCase();
       $('tradeTokenAddr').textContent   = addr.slice(0,10) + '…' + addr.slice(-8);
-      $('tradeTokenPrice').textContent  = '$' + (_tradeToken.price < 0.0001 ? _tradeToken.price.toExponential(3) : _tradeToken.price.toFixed(6));
+      $('tradeTokenPrice').textContent  = fmt.price(_tradeToken.price);
       const chg = parseFloat(p.priceChange?.h24 ?? 0);
       const chgEl = $('tradeTokenChange');
       chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% (24h)';
@@ -3951,7 +3954,7 @@ function _applyTradePrice(p) {
   const el = $('tradeTokenPrice');
   if (el) {
     const prev = t.price || 0;
-    el.textContent = '$' + (p < 0.0001 ? p.toExponential(3) : p.toFixed(6));
+    el.textContent = fmt.price(p);
     if (prev > 0 && p !== prev) {
       el.style.color = p > prev ? '#27c97f' : '#ff4d4d';
       el.style.transition = 'color 0.2s';
@@ -4016,11 +4019,7 @@ async function tradeLoadTxs(showLoading = true) {
 
     const trades = allTrades.slice(0, 30);
     const explorer = TRADE_CHAINS[t.chain]?.explorer || '';
-    const fmtTxPrice = p => !p ? '—'
-      : p < 0.0001 ? '$' + p.toExponential(2)
-      : p < 1      ? '$' + p.toFixed(6)
-      : p < 1000   ? '$' + p.toFixed(4)
-      : '$' + p.toLocaleString('en-US', { maximumFractionDigits: 2 });
+    const fmtTxPrice = p => !p ? '—' : fmt.price(p);
     list.innerHTML = trades.map(tr => `
       <div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 62px 34px;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border-light);font-size:11px;align-items:center">
         <span style="font-weight:800;color:${tr.isBuy ? '#27c97f' : '#ff4d4d'}">${tr.isBuy ? '▲ BUY' : '▼ SELL'}</span>
