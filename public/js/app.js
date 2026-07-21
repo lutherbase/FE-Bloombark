@@ -1,3 +1,51 @@
+/* ─── Blockies avatar (deterministic identicon from a seed, e.g. wallet address) ─
+   Classic "blockies" algorithm (the same style MetaMask used) — pure vanilla
+   JS + <canvas>, no dependency/bundler needed. Same seed always renders the
+   same pattern, so it works as a free default avatar. */
+function _blockieRand(seed) {
+  const rs = [0, 0, 0, 0];
+  for (let i = 0; i < seed.length; i++) rs[i % 4] = ((rs[i % 4] << 5) - rs[i % 4]) + seed.charCodeAt(i);
+  return function() {
+    const t = rs[0] ^ (rs[0] << 11);
+    rs[0] = rs[1]; rs[1] = rs[2]; rs[2] = rs[3];
+    rs[3] = rs[3] ^ (rs[3] >>> 19) ^ t ^ (t >>> 8);
+    return (rs[3] >>> 0) / 4294967296;
+  };
+}
+function _blockieColor(rand) {
+  return `hsl(${Math.floor(rand() * 360)},${Math.floor(rand() * 60 + 40)}%,${Math.floor((rand()+rand()+rand()+rand()) * 25)}%)`;
+}
+function _blockiePattern(rand, size) {
+  const dataW = Math.ceil(size / 2);
+  const mirrorW = size - dataW;
+  const data = [];
+  for (let y = 0; y < size; y++) {
+    const row = [];
+    for (let x = 0; x < dataW; x++) row[x] = Math.floor(rand() * 2.3);
+    data.push(...row, ...row.slice(0, mirrorW).reverse());
+  }
+  return data;
+}
+function blockieDataUrl(seed, size = 8, scale = 6) {
+  seed = String(seed || 'anon').toLowerCase();
+  const rand      = _blockieRand(seed);
+  const color     = _blockieColor(rand);
+  const bgColor   = _blockieColor(rand);
+  const spotColor = _blockieColor(rand);
+  const pattern   = _blockiePattern(rand, size);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  pattern.forEach((val, i) => {
+    if (!val) return;
+    ctx.fillStyle = val === 1 ? color : spotColor;
+    ctx.fillRect((i % size) * scale, Math.floor(i / size) * scale, scale, scale);
+  });
+  return canvas.toDataURL();
+}
+
 /* ─── Toast ───────────────────────────────────────────────────────────────── */
 function showWipModal() {
   const existing = document.getElementById('wipModal');
@@ -2164,11 +2212,8 @@ function openWalletModal() {
     // Already connected — show profile (view only) + disconnect
     const addr = _privyUser._displayAddress || _privyUser.wallet?.address || _privyUser.linked_accounts?.find(a => a.type === 'wallet')?.address || _privyUser.email?.address || _privyUser.linked_accounts?.find(a => a.type === 'email')?.address || '';
     const displayName = _userProfile?.displayName || _chatName || '';
-    const avatar = _userProfile?.avatar || '';
-    const fallbackLetter = (displayName || addr || '?').charAt(0).toUpperCase();
-    const avatarHtml = avatar
-      ? `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid #27c97f55;margin:0 auto 10px"><img src="${avatar}" style="width:100%;height:100%;object-fit:cover"></div>`
-      : `<div style="width:64px;height:64px;border-radius:50%;background:#27c97f22;border:2px solid #27c97f55;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#27c97f;margin:0 auto 10px">${fallbackLetter}</div>`;
+    const avatarSrc = _userProfile?.avatar || blockieDataUrl(addr || displayName || 'anon');
+    const avatarHtml = `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid #27c97f55;margin:0 auto 10px"><img src="${avatarSrc}" style="width:100%;height:100%;object-fit:cover"></div>`;
     const nameHtml = displayName
       ? `<div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px">${displayName}</div>`
       : '';
@@ -2268,38 +2313,34 @@ function _setWalletConnected(user) {
 // ── Cached profile for current wallet ────────────────────────────────────────
 let _userProfile = null; // { displayName, avatar }
 
-function _setAvatarEl(el, avatar, fallbackLetter) {
+function _setAvatarEl(el, avatar, seed) {
   if (!el) return;
-  if (avatar) {
-    el.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  } else {
-    el.innerHTML = fallbackLetter || 'P';
-  }
+  const src = avatar || (seed ? blockieDataUrl(seed) : null);
+  el.innerHTML = src
+    ? `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    : 'P';
 }
 
 function _applyProfile(profile) {
   _userProfile = profile;
-  const fallback = (window._privyWallet || '?').charAt(0).toUpperCase();
+  const seed = window._privyWallet || null;
   // Profile popup avatar
   const popupAvatar = document.getElementById('popupAvatar');
-  _setAvatarEl(popupAvatar, profile?.avatar, fallback);
+  _setAvatarEl(popupAvatar, profile?.avatar, seed);
   // Sidebar avatar
   const avatarEl = document.getElementById('sidebarAvatar');
-  _setAvatarEl(avatarEl, profile?.avatar, fallback);
+  _setAvatarEl(avatarEl, profile?.avatar, seed);
   // Wallet button top-right
   const walletBtnAvatar = document.getElementById('walletBtnAvatar');
   const walletBtnIcon   = document.getElementById('walletBtnIcon');
   const label = document.getElementById('connectWalletLabel');
   if (walletBtnAvatar && walletBtnIcon && label && window._privyWallet) {
-    if (profile?.avatar || profile?.displayName) {
-      _setAvatarEl(walletBtnAvatar, profile.avatar, fallback);
-      walletBtnAvatar.style.display = 'flex';
-      walletBtnIcon.style.display   = 'none';
-      if (profile.displayName) label.textContent = profile.displayName;
-    } else {
-      walletBtnAvatar.style.display = 'none';
-      walletBtnIcon.style.display   = '';
-    }
+    // Always show an avatar once connected — custom photo, else a blockie
+    // generated from the wallet address (never the plain wallet-icon SVG).
+    _setAvatarEl(walletBtnAvatar, profile?.avatar, seed);
+    walletBtnAvatar.style.display = 'flex';
+    walletBtnIcon.style.display   = 'none';
+    if (profile?.displayName) label.textContent = profile.displayName;
   }
   // Pre-fill chat name input
   const inp = document.getElementById('chatNameInput');
@@ -2399,11 +2440,19 @@ function _updateSidebarProfile(user) {
     const display = addr || email || '';
     const short = display ? (addr ? addr.slice(0,6)+'…'+addr.slice(-4) : email) : 'Connected';
     walletEl.textContent = short;
-    const fallback = display.charAt(0).toUpperCase() || 'P';
     const popupAvatar = document.getElementById('popupAvatar');
-    _setAvatarEl(popupAvatar, _userProfile?.avatar, fallback);
+    _setAvatarEl(popupAvatar, _userProfile?.avatar, display);
     const avatarEl = document.getElementById('sidebarAvatar');
-    _setAvatarEl(avatarEl, _userProfile?.avatar, fallback);
+    _setAvatarEl(avatarEl, _userProfile?.avatar, display);
+    // Show the wallet-button avatar immediately too (don't wait on the async
+    // profile fetch below) — same blockie fallback as everywhere else.
+    const walletBtnAvatar = document.getElementById('walletBtnAvatar');
+    const walletBtnIcon   = document.getElementById('walletBtnIcon');
+    if (walletBtnAvatar && walletBtnIcon) {
+      _setAvatarEl(walletBtnAvatar, _userProfile?.avatar, display);
+      walletBtnAvatar.style.display = 'flex';
+      walletBtnIcon.style.display   = 'none';
+    }
     if (popupFull) popupFull.textContent = display || '—';
     if (statusText)  statusText.textContent = 'CONNECTED';
     if (statusDot)   statusDot.style.background = '#27c97f';
@@ -2883,12 +2932,6 @@ let _chatConnected = false;
 let _chatName      = localStorage.getItem('bloomChatName') || null;
 let _chatNameEdits = parseInt(localStorage.getItem('bloomChatNameEdits') || '0', 10);
 
-const AVATAR_COLORS = ['#f59e0b','#3b82f6','#8b5cf6','#ec4899','#10b981','#ef4444','#06b6d4','#f97316'];
-function avatarColor(str) {
-  let h = 0; for (const c of (str||'?')) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-function avatarLetter(name) { return (name||'?')[0].toUpperCase(); }
 
 function fmtChatTime(ts) {
   const d = new Date(ts);
@@ -2943,6 +2986,14 @@ function connectChat() {
           _chatUnread[msg.room] = (_chatUnread[msg.room] || 0) + 1;
           updateRoomUnread(msg.room);
         }
+      } else if (d.type === 'chat_edited') {
+        const arr = _chatMessages[d.room];
+        if (arr) { const m = arr.find(x => String(x.id) === String(d.id)); if (m) { m.text = d.text; m.edited = true; } }
+        if (d.room === _chatRoom) renderChatMessages();
+      } else if (d.type === 'chat_deleted') {
+        const arr = _chatMessages[d.room];
+        if (arr) { const i = arr.findIndex(x => String(x.id) === String(d.id)); if (i >= 0) arr.splice(i, 1); }
+        if (d.room === _chatRoom) renderChatMessages();
       } else if (d.type === 'chat_online') {
         updateOnlineCount(d.online || 0);
       } else if (d.type === 'chat_nameok') {
@@ -2978,6 +3029,8 @@ function renderChatRooms() {
 function switchChatRoom(room) {
   _chatRoom = room;
   _chatUnread[room] = 0;
+  // Clear any pending reply/edit context carried over from another room.
+  if (typeof chatCancelContext === 'function') chatCancelContext();
   const r = CHAT_ROOMS[room];
   if ($('chatRoomIcon'))  $('chatRoomIcon').textContent  = r.icon;
   if ($('chatRoomName'))  $('chatRoomName').textContent  = r.name;
@@ -3057,12 +3110,34 @@ function isMine(m) {
 }
 
 function _chatAvatarHtml(m, size = 30) {
-  const color  = avatarColor(m.wallet || m.displayName);
-  const letter = avatarLetter(m.displayName);
-  if (m.avatar) {
-    return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="${m.avatar}" style="width:100%;height:100%;object-fit:cover"></div>`;
-  }
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.4)}px;font-weight:800;color:#000;flex-shrink:0">${letter}</div>`;
+  const src = m.avatar || blockieDataUrl(m.wallet || m.displayName || 'anon');
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="${src}" style="width:100%;height:100%;object-fit:cover"></div>`;
+}
+
+function _escapeHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Reply quote shown inside a bubble when a message replies to another.
+function _replyQuoteHtml(m, mine) {
+  if (!m.replyTo) return '';
+  const border = mine ? 'rgba(0,0,0,0.35)' : 'var(--accent-green)';
+  const nameCol = mine ? 'rgba(0,0,0,0.75)' : 'var(--accent-green)';
+  const txtCol  = mine ? 'rgba(0,0,0,0.6)'  : 'var(--text-muted)';
+  return `<div onclick="chatScrollToMsg('${m.replyTo}')" style="border-left:2px solid ${border};padding:2px 8px;margin-bottom:5px;cursor:pointer;border-radius:3px;background:rgba(255,255,255,0.06);max-width:100%;overflow:hidden">
+    <div style="font-size:10px;font-weight:700;color:${nameCol};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_escapeHtml(m.replyName || 'Anon')}</div>
+    <div style="font-size:11px;color:${txtCol};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_escapeHtml(m.replyText || '')}</div>
+  </div>`;
+}
+
+// Hover action buttons (reply for everyone; edit/delete for own wallet-owned msgs).
+function _msgActionsHtml(m, mine) {
+  const canModify = mine && window._privyWallet && m.wallet && m.wallet === window._privyWallet;
+  const btn = (label, fn, extra='') => `<button onclick="event.stopPropagation();${fn}" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:11px;padding:2px 4px;line-height:1;${extra}" title="${label}">${label}</button>`;
+  let btns = btn('Reply', `chatSetReply('${m.id}')`);
+  if (canModify && !m.imgData) btns += btn('Edit', `chatStartEdit('${m.id}')`);
+  if (canModify) btns += btn('Delete', `chatDeleteMsg('${m.id}')`, 'color:#ff6b6b');
+  return `<div class="chat-msg-actions">${btns}</div>`;
 }
 
 function buildMsgHtml(m) {
@@ -3078,27 +3153,32 @@ function buildMsgHtml(m) {
   const imgHtml = m.imgData
     ? `<div style="margin-top:6px"><img src="${m.imgData}" style="max-width:260px;max-height:200px;border-radius:8px;cursor:pointer;display:block" onclick="chatZoomImg(this.src)"></div>`
     : '';
+  const editedHtml = m.edited ? `<span style="font-size:9px;opacity:0.6;margin-left:4px">(edited)</span>` : '';
+  const replyQuote = _replyQuoteHtml(m, mine);
+  const actions    = _msgActionsHtml(m, mine);
 
   if (mine) {
-    return `<div style="display:flex;justify-content:flex-end;padding:3px 0;gap:8px;align-items:flex-end">
+    return `<div class="chat-msg-row" id="msg-${m.id}" style="display:flex;justify-content:flex-end;padding:3px 0;gap:8px;align-items:flex-end">
+      ${actions}
       <div style="max-width:72%;display:flex;flex-direction:column;align-items:flex-end">
-        <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${fmtChatTime(m.ts)}</span>
+        <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${fmtChatTime(m.ts)}${editedHtml}</span>
         <div style="background:#27c97f;color:#000;padding:9px 13px;border-radius:16px 16px 4px 16px;font-size:13px;line-height:1.5;word-break:break-word;max-width:100%">
-          ${textHtml}${imgHtml}
+          ${replyQuote}${textHtml}${imgHtml}
         </div>
       </div>
       ${avatarHtml}
     </div>`;
   }
 
-  return `<div style="display:flex;padding:3px 0;gap:8px;align-items:flex-end">
+  return `<div class="chat-msg-row" id="msg-${m.id}" style="display:flex;padding:3px 0;gap:8px;align-items:flex-end">
     ${avatarHtml}
     <div style="max-width:72%;display:flex;flex-direction:column;align-items:flex-start">
-      <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${m.displayName} · ${fmtChatTime(m.ts)}</span>
+      <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${_escapeHtml(m.displayName)} · ${fmtChatTime(m.ts)}${editedHtml}</span>
       <div style="background:var(--bg-card);border:1px solid var(--border-light);color:var(--text-primary);padding:9px 13px;border-radius:16px 16px 16px 4px;font-size:13px;line-height:1.5;word-break:break-word;max-width:100%">
-        ${textHtml}${imgHtml}
+        ${replyQuote}${textHtml}${imgHtml}
       </div>
     </div>
+    ${actions}
   </div>`;
 }
 
@@ -3146,15 +3226,105 @@ function updateRoomUnread(room) {
 }
 
 let _chatPendingImg = null;
+let _chatReplyTo    = null;  // { id, name, text } — message being replied to
+let _chatEditId     = null;  // id of the message currently being edited
+
+// Find a message across the current room's cache.
+function _findMsg(id) {
+  return (_chatMessages[_chatRoom] || []).find(m => String(m.id) === String(id));
+}
+
+// Render the little context bar above the input (reply target / edit mode).
+function _renderChatContextBar() {
+  const bar = $('chatContextBar');
+  if (!bar) return;
+  if (_chatEditId) {
+    bar.style.display = 'flex';
+    bar.innerHTML = `<div style="flex:1;min-width:0;overflow:hidden">
+        <div style="font-size:10px;font-weight:700;color:var(--accent-yellow)">✏️ Editing message</div>
+      </div>
+      <button onclick="chatCancelContext()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;line-height:1">✕</button>`;
+  } else if (_chatReplyTo) {
+    bar.style.display = 'flex';
+    bar.innerHTML = `<div style="flex:1;min-width:0;overflow:hidden;border-left:2px solid var(--accent-green);padding-left:8px">
+        <div style="font-size:10px;font-weight:700;color:var(--accent-green)">↩ Replying to ${_escapeHtml(_chatReplyTo.name)}</div>
+        <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_escapeHtml(_chatReplyTo.text)}</div>
+      </div>
+      <button onclick="chatCancelContext()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:15px;line-height:1">✕</button>`;
+  } else {
+    bar.style.display = 'none';
+    bar.innerHTML = '';
+  }
+}
+
+window.chatSetReply = function(id) {
+  const m = _findMsg(id);
+  if (!m) return;
+  _chatEditId = null;
+  _chatReplyTo = { id: m.id, name: m.displayName || 'Anon', text: (m.text || (m.imgData ? '📷 image' : '')).slice(0, 120) };
+  _renderChatContextBar();
+  $('chatInput')?.focus();
+};
+
+window.chatStartEdit = function(id) {
+  const m = _findMsg(id);
+  if (!m) return;
+  _chatReplyTo = null;
+  _chatEditId  = m.id;
+  const inp = $('chatInput');
+  if (inp) { inp.value = m.text || ''; inp.focus(); }
+  _renderChatContextBar();
+};
+
+window.chatCancelContext = function() {
+  const wasEdit = !!_chatEditId;
+  _chatReplyTo = null;
+  _chatEditId  = null;
+  if (wasEdit && $('chatInput')) $('chatInput').value = '';
+  _renderChatContextBar();
+};
+
+window.chatDeleteMsg = function(id) {
+  if (!_chatWs || !_chatConnected) return;
+  if (!confirm('Delete this message?')) return;
+  _chatWs.send(JSON.stringify({ type: 'chat_delete', id }));
+};
+
+window.chatScrollToMsg = function(id) {
+  const el = document.getElementById('msg-' + id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.style.transition = 'background 0.2s';
+  el.style.background = 'rgba(39,201,127,0.12)';
+  setTimeout(() => { el.style.background = ''; }, 1200);
+};
 
 function chatSend() {
   const inp = $('chatInput');
   if (!inp || !_chatConnected || !_chatWs) return;
-  if (_roomLocked(_chatRoom)) { showToast('🔒 This channel is locked'); return; }
   const text = inp.value.trim();
+
+  // Edit mode: save the edit instead of sending a new message.
+  if (_chatEditId) {
+    if (!text) { showToast('Message cannot be empty'); return; }
+    _chatWs.send(JSON.stringify({ type: 'chat_edit', id: _chatEditId, text }));
+    inp.value = '';
+    _chatEditId = null;
+    _renderChatContextBar();
+    closeEmojiPicker();
+    return;
+  }
+
+  if (_roomLocked(_chatRoom)) { showToast('🔒 This channel is locked'); return; }
   if (!text && !_chatPendingImg) return;
-  _chatWs.send(JSON.stringify({ type: 'chat_msg', room: _chatRoom, text, imgData: _chatPendingImg || null }));
+  _chatWs.send(JSON.stringify({
+    type: 'chat_msg', room: _chatRoom, text,
+    imgData: _chatPendingImg || null,
+    replyTo: _chatReplyTo?.id || null,
+  }));
   inp.value = '';
+  _chatReplyTo = null;
+  _renderChatContextBar();
   chatClearImg();
   closeEmojiPicker();
 }

@@ -375,6 +375,10 @@ body {
   border-radius: 8px;
   padding: 14px;
   position: relative;
+  /* Grid/flex items default to min-width:auto, which lets wide content (a
+     fixed-column table, an unwrapped stat row) force the whole grid track
+     wider than the viewport instead of scrolling within the card. */
+  min-width: 0;
 }
 
 .card-header {
@@ -865,6 +869,14 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
   /* Grids stack */
   .row-2col, .row-3col { grid-template-columns: 1fr; }
   .row-3col .risk-card { max-width: none; }
+  /* Holder Concentration + Token Activity row uses its own fixed 3-col
+     template (220px 1fr 1fr) inline, not the row-2col/row-3col classes. */
+  .row-holder-activity { grid-template-columns: 1fr !important; }
+  .row-holder-activity > [style*="grid-column"] { grid-column: 1 / -1 !important; }
+
+  /* Wallet table: let the fixed-width grid rows scroll horizontally inside
+     their own card instead of overflowing the whole page. */
+  .wallets-thead-v2, .wallet-row-v2 { min-width: 620px; }
 
   /* Page-level two-column layouts collapse to one */
   .page-split-grid { grid-template-columns: 1fr !important; }
@@ -1136,6 +1148,20 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .chat-text a { color: var(--accent-blue); text-decoration: none; }
 
 .chat-system { text-align: center; font-size: 11px; color: var(--text-muted); padding: 6px 0; font-style: italic; }
+
+/* Message hover actions (reply / edit / delete) */
+.chat-msg-row .chat-msg-actions {
+  display: flex; align-items: center; gap: 1px;
+  align-self: center;
+  opacity: 0; transition: opacity 0.12s;
+  flex-shrink: 0;
+}
+.chat-msg-row:hover .chat-msg-actions { opacity: 1; }
+.chat-msg-actions button:hover { color: var(--text-primary) !important; }
+/* Touch devices can't hover — keep actions faintly visible so they're reachable */
+@media (hover: none) {
+  .chat-msg-row .chat-msg-actions { opacity: 0.55; }
+}
 
 #chatInput:focus { border-color: var(--accent-green); }
 #chatNameInput:focus { border-color: var(--accent-green); }
