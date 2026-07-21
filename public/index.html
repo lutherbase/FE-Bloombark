@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23E86C3A'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23F5A623'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%2327C97F'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%234a90d9'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/main.css?v=5" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -119,10 +119,16 @@
       </div>
     </aside>
 
+    <!-- Mobile nav backdrop (tap to close drawer) -->
+    <div class="nav-backdrop" id="navBackdrop" onclick="toggleSidebar(false)"></div>
+
     <!-- Main Content -->
     <main class="main-content">
       <!-- Top Bar -->
       <header class="topbar">
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <h1 class="page-title" id="pageTitle">AI ANALYZER</h1>
         <p class="page-subtitle" id="pageSubtitle">Analyze token risk, insider activity & wallet behavior from contract address</p>
         <div class="topbar-right">
@@ -518,7 +524,7 @@
           </div>
         </div>
         <div class="page ai-analyzer-page" id="page-trade">
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start">
+          <div class="page-split-grid" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start">
 
             <!-- ═══ LEFT COLUMN: token loader + swap ═══ -->
             <div style="min-width:0">
@@ -579,9 +585,9 @@
                   </div>
                   <div id="swapWalletStatus" style="font-size:10px;color:var(--text-muted)">—</div>
                 </div>
-                <div style="display:flex;gap:0;flex-wrap:wrap">
+                <div class="swap-split" style="display:flex;gap:0;flex-wrap:wrap">
                   <!-- Left: swap form -->
-                  <div style="flex:1;min-width:280px;padding:16px;border-right:1px solid var(--border-light)">
+                  <div class="swap-form-col" style="flex:1;min-width:280px;padding:16px;border-right:1px solid var(--border-light)">
                     <div style="display:flex;gap:6px;margin-bottom:14px;background:var(--bg-secondary);border-radius:10px;padding:3px">
                       <button id="swapTabBuy"  onclick="swapSetSide('buy')"  style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;background:#27c97f;border:none;color:#000;letter-spacing:0.5px;transition:background .15s">BUY</button>
                       <button id="swapTabSell" onclick="swapSetSide('sell')" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;background:transparent;border:none;color:var(--text-muted);letter-spacing:0.5px;transition:background .15s">SELL</button>
@@ -618,7 +624,7 @@
                     <button id="swapExecBtn" onclick="swapExecute()" style="width:100%;padding:13px;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:13px;font-weight:800;cursor:pointer;letter-spacing:0.5px">BUY</button>
                   </div>
                   <!-- Right: details -->
-                  <div style="width:210px;min-width:190px;padding:16px;display:flex;flex-direction:column;gap:12px">
+                  <div class="swap-details-col" style="width:210px;min-width:190px;padding:16px;display:flex;flex-direction:column;gap:12px">
                     <div>
                       <div style="font-size:9px;color:var(--text-muted);font-weight:700;margin-bottom:7px;letter-spacing:0.5px">SLIPPAGE TOLERANCE</div>
                       <div style="display:flex;gap:4px;flex-wrap:wrap">
@@ -729,9 +735,9 @@
 
           <div id="wtContent" style="padding:0 24px 24px;display:none">
             <!-- Summary row -->
-            <div id="wtSummary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
+            <div id="wtSummary" class="wt-summary-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px"></div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="page-split-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
               <!-- Holdings -->
               <div class="card">
                 <div class="card-header"><h3>HOLDINGS</h3><span id="wtHoldingCount" style="font-size:10px;color:var(--text-muted)"></span></div>
@@ -785,15 +791,15 @@
         </div>
         <!-- Community Chat Page -->
         <div class="page ai-analyzer-page" id="page-community" style="height:100%;padding:0">
-          <div style="display:flex;height:100%;overflow:hidden">
+          <div class="community-layout" style="display:flex;height:100%;overflow:hidden">
 
             <!-- Sidebar: rooms + online users -->
-            <div style="width:200px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border-light);display:flex;flex-direction:column;overflow:hidden">
-              <div style="padding:14px 14px 10px;border-bottom:1px solid var(--border-light)">
+            <div class="community-channels" style="width:200px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border-light);display:flex;flex-direction:column;overflow:hidden">
+              <div class="community-channels-head" style="padding:14px 14px 10px;border-bottom:1px solid var(--border-light)">
                 <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px">CHANNELS</div>
                 <div id="chatRoomList" style="display:flex;flex-direction:column;gap:2px"></div>
               </div>
-              <div style="padding:12px 14px;flex:1;overflow-y:auto">
+              <div class="community-online" style="padding:12px 14px;flex:1;overflow-y:auto">
                 <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1px;margin-bottom:10px">
                   ONLINE — <span id="chatOnlineCount" style="color:#27c97f">0</span>
                 </div>
@@ -1009,7 +1015,7 @@
 
           <!-- Footer note -->
           <div style="text-align:center;padding:48px 24px 32px;color:#374151;font-size:11px">
-            © 2025 Bloombark Terminal · Built for on-chain traders
+            © 2026 Bloombark Terminal · Built for on-chain traders
           </div>
         </div>
       </div>
@@ -1099,6 +1105,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=116"></script>
+  <script src="js/app.js?v=117"></script>
 </body>
 </html>

@@ -111,9 +111,21 @@ const fmt = {
 };
 
 /* ─── Navigation ──────────────────────────────────────────────────────────── */
+// ── Mobile off-canvas sidebar drawer ─────────────────────────────────────────
+// toggleSidebar()      → flip open/closed
+// toggleSidebar(true)  → force open   |  toggleSidebar(false) → force closed
+window.toggleSidebar = function(force) {
+  const app = document.querySelector('.app');
+  if (!app) return;
+  const open = typeof force === 'boolean' ? force : !app.classList.contains('nav-open');
+  app.classList.toggle('nav-open', open);
+};
+
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', e => {
     e.preventDefault();
+    // On mobile, selecting a destination closes the drawer.
+    toggleSidebar(false);
     const page = el.dataset.page;
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     el.classList.add('active');
