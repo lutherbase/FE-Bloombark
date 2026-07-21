@@ -2033,75 +2033,63 @@ function filterByChain(arr) {
   return arr.filter(p => p.networkId === _dashChain);
 }
 
+// Token logo for a dashboard row. Prefer a backend-provided imageUrl; otherwise
+// build DexScreener's CDN URL from chain + address (browser follows the 301 to
+// the real logo; onerror falls back to the colored initial).
+function dashLogoUrl(t) {
+  if (t.imageUrl) return t.imageUrl;
+  if (t.networkId && t.address) return `https://dd.dexscreener.com/ds-data/tokens/${t.networkId}/${t.address}.png`;
+  return '';
+}
+
+const DASH_HEADER = `
+  <div class="dash-vol-header">
+    <span>#</span><span style="padding-left:33px">TOKEN / PAIR</span><span style="text-align:right">PRICE</span>
+    <span style="text-align:right">24H CHANGE</span><span style="text-align:right">24H VOLUME</span>
+    <span style="text-align:right">MCAP</span><span style="text-align:right">LIQ</span>
+    <span style="text-align:right">AGE</span><span style="text-align:right">BUYS</span><span style="text-align:right">SELLS</span>
+  </div>`;
+
+function _dashRowHtml(t, i) {
+  const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+  const chg = t.priceChange24h || 0;
+  const chgColor = chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+  const chainColor = CHAIN_COLOR[t.networkId] || '#8b92a8';
+  const logo = dashLogoUrl(t);
+  const initial = (t.name || '?').trim().charAt(0).toUpperCase();
+  return `<div class="dash-vol-row" onclick="openInAnalyzer('${t.address}','${t.networkId}')">
+    <span class="dash-vol-rank ${rankClass}">${i+1}</span>
+    <div class="dash-vol-token">
+      <span class="dash-vol-logo" style="background:${chainColor}22;color:${chainColor}">${initial}${logo ? `<img src="${logo}" alt="" loading="lazy" onload="this.style.opacity=1" onerror="this.remove()">` : ''}</span>
+      <div class="dash-vol-info">
+        <span class="dash-vol-name">${t.name}</span>
+        <span class="dash-vol-pair">
+          <span class="dash-chain-badge" style="background:${chainColor}22;color:${chainColor}">${t.network}</span>
+        </span>
+      </div>
+    </div>
+    <span class="dash-vol-price">${dashFmtPrice(t.price)}</span>
+    <span class="dash-vol-change" style="color:${chgColor}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
+    <span class="dash-vol-volume">${dashFmtVol(t.volume24h)}</span>
+    <span class="dash-vol-liq">${dashFmtVol(t.fdv)}</span>
+    <span class="dash-vol-liq">${dashFmtVol(t.liquidity)}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-blue)">${dashAge(t.createdAt) || '-'}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-green)">${t.buys24h || 0}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-red)">${t.sells24h || 0}</span>
+  </div>`;
+}
+
 function renderBestVolume(items) {
   const el = $('dashVolumeGrid');
   const filtered = filterByChain(items).slice(0, 10);
   if (!filtered.length) { el.innerHTML = '<div class="dash-loading">No data for this chain</div>'; return; }
-  el.innerHTML = `
-    <div class="dash-vol-header">
-      <span>#</span><span>TOKEN / PAIR</span><span style="text-align:right">PRICE</span>
-      <span style="text-align:right">24H CHANGE</span><span style="text-align:right">24H VOLUME</span>
-      <span style="text-align:right">MCAP</span><span style="text-align:right">LIQ</span>
-      <span style="text-align:right">AGE</span><span style="text-align:right">BUYS</span><span style="text-align:right">SELLS</span>
-    </div>` +
-    filtered.map((t, i) => {
-      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      const chg = t.priceChange24h || 0;
-      const chgColor = chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-      const chainColor = CHAIN_COLOR[t.networkId] || '#8b92a8';
-      return `<div class="dash-vol-row" onclick="openInAnalyzer('${t.address}','${t.networkId}')">
-        <span class="dash-vol-rank ${rankClass}">${i+1}</span>
-        <div class="dash-vol-info">
-          <span class="dash-vol-name">${t.name}</span>
-          <span class="dash-vol-pair">
-            <span class="dash-chain-badge" style="background:${chainColor}22;color:${chainColor}">${t.network}</span>
-          </span>
-        </div>
-        <span class="dash-vol-price">${dashFmtPrice(t.price)}</span>
-        <span class="dash-vol-change" style="color:${chgColor}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
-        <span class="dash-vol-volume">${dashFmtVol(t.volume24h)}</span>
-        <span class="dash-vol-liq">${dashFmtVol(t.fdv)}</span>
-        <span class="dash-vol-liq">${dashFmtVol(t.liquidity)}</span>
-        <span class="dash-vol-liq" style="color:var(--accent-blue)">${dashAge(t.createdAt) || '-'}</span>
-        <span class="dash-vol-liq" style="color:var(--accent-green)">${t.buys24h || 0}</span>
-        <span class="dash-vol-liq" style="color:var(--accent-red)">${t.sells24h || 0}</span>
-      </div>`;
-    }).join('');
+  el.innerHTML = DASH_HEADER + filtered.map(_dashRowHtml).join('');
 }
 
 function renderDashList(items, el) {
   const filtered = filterByChain(items).slice(0, 10);
   if (!filtered.length) { el.innerHTML = '<div class="dash-loading">No data for this chain</div>'; return; }
-  el.innerHTML = `
-    <div class="dash-vol-header">
-      <span>#</span><span>TOKEN / PAIR</span><span style="text-align:right">PRICE</span>
-      <span style="text-align:right">24H CHANGE</span><span style="text-align:right">24H VOLUME</span>
-      <span style="text-align:right">MCAP</span><span style="text-align:right">LIQ</span>
-      <span style="text-align:right">AGE</span><span style="text-align:right">BUYS</span><span style="text-align:right">SELLS</span>
-    </div>` +
-    filtered.map((t, i) => {
-      const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      const chg = t.priceChange24h || 0;
-      const chgColor = chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-      const chainColor = CHAIN_COLOR[t.networkId] || '#8b92a8';
-      return `<div class="dash-vol-row" onclick="openInAnalyzer('${t.address}','${t.networkId}')">
-        <span class="dash-vol-rank ${rankClass}">${i+1}</span>
-        <div class="dash-vol-info">
-          <span class="dash-vol-name">${t.name}</span>
-          <span class="dash-vol-pair">
-            <span class="dash-chain-badge" style="background:${chainColor}22;color:${chainColor}">${t.network}</span>
-          </span>
-        </div>
-        <span class="dash-vol-price">${dashFmtPrice(t.price)}</span>
-        <span class="dash-vol-change" style="color:${chgColor}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
-        <span class="dash-vol-volume">${dashFmtVol(t.volume24h)}</span>
-        <span class="dash-vol-liq">${dashFmtVol(t.fdv)}</span>
-        <span class="dash-vol-liq">${dashFmtVol(t.liquidity)}</span>
-        <span class="dash-vol-liq" style="color:var(--accent-blue)">${dashAge(t.createdAt) || '-'}</span>
-        <span class="dash-vol-liq" style="color:var(--accent-green)">${t.buys24h || 0}</span>
-        <span class="dash-vol-liq" style="color:var(--accent-red)">${t.sells24h || 0}</span>
-      </div>`;
-    }).join('');
+  el.innerHTML = DASH_HEADER + filtered.map(_dashRowHtml).join('');
 }
 
 function renderDashFilter() {
