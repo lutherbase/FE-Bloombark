@@ -97,6 +97,7 @@ const API_BASE = API_ORIGIN + '/api';
 const WS_URL   = API_ORIGIN.replace(/^http/, 'ws');
 
 /* ─── State ───────────────────────────────────────────────────────────────── */
+let _prevActivePage = 'landing'; // last successfully-entered page, for bouncing back (e.g. Community without a wallet)
 let selectedChain  = 'auto'; // 'auto' | 'ethereum' | 'base' | 'robinhood'
 let currentData    = null;
 let _cachedCA      = null;
@@ -207,6 +208,20 @@ document.querySelectorAll('.nav-item').forEach(el => {
       showWipModal();
       return;
     }
+
+    // Community requires a connected wallet — bounce back to the previous
+    // page and prompt connect instead of letting anon users into chat.
+    if (page === 'community' && !window._privyWallet) {
+      el.classList.remove('active');
+      document.querySelector('.page.active')?.classList.remove('active');
+      const prevActive = document.querySelector(`.nav-item[data-page="${_prevActivePage || 'landing'}"]`);
+      (prevActive || document.querySelector('.nav-item[data-page="landing"]'))?.classList.add('active');
+      document.getElementById('page-' + (_prevActivePage || 'landing'))?.classList.add('active');
+      showToast('Connect your wallet to join the Community');
+      openWalletModal();
+      return;
+    }
+    _prevActivePage = page;
 
     const [title, sub] = titles[page] || ['BLOOMBARK TERMINAL', ''];
     $('pageTitle').textContent    = title;
@@ -2940,11 +2955,32 @@ function fmtChatTime(ts) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+// True when the chat name is still the auto-generated "0xAB…CD12" placeholder
+// (i.e. the user has never picked a real username).
+function _isDefaultChatName() {
+  const w = window._privyWallet;
+  if (!w || !_chatName) return false;
+  return _chatName === (w.slice(0, 4) + '...' + w.slice(-4));
+}
+
+// Nudge the user to pick a username by opening the Wallet Profile popup
+// straight into the name-edit field.
+function _maybePromptUsername() {
+  if (!_isDefaultChatName()) return;
+  setTimeout(() => {
+    if (!document.getElementById('page-community')?.classList.contains('active')) return;
+    showToast('Set a username to chat (max 15 characters)');
+    toggleProfilePopup();
+    chatNameStartEdit();
+  }, 350);
+}
+
 function initCommunity() {
   checkChatGates();
   if (_chatWs && _chatWs.readyState === WebSocket.OPEN) {
     renderChatRooms();
     switchChatRoom(_chatRoom);
+    _maybePromptUsername();
     return;
   }
   renderChatRooms();
@@ -2963,6 +2999,7 @@ function connectChat() {
     _chatWs.send(JSON.stringify({ type: 'chat_join', wallet, displayName: _chatName, avatar: _userProfile?.avatar || null }));
     if ($('chatNameInput') && !$('chatNameInput').value) $('chatNameInput').placeholder = _chatName;
     appendChatSystem('general', '🟢 Connected to Bloombark Community');
+    _maybePromptUsername();
   };
 
   _chatWs.onmessage = (e) => {
@@ -3481,10 +3518,12 @@ window.chatNameCancel = function() {
   if (view && _chatName) view.style.display = 'flex';
 };
 
+const CHAT_NAME_MAX_LEN = 15;
+
 function chatSetName() {
   const inp = $('chatNameInput');
   if (!inp) return;
-  const name = inp.value.trim();
+  const name = inp.value.trim().slice(0, CHAT_NAME_MAX_LEN);
   if (!name) return;
 
   const isFirstSet = !_chatName;

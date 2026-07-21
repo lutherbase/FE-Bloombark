@@ -1083,7 +1083,7 @@
       </div>
       <!-- Edit state: input + save + cancel -->
       <div id="chatNameEdit" style="display:flex;gap:8px">
-        <input id="chatNameInput" maxlength="24" placeholder="Set your chat name…"
+        <input id="chatNameInput" maxlength="15" placeholder="Set your chat name…"
           style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;padding:10px 12px;font-size:12px;color:#e2e8f0;font-family:monospace;outline:none;min-width:0"
           onkeydown="if(event.key==='Enter') chatSetName(); else if(event.key==='Escape') chatNameCancel()"
           onfocus="this.style.borderColor='#27c97f'" onblur="this.style.borderColor='#2d3748'">
@@ -1108,6 +1108,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=123"></script>
+  <script src="js/app.js?v=124"></script>
 </body>
 </html>
