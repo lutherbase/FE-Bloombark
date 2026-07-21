@@ -85,12 +85,14 @@ function showToast(msg, type = 'success') {
 
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 // Backend origin. Override at runtime via `window.BLOOMBARK_API_ORIGIN` (e.g. an
-// injected <script> in production). Defaults to localhost:3001 in dev, or the
-// same origin the page is served from otherwise.
+// injected <script>). In dev (localhost/127.0.0.1) this points at the local
+// backend (backend/.env PORT, default 3002) so local testing never touches
+// production data. Frontend (Vercel) and backend (Render) are different
+// origins in production, so that case stays a hardcoded absolute URL —
+// `location.origin` would point back at the frontend itself, which has no API.
 const _isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
-//const API_ORIGIN = window.BLOOMBARK_API_ORIGIN || (_isLocal ? 'http://localhost:3001' : location.origin);
 const PORT = 3000;
-const API_ORIGIN = 'https://be-bloombark.onrender.com';
+const API_ORIGIN = window.BLOOMBARK_API_ORIGIN || (_isLocal ? 'http://localhost:3002' : 'https://be-bloombark.onrender.com');
 const API_BASE = API_ORIGIN + '/api';
 const WS_URL   = API_ORIGIN.replace(/^http/, 'ws');
 
