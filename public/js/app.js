@@ -64,6 +64,30 @@ function showWipModal() {
   document.body.appendChild(overlay);
 }
 
+// In-app confirm dialog (Bloombark-styled) — replaces window.confirm(), which
+// renders as an ugly native browser alert instead of matching the app's UI.
+// Usage: bloombarkConfirm('Delete this message?', () => { ...on confirm... });
+function bloombarkConfirm(message, onConfirm, opts = {}) {
+  const existing = document.getElementById('bbConfirmModal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'bbConfirmModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px);z-index:10000;display:flex;align-items:center;justify-content:center';
+  const danger = opts.danger !== false;
+  overlay.innerHTML = `
+    <div style="background:#161822;border:1px solid #1e2235;border-radius:16px;padding:26px 24px;width:320px;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,0.7)">
+      <div style="font-size:13px;font-weight:700;color:#e2e8f0;line-height:1.6;margin-bottom:22px">${message}</div>
+      <div style="display:flex;gap:8px">
+        <button id="bbConfirmCancel" style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">${opts.cancelLabel || 'Cancel'}</button>
+        <button id="bbConfirmOk" style="flex:1;background:${danger ? '#ff4d4d12' : '#27c97f15'};border:1px solid ${danger ? '#ff4d4d44' : '#27c97f40'};border-radius:10px;color:${danger ? '#ff6b6b' : '#27c97f'};font-size:12px;font-weight:700;padding:10px;cursor:pointer">${opts.confirmLabel || 'Confirm'}</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  overlay.querySelector('#bbConfirmCancel').onclick = () => overlay.remove();
+  overlay.querySelector('#bbConfirmOk').onclick = () => { overlay.remove(); onConfirm(); };
+}
+
 function showToast(msg, type = 'success') {
   const t = document.createElement('div');
   t.className = 'app-toast';
@@ -2912,20 +2936,48 @@ const CHAT_ROOMS = {
   alpha:     { name: 'Alpha',      icon: '🔥', desc: 'Early alpha & gems' },
   freeshill: { name: 'Free Shill', icon: '📣', desc: 'Shill your token here 🚀' },
   holders:   { name: 'Holders',    icon: '💎', desc: 'Token holders only', gated: true },
+  private:   { name: 'Private',    icon: '🔐', desc: 'Pay to unlock', gated: true },
 };
 
-// Token-gate state: room -> { ok, balance, minAmount, symbol, network, token }
+// Token-gate state: room -> { ok, kind, balance, minAmount, symbol, network, token, amountEth, treasury }
 let _chatGates = {};
 function _roomLocked(room) {
   return !!CHAT_ROOMS[room]?.gated && !_chatGates[room]?.ok;
 }
 
+// Admin/mute state (set from the chat_history payload + live chat_muted pushes)
+let _chatIsAdmin   = false;
+let _chatMutedUntil = null;
+
+function _updateMuteBanner() {
+  const bar   = $('chatInputBar');
+  const input = $('chatInput');
+  const muted = _chatMutedUntil && _chatMutedUntil > Date.now();
+  let banner = $('chatMuteBanner');
+  if (muted) {
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'chatMuteBanner';
+      banner.style.cssText = 'padding:8px 18px;background:#ff4d4d15;border-top:1px solid #ff4d4d33;color:#ff6b6b;font-size:11px;font-weight:600;text-align:center;flex-shrink:0';
+      bar?.parentElement?.insertBefore(banner, bar);
+    }
+    const mins = Math.max(1, Math.ceil((_chatMutedUntil - Date.now()) / 60000));
+    banner.textContent = `🔇 You've been muted — you can chat again in ${mins} minute${mins === 1 ? '' : 's'}`;
+    banner.style.display = 'block';
+    if (input) input.disabled = true;
+  } else {
+    if (banner) banner.style.display = 'none';
+    if (input) input.disabled = false;
+  }
+}
+
 // Update a gated room's sidebar description from its live gate config
 function _applyGateDesc(room) {
   const g = _chatGates[room];
-  if (g && CHAT_ROOMS[room]) {
-    CHAT_ROOMS[room].desc = `Hold ≥ ${g.minAmount} ${g.symbol} to unlock`;
-  }
+  if (!g || !CHAT_ROOMS[room]) return;
+  CHAT_ROOMS[room].desc = g.kind === 'paid'
+    ? (g.ok ? 'Unlocked' : `Pay ${g.amountEth} ${g.symbol} to unlock`)
+    : `Hold ≥ ${g.minAmount} ${g.symbol} to unlock`;
 }
 
 // Fetch gate status for the connected wallet, then refresh room UI
@@ -3009,8 +3061,18 @@ function connectChat() {
         _chatMessages = {};
         for (const [room, msgs] of Object.entries(d.history || {})) _chatMessages[room] = msgs;
         if (d.gates) { _chatGates = { ..._chatGates, ...d.gates }; Object.keys(_chatGates).forEach(_applyGateDesc); renderChatRooms(); }
+        _chatIsAdmin    = !!d.isAdmin;
+        _chatMutedUntil = d.mutedUntil || null;
+        _updateMuteBanner();
         updateOnlineCount(d.online || 0);
         if (CHAT_ROOMS[_chatRoom]?.gated) switchChatRoom(_chatRoom); else renderChatMessages();
+      } else if (d.type === 'chat_muted') {
+        _chatMutedUntil = d.mutedUntil || null;
+        _updateMuteBanner();
+        if (_chatMutedUntil) showToast('🔇 You have been muted by an admin');
+        else showToast('🔊 Your mute has been lifted');
+      } else if (d.type === 'chat_mute_ok') {
+        showToast(d.mutedUntil ? `Muted ${d.wallet.slice(0,6)}…${d.wallet.slice(-4)}` : `Unmuted ${d.wallet.slice(0,6)}…${d.wallet.slice(-4)}`);
       } else if (d.type === 'chat_gate_denied') {
         showToast(`🔒 ${CHAT_ROOMS[d.room]?.name || 'Channel'} locked — need ≥ ${d.minAmount} ${d.symbol} (you have ${(+d.balance).toFixed(4)})`);
       } else if (d.type === 'chat_msg') {
@@ -3031,8 +3093,12 @@ function connectChat() {
         if (d.room === _chatRoom) renderChatMessages();
       } else if (d.type === 'chat_deleted') {
         const arr = _chatMessages[d.room];
+        const removed = arr ? arr.find(x => String(x.id) === String(d.id)) : null;
         if (arr) { const i = arr.findIndex(x => String(x.id) === String(d.id)); if (i >= 0) arr.splice(i, 1); }
         if (d.room === _chatRoom) renderChatMessages();
+        if (d.byAdmin && removed && window._privyWallet && removed.wallet === window._privyWallet) {
+          showToast('🛡️ Your message was removed by an admin');
+        }
       } else if (d.type === 'chat_online') {
         updateOnlineCount(d.online || 0);
       } else if (d.type === 'chat_nameok') {
@@ -3058,7 +3124,7 @@ function renderChatRooms() {
   el.innerHTML = Object.entries(CHAT_ROOMS).map(([id, r]) => {
     const locked = _roomLocked(id);
     return `
-    <button class="chat-room-btn ${id === _chatRoom ? 'active' : ''}" onclick="switchChatRoom('${id}')" ${locked ? 'title="Locked — holders only"' : ''}>
+    <button class="chat-room-btn ${id === _chatRoom ? 'active' : ''}" onclick="switchChatRoom('${id}')" ${locked ? `title="Locked — ${_escapeHtml(r.desc)}"` : ''}>
       <span>${r.icon}</span><span style="${locked ? 'opacity:.55' : ''}">${r.name}</span>
       ${locked ? '<span style="margin-left:auto;font-size:11px">🔒</span>' : `<span class="room-unread" id="unread-${id}">${_chatUnread[id]||''}</span>`}
     </button>`;
@@ -3090,6 +3156,9 @@ function renderChatLockScreen(room) {
   const el = $('chatMessages');
   if (!el) return;
   const g = _chatGates[room] || {};
+
+  if (g.kind === 'paid') { _renderPaidLockScreen(room, g); return; }
+
   const min     = g.minAmount ?? 0;
   const symbol  = g.symbol || 'TOKEN';
   const network = g.network || '';
@@ -3116,6 +3185,71 @@ function renderChatLockScreen(room) {
       </div>
     </div>`;
 }
+
+function _renderPaidLockScreen(room, g) {
+  const el = $('chatMessages');
+  if (!el) return;
+  const connected = !!window._privyWallet;
+  const treasury  = g.treasury || '';
+  el.innerHTML = `
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;gap:14px">
+      <div style="font-size:52px;line-height:1">🔐</div>
+      <div style="font-size:17px;font-weight:800;color:var(--text-primary)">Private Channel</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.6;max-width:360px">
+        One-time payment of <b style="color:#27c97f">${g.amountEth} ${g.symbol}</b> unlocks this channel permanently for your wallet.
+      </div>
+      <div style="font-size:10px;color:#4b5563;font-family:monospace">${treasury.slice(0,10)}…${treasury.slice(-8)}</div>
+      <div id="chatPayStatus" style="display:none;font-size:12px;color:var(--accent-blue)"></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        ${connected
+          ? `<button id="chatPayBtn" onclick="chatPayUnlock('${room}')" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Pay ${g.amountEth} ${g.symbol} to Unlock</button>`
+          : `<button onclick="openWalletModal()" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`}
+      </div>
+    </div>`;
+}
+
+// Send the one-time unlock payment via MetaMask, then have the backend verify
+// it on-chain before marking the room unlocked for this wallet.
+window.chatPayUnlock = async function(room) {
+  const g = _chatGates[room];
+  if (!g || g.kind !== 'paid') return;
+  if (!window.ethereum) { showToast('MetaMask not found'); return; }
+  const wallet = window._privyWallet;
+  if (!wallet) { openWalletModal(); return; }
+
+  const btn = $('chatPayBtn');
+  const status = $('chatPayStatus');
+  const setStatus = (text) => { if (status) { status.textContent = text; status.style.display = 'block'; } };
+
+  try {
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = 'Confirm in wallet…'; }
+    const valueWei = BigInt(Math.round(g.amountEth * 1e18));
+    const txHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [{ from: wallet, to: g.treasury, value: '0x' + valueWei.toString(16) }],
+    });
+    setStatus('⏳ Verifying payment on-chain…');
+    if (btn) btn.textContent = 'Verifying…';
+
+    const res = await fetch(`${API_BASE}/community/pay-verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ wallet, room, txHash }),
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || 'Verification failed');
+
+    showToast('🔓 Private channel unlocked!');
+    await checkChatGates();
+  } catch (e) {
+    const msg = e?.message?.includes('User denied') || e?.code === 4001
+      ? 'Payment cancelled'
+      : (e?.message || 'Payment failed');
+    showToast(msg);
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = `Pay ${g.amountEth} ${g.symbol} to Unlock`; }
+    if (status) status.style.display = 'none';
+  }
+};
 
 function renderChatMessages() {
   const el = $('chatMessages');
@@ -3172,10 +3306,15 @@ function _replyQuoteHtml(m, mine) {
 // Hover action buttons (reply for everyone; edit/delete for own wallet-owned msgs).
 function _msgActionsHtml(m, mine) {
   const canModify = mine && window._privyWallet && m.wallet && m.wallet === window._privyWallet;
+  const isAdminTarget = _chatIsAdmin && !canModify && m.wallet && !m.isBot; // admin acting on someone else's message
   const btn = (label, fn, extra='') => `<button onclick="event.stopPropagation();${fn}" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:11px;padding:2px 4px;line-height:1;${extra}" title="${label}">${label}</button>`;
   let btns = btn('Reply', `chatSetReply('${m.id}')`);
   if (canModify && !m.imgData) btns += btn('Edit', `chatStartEdit('${m.id}')`);
   if (canModify) btns += btn('Delete', `chatDeleteMsg('${m.id}')`, 'color:#ff6b6b');
+  if (isAdminTarget) {
+    btns += btn('Delete', `chatDeleteMsg('${m.id}')`, 'color:#ff6b6b');
+    btns += btn('Mute', `chatAdminMute('${m.wallet}','${_escapeHtml(m.displayName || 'this user')}')`, 'color:#f5a623');
+  }
   return `<div class="chat-msg-actions">${btns}</div>`;
 }
 
@@ -3325,8 +3464,38 @@ window.chatCancelContext = function() {
 
 window.chatDeleteMsg = function(id) {
   if (!_chatWs || !_chatConnected) return;
-  if (!confirm('Delete this message?')) return;
-  _chatWs.send(JSON.stringify({ type: 'chat_delete', id }));
+  bloombarkConfirm('Delete this message?', () => {
+    _chatWs.send(JSON.stringify({ type: 'chat_delete', id }));
+  }, { confirmLabel: 'Delete' });
+};
+
+// Admin: mute a wallet — quick duration picker instead of a native prompt().
+window.chatAdminMute = function(wallet, name) {
+  if (!_chatWs || !_chatConnected || !_chatIsAdmin) return;
+  const existing = document.getElementById('bbMuteModal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'bbMuteModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px);z-index:10000;display:flex;align-items:center;justify-content:center';
+  const durations = [['10 min',10],['1 hour',60],['1 day',1440],['7 days',10080],['30 days',43200]];
+  overlay.innerHTML = `
+    <div style="background:#161822;border:1px solid #1e2235;border-radius:16px;padding:24px 22px;width:300px;box-shadow:0 16px 48px rgba(0,0,0,0.7)">
+      <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:4px">Mute ${_escapeHtml(name)}</div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:16px">They won't be able to send messages until the mute expires.</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${durations.map(([label, mins]) => `<button data-mins="${mins}" style="background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#e2e8f0;font-size:12px;font-weight:600;padding:9px;cursor:pointer;text-align:left;padding-left:14px">${label}</button>`).join('')}
+      </div>
+      <button id="bbMuteCancel" style="width:100%;margin-top:12px;background:none;border:none;color:#6b7280;font-size:11px;cursor:pointer;padding:6px">Cancel</button>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#bbMuteCancel').onclick = () => overlay.remove();
+  overlay.querySelectorAll('button[data-mins]').forEach(b => {
+    b.onclick = () => {
+      _chatWs.send(JSON.stringify({ type: 'chat_mute', wallet, minutes: parseInt(b.dataset.mins) }));
+      overlay.remove();
+    };
+  });
+  document.body.appendChild(overlay);
 };
 
 window.chatScrollToMsg = function(id) {
@@ -3371,19 +3540,27 @@ function chatSend() {
 function chatLoadImg(input) {
   const file = input.files[0];
   if (!file) return;
-  if (file.size > 2 * 1024 * 1024) { alert('Image too large (max 2MB)'); input.value=''; return; }
+  if (file.size > 2 * 1024 * 1024) { showToast('Image too large (max 2MB)'); input.value=''; return; }
   const reader = new FileReader();
   reader.onload = (e) => {
-    // Compress via canvas
+    // Compress via canvas — capped at 640px on the long edge, then step the
+    // JPEG quality down until it's comfortably under the server's storage
+    // cap (400KB raw / ~530KB base64), so chat images never bloat the DB.
     const img = new Image();
     img.onload = () => {
-      const MAX = 800;
+      const MAX = 640;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) { if (w > h) { h = h/w*MAX; w = MAX; } else { w = w/h*MAX; h = MAX; } }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      _chatPendingImg = canvas.toDataURL('image/jpeg', 0.75);
+      const TARGET_LEN = 350000; // base64 chars — safely under the 400000 server cap
+      let dataUrl, quality = 0.65;
+      do {
+        dataUrl = canvas.toDataURL('image/jpeg', quality);
+        quality -= 0.15;
+      } while (dataUrl.length > TARGET_LEN && quality > 0.2);
+      _chatPendingImg = dataUrl;
       const preview = $('chatImgPreview');
       const thumb = $('chatImgThumb');
       if (preview && thumb) { thumb.src = _chatPendingImg; preview.style.display = 'flex'; }
