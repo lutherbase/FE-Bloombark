@@ -124,11 +124,12 @@ const WS_URL   = API_ORIGIN.replace(/^http/, 'ws');
 let _prevActivePage = 'landing'; // last successfully-entered page, for bouncing back (e.g. Community without a wallet)
 let _pendingCommunityEntry = false; // true while we hold the user on the username prompt before letting them into Community
 
-// Revert a blocked nav click back to the previously-entered page.
+// Revert a blocked nav click back to the previously-entered page. Never bounce
+// back into Community itself (the page we're being blocked from) — fall to landing.
 function _bounceToPrevPage(clickedNavEl) {
   clickedNavEl?.classList.remove('active');
   document.querySelector('.page.active')?.classList.remove('active');
-  const dest = _prevActivePage || 'landing';
+  const dest = (_prevActivePage && _prevActivePage !== 'community') ? _prevActivePage : 'landing';
   (document.querySelector(`.nav-item[data-page="${dest}"]`) || document.querySelector('.nav-item[data-page="landing"]'))?.classList.add('active');
   document.getElementById('page-' + dest)?.classList.add('active');
 }
@@ -2336,13 +2337,14 @@ function _setWalletConnected(user) {
   } else {
     window._privyWallet = null;
   }
-  // Chat identity (username) is per-wallet. When the wallet changes — including
-  // disconnect, or connecting a DIFFERENT wallet on the same device — wipe the
-  // cached name/edits so it re-derives from the new wallet's server profile
-  // (or the default 0xAB…CD12 format), instead of keeping the old wallet's name.
+  // Chat identity (username) is cached per-wallet. When the wallet changes —
+  // including disconnect, or connecting a DIFFERENT wallet on the same device —
+  // load THAT wallet's own cached name (or none), so we neither keep the old
+  // wallet's name nor wipe the current wallet's name on a page refresh.
   const newWallet = window._privyWallet;
   if ((newWallet || null) !== (prevWallet || null)) {
-    _resetChatIdentity();
+    if (newWallet) _loadChatIdentityForWallet(newWallet);
+    else { _chatName = null; _chatNameEdits = 0; _userProfile = null; }
   }
   if (user) setTimeout(_loadWatchlist, 200);
   else { _watchlist = new Set(); if (_currentTokenData?.address) _updateWatchlistBtn(_currentTokenData.address); }
@@ -2381,15 +2383,19 @@ function _setWalletConnected(user) {
   if ((newWallet || null) !== (prevWallet || null)) _rejoinChatWithCurrentIdentity();
 }
 
-// Clear the cached per-wallet chat identity (username + edit count).
-function _resetChatIdentity() {
-  _chatName = null;
-  _chatNameEdits = 0;
+// Per-wallet localStorage keys for the cached username + edit count.
+function _chatNameKey(w)  { return 'bloomChatName:'      + String(w || '').toLowerCase(); }
+function _chatEditsKey(w) { return 'bloomChatNameEdits:' + String(w || '').toLowerCase(); }
+
+// Load the cached chat identity for a specific wallet (or clear it if that
+// wallet has none saved). Server profile fetch (loadUserProfile) may still
+// refine _chatName afterwards.
+function _loadChatIdentityForWallet(wallet) {
   _userProfile = null;
   try {
-    localStorage.removeItem('bloomChatName');
-    localStorage.removeItem('bloomChatNameEdits');
-  } catch (_) {}
+    _chatName      = localStorage.getItem(_chatNameKey(wallet)) || null;
+    _chatNameEdits = parseInt(localStorage.getItem(_chatEditsKey(wallet)) || '0', 10);
+  } catch (_) { _chatName = null; _chatNameEdits = 0; }
 }
 
 // Re-announce ourselves on the live chat socket (server derives the name from
@@ -2436,11 +2442,13 @@ function _applyProfile(profile) {
     walletBtnIcon.style.display   = 'none';
     if (profile?.displayName) label.textContent = profile.displayName;
   }
-  // Pre-fill chat name input
+  // Pre-fill chat name input — adopt the wallet's saved server name if we don't
+  // have a local one yet, and cache it under this wallet's key.
   const inp = document.getElementById('chatNameInput');
   if (profile?.displayName && !_chatName) {
     _chatName = profile.displayName;
-    localStorage.setItem('bloomChatName', _chatName);
+    const w = window._privyWallet;
+    if (w) { try { localStorage.setItem(_chatNameKey(w), _chatName); } catch (_) {} }
   }
 }
 
@@ -2864,16 +2872,39 @@ function renderNarrativeGrid() {
   }).join('');
 }
 
+let _cachedTicker = null;
+
+// Ticker + contract address are parameterized in the DB (app_config) and served
+// via /api/config/public, so they can be flipped live at launch without a deploy.
 async function loadLandingCA() {
-  // $BBRK contract not deployed yet — keep the static "Not Live Yet" label,
-  // don't fetch or overwrite it with a real/masked address.
+  try {
+    const res = await fetch(`${API_BASE}/config/public`);
+    const cfg = await res.json();
+    _cachedCA     = cfg.contractAddress || 'coming_soon';
+    _cachedTicker = cfg.tokenTicker || 'BBRK';
+  } catch (_) {
+    _cachedCA     = _cachedCA     || 'coming_soon';
+    _cachedTicker = _cachedTicker || 'BBRK';
+  }
+  // Ticker labels ($BBRK today, whatever the DB says at launch)
+  document.querySelectorAll('.js-ticker').forEach(n => { n.textContent = '$' + _cachedTicker; });
+
+  // Contract address — real 0x… address once set in the DB, else "Not Live Yet"
   const el = document.getElementById('landingCA');
   const copyBtn = document.getElementById('landingCACopy');
   if (!el) return;
-  el.textContent = 'Not Live Yet';
-  el.style.color = '#4b5563';
-  el.title = 'Contract address will be revealed at launch';
-  if (copyBtn) copyBtn.style.display = 'none';
+  const isLive = /^0x[0-9a-fA-F]{40}$/.test(_cachedCA || '');
+  if (isLive) {
+    el.textContent = _cachedCA;
+    el.style.color = '#27c97f';
+    el.title = '';
+    if (copyBtn) copyBtn.style.display = 'inline-block';
+  } else {
+    el.textContent = 'Not Live Yet';
+    el.style.color = '#4b5563';
+    el.title = 'Contract address will be revealed at launch';
+    if (copyBtn) copyBtn.style.display = 'none';
+  }
 }
 window.__copyCA = () => {
   if (!_cachedCA || _cachedCA === 'coming_soon') return;
@@ -3133,8 +3164,10 @@ let _chatRoom      = 'general';
 let _chatMessages  = {};   // room -> [{...}]
 let _chatUnread    = {};   // room -> count
 let _chatConnected = false;
-let _chatName      = localStorage.getItem('bloomChatName') || null;
-let _chatNameEdits = parseInt(localStorage.getItem('bloomChatNameEdits') || '0', 10);
+// Username cache is per-wallet (see _chatNameKey) — starts empty and is loaded
+// for the connected wallet in _loadChatIdentityForWallet().
+let _chatName      = null;
+let _chatNameEdits = 0;
 
 
 function fmtChatTime(ts) {
@@ -3142,19 +3175,28 @@ function fmtChatTime(ts) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function _defaultChatName(w) { return w ? (w.slice(0, 4) + '...' + w.slice(-4)) : ''; }
+
 // True when the chat name is still the auto-generated "0xAB…CD12" placeholder
 // (i.e. the user has never picked a real username).
 function _isDefaultChatName() {
   const w = window._privyWallet;
   if (!w || !_chatName) return false;
-  return _chatName === (w.slice(0, 4) + '...' + w.slice(-4));
+  return _chatName === _defaultChatName(w);
 }
 
 // Has this wallet picked a real username (not the default 0xAB…CD12 form)?
-// Source of truth is the wallet's saved server profile; _chatName is a fallback.
+// Checks the loaded server profile, the in-memory name, then the per-wallet
+// localStorage cache directly (so a fresh page load — where the async profile
+// fetch may not have finished yet — still recognizes a previously-set name).
 function _hasCustomUsername() {
   if (_userProfile?.displayName) return true;
   if (_chatName && !_isDefaultChatName()) return true;
+  const w = window._privyWallet;
+  if (w) {
+    const cached = localStorage.getItem(_chatNameKey(w));
+    if (cached && cached !== _defaultChatName(w)) return true;
+  }
   return false;
 }
 
@@ -3841,16 +3883,17 @@ function chatSetName() {
   const name = inp.value.trim().slice(0, CHAT_NAME_MAX_LEN);
   if (!name) return;
 
+  const w = window._privyWallet;
   // Setting a name over the auto-generated default counts as the first set,
   // not an edit, so it doesn't consume one of the limited edits.
   const isFirstSet = !_chatName || _isDefaultChatName();
   if (!isFirstSet) {
     if (_chatNameEdits >= MAX_NAME_EDITS) return;
     _chatNameEdits++;
-    localStorage.setItem('bloomChatNameEdits', String(_chatNameEdits));
+    if (w) localStorage.setItem(_chatEditsKey(w), String(_chatNameEdits));
   }
 
-  localStorage.setItem('bloomChatName', name);
+  if (w) localStorage.setItem(_chatNameKey(w), name);
   _chatName = name;
   if (_chatWs && _chatConnected) {
     _chatWs.send(JSON.stringify({ type: 'chat_setname', name }));
