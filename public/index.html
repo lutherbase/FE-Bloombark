@@ -1051,14 +1051,13 @@
     <!-- Status -->
     <div style="padding:18px 18px 14px;text-align:center;border-bottom:1px solid #1e2235">
       <!-- Avatar: click to upload (disabled while wallet is disconnected) -->
-      <div id="profileAvatarWrap" style="position:relative;width:64px;height:64px;margin:0 auto 10px;cursor:pointer" onclick="profileAvatarClick()" title="Click to change photo">
+      <div id="profileAvatarWrap" style="position:relative;width:64px;height:64px;margin:0 auto 10px;cursor:pointer" onclick="profileAvatarClick()" title="Choose an avatar">
         <div id="popupAvatar" style="width:64px;height:64px;border-radius:50%;background:#27c97f22;border:2px solid #27c97f55;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#27c97f;overflow:hidden">P</div>
         <div id="profileAvatarEditDot" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#27c97f;display:flex;align-items:center;justify-content:center;border:2px solid #13161d">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
         </div>
       </div>
-      <input id="profileAvatarInput" type="file" accept="image/*" style="display:none" onchange="profileAvatarPicked(this)">
-      <div id="profileAvatarStatus" style="font-size:9px;color:#6b7280;margin-bottom:6px">Connect wallet to set a photo</div>
+      <div id="profileAvatarStatus" style="font-size:9px;color:#6b7280;margin-bottom:6px">Connect wallet to choose an avatar</div>
       <div id="popupStatusBadge" style="display:inline-flex;align-items:center;gap:5px;background:#6b728015;border:1px solid #6b728030;border-radius:20px;padding:3px 12px;margin-bottom:10px">
         <span id="popupStatusDot" style="width:6px;height:6px;border-radius:50%;background:#6b7280;display:inline-block;flex-shrink:0"></span>
         <span id="popupStatusText" style="font-size:10px;color:#8b92a8;font-weight:600">NOT CONNECTED</span>
@@ -1108,6 +1107,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=125"></script>
+  <script src="js/app.js?v=127"></script>
 </body>
 </html>

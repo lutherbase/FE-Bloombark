@@ -122,6 +122,16 @@ const WS_URL   = API_ORIGIN.replace(/^http/, 'ws');
 
 /* ─── State ───────────────────────────────────────────────────────────────── */
 let _prevActivePage = 'landing'; // last successfully-entered page, for bouncing back (e.g. Community without a wallet)
+let _pendingCommunityEntry = false; // true while we hold the user on the username prompt before letting them into Community
+
+// Revert a blocked nav click back to the previously-entered page.
+function _bounceToPrevPage(clickedNavEl) {
+  clickedNavEl?.classList.remove('active');
+  document.querySelector('.page.active')?.classList.remove('active');
+  const dest = _prevActivePage || 'landing';
+  (document.querySelector(`.nav-item[data-page="${dest}"]`) || document.querySelector('.nav-item[data-page="landing"]'))?.classList.add('active');
+  document.getElementById('page-' + dest)?.classList.add('active');
+}
 let selectedChain  = 'auto'; // 'auto' | 'ethereum' | 'base' | 'robinhood'
 let currentData    = null;
 let _cachedCA      = null;
@@ -233,17 +243,24 @@ document.querySelectorAll('.nav-item').forEach(el => {
       return;
     }
 
-    // Community requires a connected wallet — bounce back to the previous
-    // page and prompt connect instead of letting anon users into chat.
-    if (page === 'community' && !window._privyWallet) {
-      el.classList.remove('active');
-      document.querySelector('.page.active')?.classList.remove('active');
-      const prevActive = document.querySelector(`.nav-item[data-page="${_prevActivePage || 'landing'}"]`);
-      (prevActive || document.querySelector('.nav-item[data-page="landing"]'))?.classList.add('active');
-      document.getElementById('page-' + (_prevActivePage || 'landing'))?.classList.add('active');
-      showToast('Connect your wallet to join the Community');
-      openWalletModal();
-      return;
+    // Community entry guards. Both bounce the user back to the previous page
+    // (they never actually land in Community until the requirement is met).
+    if (page === 'community') {
+      // 1. Must have a connected wallet.
+      if (!window._privyWallet) {
+        _bounceToPrevPage(el);
+        showToast('Connect your wallet to join the Community');
+        openWalletModal();
+        return;
+      }
+      // 2. Must have picked a real username (not the default 0xAB…CD12 form).
+      //    Prompt for one and only enter Community after it's saved.
+      if (!_hasCustomUsername()) {
+        _bounceToPrevPage(el);
+        _pendingCommunityEntry = true;
+        _openUsernamePrompt();
+        return;
+      }
     }
     _prevActivePage = page;
 
@@ -2312,11 +2329,20 @@ document.getElementById('walletModal')?.addEventListener('click', function(e) {
 function _setWalletConnected(user) {
   _privyUser = user;
   // Expose wallet for chat (and clear it on disconnect — was previously left stale)
+  const prevWallet = window._privyWallet;
   if (user) {
     window._privyWallet = user._displayAddress || user.wallet?.address
       || user.linked_accounts?.find(a => a.type === 'wallet')?.address || null;
   } else {
     window._privyWallet = null;
+  }
+  // Chat identity (username) is per-wallet. When the wallet changes — including
+  // disconnect, or connecting a DIFFERENT wallet on the same device — wipe the
+  // cached name/edits so it re-derives from the new wallet's server profile
+  // (or the default 0xAB…CD12 format), instead of keeping the old wallet's name.
+  const newWallet = window._privyWallet;
+  if ((newWallet || null) !== (prevWallet || null)) {
+    _resetChatIdentity();
   }
   if (user) setTimeout(_loadWatchlist, 200);
   else { _watchlist = new Set(); if (_currentTokenData?.address) _updateWatchlistBtn(_currentTokenData.address); }
@@ -2349,6 +2375,33 @@ function _setWalletConnected(user) {
   if (typeof checkChatGates === 'function') checkChatGates();
   // Hide/show the username section in the profile popup to match wallet state
   if (typeof _chatNameRenderState === 'function') _chatNameRenderState();
+  // If the chat socket is already open, re-join under the new identity so the
+  // server's user map + online list reflect the current wallet (it re-loads the
+  // saved display name from that wallet's profile).
+  if ((newWallet || null) !== (prevWallet || null)) _rejoinChatWithCurrentIdentity();
+}
+
+// Clear the cached per-wallet chat identity (username + edit count).
+function _resetChatIdentity() {
+  _chatName = null;
+  _chatNameEdits = 0;
+  _userProfile = null;
+  try {
+    localStorage.removeItem('bloomChatName');
+    localStorage.removeItem('bloomChatNameEdits');
+  } catch (_) {}
+}
+
+// Re-announce ourselves on the live chat socket (server derives the name from
+// the new wallet's saved profile).
+function _rejoinChatWithCurrentIdentity() {
+  if (!_chatWs || _chatWs.readyState !== WebSocket.OPEN) return;
+  _chatWs.send(JSON.stringify({
+    type: 'chat_join',
+    wallet: window._privyWallet || null,
+    displayName: _chatName || null,
+    avatar: _userProfile?.avatar || null,
+  }));
 }
 
 // ── Cached profile for current wallet ────────────────────────────────────────
@@ -2414,45 +2467,123 @@ async function saveProfile() {
     _refreshMyMessages();
     const st = document.getElementById('profileAvatarStatus');
     if (st) st.textContent = 'Profile saved!';
-    setTimeout(() => { if (st) st.textContent = 'Click photo to change'; }, 2500);
+    setTimeout(() => { if (st) st.textContent = 'Click to choose an avatar'; }, 2500);
   } catch (_) { showToast('Failed to save profile'); }
 }
 
 let _pendingProfileAvatar = null;
 
+// ── Preset avatars (custom SVG, Robin-Hood/outlaw + crypto character set) ─────
+// 20 hand-authored flat SVG characters drawn over a customizable colored circle.
+// Pure inline SVG → identical on every device (no OS emoji fonts), tiny, and
+// stored/rendered exactly like an uploaded photo (data URI in the avatar field).
+const AVATAR_SVGS = [
+  // 0 Hooded outlaw
+  "<path d='M50 20c-16 0-27 13-27 30v22h12V53c0-9 6-16 15-16s15 7 15 16v19h12V50c0-17-11-30-27-30z' fill='#fff'/><path d='M38 49c0-7 5-12 12-12s12 5 12 12v4a12 14 0 0 1-24 0z' fill='rgba(0,0,0,.3)'/><circle cx='45' cy='50' r='2.3' fill='#fff'/><circle cx='55' cy='50' r='2.3' fill='#fff'/>",
+  // 1 Fox
+  "<path d='M25 33l12 5 13-3 13 3 12-5-2 14 4 7-9 13-18 6-18-6-9-13 4-7z' fill='#fff'/><path d='M34 43l8 4 8-2 8 2 8-4-2 9-14 8-14-8z' fill='rgba(0,0,0,.16)'/><circle cx='43' cy='50' r='2.5' fill='#111'/><circle cx='57' cy='50' r='2.5' fill='#111'/><path d='M47 59h6l-3 4z' fill='#111'/>",
+  // 2 Feather cap (Robin Hood hat)
+  "<circle cx='50' cy='58' r='19' fill='#fff'/><circle cx='43' cy='57' r='2.3' fill='#111'/><circle cx='57' cy='57' r='2.3' fill='#111'/><path d='M44 64q6 5 12 0' stroke='#111' stroke-width='2' fill='none' stroke-linecap='round'/><path d='M27 45c3-10 12-17 23-17s20 7 23 17z' fill='rgba(0,0,0,.28)'/><path d='M73 29c-10 1-16 7-19 14l21 1z' fill='#fff'/>",
+  // 3 Bandit mask
+  "<circle cx='50' cy='52' r='22' fill='#fff'/><path d='M28 45h44v8a22 22 0 0 1-44 0z' fill='rgba(0,0,0,.32)'/><circle cx='42' cy='50' r='3' fill='#fff'/><circle cx='58' cy='50' r='3' fill='#fff'/><path d='M44 62q6 4 12 0' stroke='#111' stroke-width='2' fill='none' stroke-linecap='round'/>",
+  // 4 Robot
+  "<rect x='30' y='34' width='40' height='36' rx='9' fill='#fff'/><rect x='38' y='44' width='10' height='10' rx='3' fill='#111'/><rect x='52' y='44' width='10' height='10' rx='3' fill='#111'/><rect x='40' y='60' width='20' height='4' rx='2' fill='#111'/><rect x='47' y='24' width='6' height='9' rx='2' fill='#fff'/><circle cx='50' cy='22' r='4' fill='#fff'/>",
+  // 5 Ninja
+  "<circle cx='50' cy='50' r='22' fill='#fff'/><path d='M28 44a22 22 0 0 1 44 0v3H28z' fill='rgba(0,0,0,.3)'/><path d='M28 56h44a22 22 0 0 1-44 0z' fill='rgba(0,0,0,.3)'/><rect x='37' y='47' width='26' height='8' rx='4' fill='#fff'/><circle cx='44' cy='51' r='2' fill='#111'/><circle cx='56' cy='51' r='2' fill='#111'/>",
+  // 6 Knight helm
+  "<path d='M35 30h30a5 5 0 0 1 5 5v25a20 20 0 0 1-40 0V35a5 5 0 0 1 5-5z' fill='#fff'/><rect x='46' y='38' width='8' height='27' rx='4' fill='#111'/><path d='M50 20c-3 0-4 4-4 9h8c0-5-1-9-4-9z' fill='#f5a623'/>",
+  // 7 Wizard
+  "<circle cx='50' cy='59' r='15' fill='#fff'/><circle cx='45' cy='57' r='2' fill='#111'/><circle cx='55' cy='57' r='2' fill='#111'/><path d='M50 20l15 27H35z' fill='#fff'/><path d='M50 30l2 5 5 1-4 4 1 5-4-3-4 3 1-5-4-4 5-1z' fill='#f5d76e'/>",
+  // 8 Alien
+  "<path d='M50 28c14 0 22 10 22 22 0 13-10 24-22 24S28 63 28 50c0-12 8-22 22-22z' fill='#fff'/><ellipse cx='42' cy='50' rx='4' ry='7' fill='#111' transform='rotate(-18 42 50)'/><ellipse cx='58' cy='50' rx='4' ry='7' fill='#111' transform='rotate(18 58 50)'/>",
+  // 9 Skull
+  "<path d='M50 26c-13 0-22 9-22 22 0 8 4 14 9 17v6a4 4 0 0 0 4 4h18a4 4 0 0 0 4-4v-6c5-3 9-9 9-17 0-13-9-22-22-22z' fill='#fff'/><circle cx='42' cy='48' r='5' fill='#111'/><circle cx='58' cy='48' r='5' fill='#111'/><path d='M50 56l-3 7h6z' fill='#111'/><rect x='44' y='68' width='2.5' height='7' fill='#111'/><rect x='49' y='68' width='2.5' height='7' fill='#111'/><rect x='54' y='68' width='2.5' height='7' fill='#111'/>",
+  // 10 Owl
+  "<path d='M50 30c-14 0-24 10-24 24s10 20 24 20 24-6 24-20-10-24-24-24z' fill='#fff'/><circle cx='41' cy='48' r='8' fill='#111'/><circle cx='59' cy='48' r='8' fill='#111'/><circle cx='41' cy='48' r='3' fill='#fff'/><circle cx='59' cy='48' r='3' fill='#fff'/><path d='M50 55l-4 6h8z' fill='#f5a623'/><path d='M29 31l9 8-11 2z' fill='#fff'/><path d='M71 31l-9 8 11 2z' fill='#fff'/>",
+  // 11 Wolf
+  "<path d='M30 34l6 10 14-3 14 3 6-10 2 16-6 6 4 8-20 8-20-8 4-8-6-6z' fill='#fff'/><circle cx='43' cy='49' r='2.4' fill='#111'/><circle cx='57' cy='49' r='2.4' fill='#111'/><path d='M46 58h8l-4 5z' fill='#111'/>",
+  // 12 King crown
+  "<path d='M32 30l6 13 12-15 12 15 6-13 3 22H29z' fill='#f5d76e'/><circle cx='50' cy='61' r='13' fill='#fff'/><circle cx='45' cy='60' r='2' fill='#111'/><circle cx='55' cy='60' r='2' fill='#111'/>",
+  // 13 Cat
+  "<path d='M32 34l6 12h24l6-12 2 18-6 6 3 6-17 8-17-8 3-6-6-6z' fill='#fff'/><path d='M40 49q4 4 8 0M52 49q4 4 8 0' stroke='#111' stroke-width='2' fill='none' stroke-linecap='round'/><path d='M48 58h4l-2 3z' fill='#f5a623'/><path d='M28 55h10M62 55h10' stroke='#fff' stroke-width='1.6'/>",
+  // 14 Astronaut
+  "<circle cx='50' cy='50' r='22' fill='#fff'/><path d='M35 45a17 17 0 0 1 30 0v8a17 17 0 0 1-30 0z' fill='#111'/><path d='M40 46a10 10 0 0 1 13 0z' fill='rgba(255,255,255,.45)'/>",
+  // 15 Ghost
+  "<path d='M30 50a20 20 0 0 1 40 0v22l-6-5-7 5-7-5-7 5-6-5z' fill='#fff'/><circle cx='43' cy='48' r='3.5' fill='#111'/><circle cx='57' cy='48' r='3.5' fill='#111'/>",
+  // 16 Dragon
+  "<path d='M32 38l4 8 14-4 14 4 4-8 2 14-6 8 4 8-18 6-18-6 4-8-6-8z' fill='#fff'/><path d='M37 29l4 11-9-2zM63 29l-4 11 9-2z' fill='#27c97f'/><circle cx='44' cy='49' r='2.4' fill='#111'/><circle cx='56' cy='49' r='2.4' fill='#111'/><path d='M42 60h16l-3 4h-10z' fill='#111'/>",
+  // 17 Eagle
+  "<circle cx='50' cy='52' r='20' fill='#fff'/><circle cx='43' cy='48' r='3' fill='#111'/><circle cx='57' cy='48' r='3' fill='#111'/><path d='M44 55h12l-6 9z' fill='#f5a623'/><path d='M50 28c-4 0-6 4-6 8h12c0-4-2-8-6-8z' fill='#fff'/>",
+  // 18 Diamond
+  "<path d='M35 40h30l10 12-25 26-25-26z' fill='#fff'/><path d='M35 40l7 12h16l7-12M25 52h50M42 52l8 26M58 52l-8 26' stroke='rgba(0,0,0,.22)' stroke-width='2' fill='none'/>",
+  // 19 Rocket
+  "<path d='M50 24c8 6 12 16 12 28l-4 10H42l-4-10c0-12 4-22 12-28z' fill='#fff'/><circle cx='50' cy='44' r='5' fill='#111'/><path d='M42 58l-8 8 8-2zM58 58l8 8-8-2z' fill='#fff'/><path d='M45 68h10l-5 10z' fill='#f5a623'/>",
+];
+const AVATAR_BG_COLORS = ['#27c97f','#4a90e2','#f5a623','#ff6b8a','#9b59b6','#e86c3a','#00b8d9','#f0484b','#2ecc71','#34495e','#e84393','#1abc9c'];
+let _avatarPickIdx   = 0;
+let _avatarPickColor = AVATAR_BG_COLORS[0];
+
+function buildSvgAvatar(idx, bgColor) {
+  const inner = AVATAR_SVGS[idx] || AVATAR_SVGS[0];
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='${bgColor}'/>${inner}</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
 window.profileAvatarClick = function() {
   if (!window._privyWallet) { showToast('Connect your wallet first'); return; }
-  document.getElementById('profileAvatarInput')?.click();
+  openAvatarPicker();
 };
 
-window.profileAvatarPicked = function(input) {
-  if (!window._privyWallet) { showToast('Connect your wallet first'); input.value = ''; return; }
-  const file = input.files?.[0];
-  if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('Image too large (max 5MB)'); input.value = ''; return; }
-  const st = document.getElementById('profileAvatarStatus');
-  if (st) st.textContent = 'Processing…';
-  const reader = new FileReader();
-  reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 256;
-      const canvas = document.createElement('canvas');
-      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-      canvas.width  = Math.round(img.width  * ratio);
-      canvas.height = Math.round(img.height * ratio);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      const b64 = canvas.toDataURL('image/jpeg', 0.85);
-      _pendingProfileAvatar = b64;
-      const popupAvatar = document.getElementById('popupAvatar');
-      _setAvatarEl(popupAvatar, b64, null);
-      if (st) st.textContent = 'Saving…';
-      saveProfile();
-    };
-    img.src = e.target.result;
+function _renderAvatarPickerBody() {
+  const preview = document.getElementById('avatarPickPreview');
+  if (preview) preview.style.backgroundImage = `url("${buildSvgAvatar(_avatarPickIdx, _avatarPickColor)}")`;
+  document.querySelectorAll('#avatarPickerModal .ap-avatar').forEach(b => {
+    const i = parseInt(b.dataset.idx);
+    b.style.backgroundImage = `url("${buildSvgAvatar(i, _avatarPickColor)}")`;
+    b.style.borderColor = i === _avatarPickIdx ? '#27c97f' : '#2d3748';
+  });
+  document.querySelectorAll('#avatarPickerModal .ap-color').forEach(b => {
+    b.style.outline = b.dataset.color === _avatarPickColor ? '2px solid #e2e8f0' : 'none';
+  });
+}
+
+window.openAvatarPicker = function() {
+  if (!window._privyWallet) { showToast('Connect your wallet first'); return; }
+  const existing = document.getElementById('avatarPickerModal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'avatarPickerModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML = `
+    <div style="background:#161822;border:1px solid #1e2235;border-radius:16px;padding:22px 20px;width:340px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.7)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <span style="font-size:13px;font-weight:800;letter-spacing:1px;color:#e2e8f0">CHOOSE AVATAR</span>
+        <button onclick="document.getElementById('avatarPickerModal').remove()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:16px;line-height:1">✕</button>
+      </div>
+      <div id="avatarPickPreview" style="width:80px;height:80px;border-radius:50%;margin:0 auto 16px;background-size:cover;background-position:center;border:2px solid #27c97f55"></div>
+      <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#6b7280;margin-bottom:8px">CHARACTER</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px">
+        ${AVATAR_SVGS.map((_, i) => `<button class="ap-avatar" data-idx="${i}" style="aspect-ratio:1;border:2px solid #2d3748;border-radius:10px;background:#0d0f1a;background-size:cover;background-position:center;cursor:pointer"></button>`).join('')}
+      </div>
+      <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#6b7280;margin-bottom:8px">BACKGROUND</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
+        ${AVATAR_BG_COLORS.map(c => `<button class="ap-color" data-color="${c}" style="width:26px;height:26px;border-radius:50%;border:1px solid #00000030;background:${c};cursor:pointer;outline-offset:2px"></button>`).join('')}
+      </div>
+      <button id="avatarPickSave" style="width:100%;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:800;padding:11px;cursor:pointer;letter-spacing:0.5px">Save Avatar</button>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  overlay.querySelectorAll('.ap-avatar').forEach(b => b.onclick = () => { _avatarPickIdx = parseInt(b.dataset.idx); _renderAvatarPickerBody(); });
+  overlay.querySelectorAll('.ap-color').forEach(b => b.onclick = () => { _avatarPickColor = b.dataset.color; _renderAvatarPickerBody(); });
+  overlay.querySelector('#avatarPickSave').onclick = () => {
+    _pendingProfileAvatar = buildSvgAvatar(_avatarPickIdx, _avatarPickColor);
+    _setAvatarEl(document.getElementById('popupAvatar'), _pendingProfileAvatar, null);
+    const st = document.getElementById('profileAvatarStatus');
+    if (st) st.textContent = 'Saving…';
+    saveProfile();
+    overlay.remove();
   };
-  reader.readAsDataURL(file);
-  input.value = '';
+  _renderAvatarPickerBody();
 };
 
 function _setAvatarEditEnabled(enabled) {
@@ -2461,7 +2592,7 @@ function _setAvatarEditEnabled(enabled) {
   const st   = document.getElementById('profileAvatarStatus');
   if (wrap) { wrap.style.cursor = enabled ? 'pointer' : 'not-allowed'; wrap.style.opacity = enabled ? '1' : '0.5'; }
   if (dot)  dot.style.display = enabled ? 'flex' : 'none';
-  if (st)   st.textContent = enabled ? 'Click photo to change' : 'Connect wallet to set a photo';
+  if (st)   st.textContent = enabled ? 'Click to choose an avatar' : 'Connect wallet to choose an avatar';
 }
 
 function _updateSidebarProfile(user) {
@@ -2535,6 +2666,10 @@ window.toggleProfilePopup = () => {
     if (inp) { inp.value = ''; inp.placeholder = _chatName || 'Set your chat name…'; }
     _setAvatarEditEnabled(!!window._privyWallet);
     _chatNameRenderState();
+  } else {
+    // Closing the popup without saving cancels a pending Community entry —
+    // the user stays on the page they were bounced back to.
+    _pendingCommunityEntry = false;
   }
 };
 window.__profileCopy = () => {
@@ -3015,16 +3150,21 @@ function _isDefaultChatName() {
   return _chatName === (w.slice(0, 4) + '...' + w.slice(-4));
 }
 
-// Nudge the user to pick a username by opening the Wallet Profile popup
-// straight into the name-edit field.
-function _maybePromptUsername() {
-  if (!_isDefaultChatName()) return;
-  setTimeout(() => {
-    if (!document.getElementById('page-community')?.classList.contains('active')) return;
-    showToast('Set a username to chat (max 15 characters)');
-    toggleProfilePopup();
-    chatNameStartEdit();
-  }, 350);
+// Has this wallet picked a real username (not the default 0xAB…CD12 form)?
+// Source of truth is the wallet's saved server profile; _chatName is a fallback.
+function _hasCustomUsername() {
+  if (_userProfile?.displayName) return true;
+  if (_chatName && !_isDefaultChatName()) return true;
+  return false;
+}
+
+// Open the Wallet Profile popup straight into the username editor. Used to make
+// the user set a name before they're allowed into Community.
+function _openUsernamePrompt() {
+  showToast('Set a username to enter the Community (max 15 characters)');
+  const popup = document.getElementById('profilePopup');
+  if (popup && popup.style.display === 'none') toggleProfilePopup();
+  chatNameStartEdit();
 }
 
 function initCommunity() {
@@ -3032,7 +3172,6 @@ function initCommunity() {
   if (_chatWs && _chatWs.readyState === WebSocket.OPEN) {
     renderChatRooms();
     switchChatRoom(_chatRoom);
-    _maybePromptUsername();
     return;
   }
   renderChatRooms();
@@ -3051,7 +3190,6 @@ function connectChat() {
     _chatWs.send(JSON.stringify({ type: 'chat_join', wallet, displayName: _chatName, avatar: _userProfile?.avatar || null }));
     if ($('chatNameInput') && !$('chatNameInput').value) $('chatNameInput').placeholder = _chatName;
     appendChatSystem('general', '🟢 Connected to Bloombark Community');
-    _maybePromptUsername();
   };
 
   _chatWs.onmessage = (e) => {
@@ -3703,9 +3841,10 @@ function chatSetName() {
   const name = inp.value.trim().slice(0, CHAT_NAME_MAX_LEN);
   if (!name) return;
 
-  const isFirstSet = !_chatName;
+  // Setting a name over the auto-generated default counts as the first set,
+  // not an edit, so it doesn't consume one of the limited edits.
+  const isFirstSet = !_chatName || _isDefaultChatName();
   if (!isFirstSet) {
-    // Counts as an edit only if name already existed
     if (_chatNameEdits >= MAX_NAME_EDITS) return;
     _chatNameEdits++;
     localStorage.setItem('bloomChatNameEdits', String(_chatNameEdits));
@@ -3722,6 +3861,15 @@ function chatSetName() {
   _chatNameRenderState();
   _refreshMyMessages();
   saveProfile();
+
+  // If the user was gated at the Community door, close the popup and let them in
+  // now that they have a real username.
+  if (_pendingCommunityEntry) {
+    _pendingCommunityEntry = false;
+    const popup = document.getElementById('profilePopup');
+    if (popup && popup.style.display !== 'none') toggleProfilePopup();
+    document.querySelector('.nav-item[data-page="community"]')?.click();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
