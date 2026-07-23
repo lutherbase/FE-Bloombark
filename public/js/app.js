@@ -1678,22 +1678,24 @@ function renderHolderStats(d) {
 
   if (holderChart) { holderChart.destroy(); holderChart = null; }
 
-  // Build holder distribution from real wallet data
+  // Build holder distribution from real wallet data. Whale/Large/Medium come
+  // from actual per-wallet supply % (potentialWallets); we don't have that
+  // granularity for the remaining holders, so they're one honest "Retail"
+  // bucket rather than a fabricated Small/Micro split.
   const wallets = d.potentialWallets || [];
-  const total   = hs.total || 100;
+  const total   = hs.total || 0;
   const whaleCnt  = wallets.filter(w => w.supplyPct > 1).length;
   const largeCnt  = wallets.filter(w => w.supplyPct > 0.1 && w.supplyPct <= 1).length;
   const medCnt    = wallets.filter(w => w.supplyPct > 0.01 && w.supplyPct <= 0.1).length;
-  const smallCnt  = Math.max(0, Math.round(total * 0.3));
-  const microCnt  = Math.max(0, total - whaleCnt - largeCnt - medCnt - smallCnt);
+  const retailCnt = Math.max(0, total - whaleCnt - largeCnt - medCnt);
 
   holderChart = new Chart($('holderChart'), {
     type: 'bar',
     data: {
-      labels: ['Whales\n>1%','Large\n0.1-1%','Medium\n0.01-0.1%','Small\n<0.01%','Micro'],
+      labels: ['Whales\n>1%','Large\n0.1-1%','Medium\n0.01-0.1%','Retail'],
       datasets: [{
-        data: [whaleCnt||1, largeCnt||2, medCnt||5, smallCnt||Math.round(total*0.3), microCnt||Math.round(total*0.6)],
-        backgroundColor: ['#F0484B','#FF8C42','#F5A623','#4A90E2','#27C97F'],
+        data: [whaleCnt, largeCnt, medCnt, retailCnt],
+        backgroundColor: ['#F0484B','#FF8C42','#F5A623','#27C97F'],
         borderRadius: 3, borderSkipped: false,
       }],
     },
@@ -3383,6 +3385,7 @@ function renderChatLockScreen(room) {
   if (g.kind === 'paid') { _renderPaidLockScreen(room, g); return; }
 
   const min     = g.minAmount ?? 0;
+  const minUsd  = g.minUsd ?? null;
   const symbol  = g.symbol || 'TOKEN';
   const network = g.network || '';
   const token   = g.token || '';
@@ -3398,7 +3401,7 @@ function renderChatLockScreen(room) {
       <div style="font-size:52px;line-height:1">🔒</div>
       <div style="font-size:17px;font-weight:800;color:var(--text-primary)">Holders Only</div>
       <div style="font-size:13px;color:var(--text-muted);line-height:1.6;max-width:360px">
-        This channel is locked. You need to hold at least <b style="color:#27c97f">${min} ${symbol}</b>${network ? ` on <b style="color:#27c97f">${network}</b>` : ''} to unlock it.<br>${bal}
+        This channel is locked. You need to hold at least <b style="color:#27c97f">${min} ${symbol}</b>${minUsd ? ` OR <b style="color:#27c97f">$${minUsd} USD</b> ${symbol}` : ''}${network ? ` on <b style="color:#27c97f">${network}</b>` : ''} to unlock it.<br>${bal}
       </div>
       ${tokenLine}
       <div style="display:flex;gap:10px;margin-top:6px">
