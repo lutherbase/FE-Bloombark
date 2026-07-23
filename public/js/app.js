@@ -3163,9 +3163,10 @@ function _updateMuteBanner() {
 function _applyGateDesc(room) {
   const g = _chatGates[room];
   if (!g || !CHAT_ROOMS[room]) return;
+  const minFmt = (+(g.minAmount ?? 0)).toLocaleString('en-US', { maximumFractionDigits: 2 });
   CHAT_ROOMS[room].desc = g.kind === 'paid'
     ? (g.ok ? 'Unlocked' : `Pay ${g.amountEth} ${g.symbol} to unlock`)
-    : `Hold ≥ ${g.minAmount} ${g.symbol} to unlock`;
+    : `Hold ≥ ${minFmt} ${g.symbol}${g.minUsd ? ` OR $${g.minUsd} USD` : ''} to unlock`;
 }
 
 // Fetch gate status for the connected wallet, then refresh room UI
