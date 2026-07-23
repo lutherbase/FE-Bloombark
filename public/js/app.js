@@ -2894,6 +2894,7 @@ async function loadLandingCA() {
   }
   // Ticker labels ($BBRK today, whatever the DB says at launch)
   document.querySelectorAll('.js-ticker').forEach(n => { n.textContent = '$' + _cachedTicker; });
+  _syncMoonRoomName(_cachedTicker);
 
   // Contract address — real 0x… address once set in the DB, else "Not Live Yet"
   const el = document.getElementById('landingCA');
@@ -3109,7 +3110,20 @@ const CHAT_ROOMS = {
   freeshill: { name: 'Free Shill', icon: '📣', desc: 'Shill your token here 🚀' },
   holders:   { name: 'Holders',    icon: '💎', desc: 'Token holders only', gated: true },
   private:   { name: 'Private',    icon: '🔐', desc: 'Pay to unlock', gated: true },
+  // Read-only BloomBuy feed — name tracks the live ticker (see _syncMoonRoomName).
+  moon:      { name: '$BBRK Moon', icon: '🚀', desc: 'Live buy feed — read only', readOnly: true },
 };
+
+// Keep the Moon room's label in sync with the DB-parameterized ticker
+// ($BBRK today, whatever it becomes at launch) once /api/config/public loads.
+function _syncMoonRoomName(ticker) {
+  if (!ticker) return;
+  CHAT_ROOMS.moon.name = `$${ticker} Moon`;
+  if (document.getElementById('page-community')?.classList.contains('active')) {
+    renderChatRooms();
+    if (_chatRoom === 'moon' && $('chatRoomName')) $('chatRoomName').textContent = CHAT_ROOMS.moon.name;
+  }
+}
 
 // Token-gate state: room -> { ok, kind, balance, minAmount, symbol, network, token, amountEth, treasury }
 let _chatGates = {};
@@ -3334,11 +3348,31 @@ function switchChatRoom(room) {
 
   const locked = _roomLocked(room);
   const inputBar = $('chatInputBar');
-  if (inputBar) inputBar.style.display = locked ? 'none' : 'flex';
+  if (inputBar) inputBar.style.display = (locked || r.readOnly) ? 'none' : 'flex';
+  _updateReadOnlyBanner(r.readOnly && !locked);
   if (locked) { renderChatLockScreen(room); return; }
 
   renderChatMessages();
   scrollChatBottom();
+}
+
+// Small note shown above a read-only room's message list (e.g. $BBRK Moon) —
+// input bar is hidden there, this explains why.
+function _updateReadOnlyBanner(show) {
+  const bar = $('chatInputBar');
+  let banner = $('chatReadOnlyBanner');
+  if (show) {
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'chatReadOnlyBanner';
+      banner.style.cssText = 'padding:8px 18px;background:#27c97f0f;border-top:1px solid #27c97f30;color:#27c97f;font-size:11px;font-weight:600;text-align:center;flex-shrink:0';
+      banner.textContent = '📖 Read-only — automated buy alerts, no chatting here';
+      bar?.parentElement?.insertBefore(banner, bar);
+    }
+    banner.style.display = 'block';
+  } else if (banner) {
+    banner.style.display = 'none';
+  }
 }
 
 function renderChatLockScreen(room) {
@@ -3545,6 +3579,8 @@ function _replyQuoteHtml(m, mine) {
 
 // Hover action buttons (reply for everyone; edit/delete for own wallet-owned msgs).
 function _msgActionsHtml(m, mine) {
+  // Read-only rooms (e.g. $BBRK Moon) have nothing to reply to — no one can post.
+  if (CHAT_ROOMS[_chatRoom]?.readOnly) return '';
   const canModify = mine && window._privyWallet && m.wallet && m.wallet === window._privyWallet;
   const isAdminTarget = _chatIsAdmin && !canModify && m.wallet && !m.isBot; // admin acting on someone else's message
   const btn = (label, fn, extra='') => `<button onclick="event.stopPropagation();${fn}" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:11px;padding:2px 4px;line-height:1;${extra}" title="${label}">${label}</button>`;
