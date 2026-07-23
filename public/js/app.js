@@ -3384,7 +3384,7 @@ function renderChatLockScreen(room) {
 
   if (g.kind === 'paid') { _renderPaidLockScreen(room, g); return; }
 
-  const min     = g.minAmount ?? 0;
+  const min     = (+(g.minAmount ?? 0)).toLocaleString('en-US', { maximumFractionDigits: 2 });
   const minUsd  = g.minUsd ?? null;
   const symbol  = g.symbol || 'TOKEN';
   const network = g.network || '';
