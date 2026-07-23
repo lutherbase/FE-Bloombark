@@ -3269,7 +3269,9 @@ function connectChat() {
         if (msg.room === _chatRoom) {
           appendChatMessage(msg);
           scrollChatBottom();
-        } else {
+        } else if (!_roomLocked(msg.room)) {
+          // Only count as unread if the wallet actually has access to this
+          // channel — Holders/Private never contribute when not eligible.
           _chatUnread[msg.room] = (_chatUnread[msg.room] || 0) + 1;
           updateRoomUnread(msg.room);
         }
@@ -3315,6 +3317,7 @@ function renderChatRooms() {
       ${locked ? '<span style="margin-left:auto;font-size:11px">🔒</span>' : `<span class="room-unread" id="unread-${id}">${_chatUnread[id]||''}</span>`}
     </button>`;
   }).join('');
+  _updateChatNavBadge();
 }
 
 function switchChatRoom(room) {
@@ -3623,13 +3626,11 @@ function scrollChatBottom() {
   if (el) el.scrollTop = el.scrollHeight;
 }
 
+// "X online" — shown inside the Community page itself (sidebar count + room
+// header). Unrelated to the sidebar nav badge, which shows unread messages.
 function updateOnlineCount(n) {
   if ($('chatOnlineCount'))   $('chatOnlineCount').textContent  = n;
   if ($('chatOnlineHeader'))  $('chatOnlineHeader').textContent = `${n} online`;
-  if ($('chatOnlineBadge')) {
-    $('chatOnlineBadge').textContent = n;
-    $('chatOnlineBadge').style.display = n > 0 ? 'inline' : 'none';
-  }
 }
 
 function updateRoomUnread(room) {
@@ -3638,6 +3639,20 @@ function updateRoomUnread(room) {
   const n = _chatUnread[room] || 0;
   el.textContent = n || '';
   el.style.display = n > 0 ? 'inline' : 'none';
+  _updateChatNavBadge();
+}
+
+// Sidebar nav badge (next to "Community") = total unread across channels the
+// wallet actually has access to. Gated channels the user isn't eligible for
+// (Holders, Private) never contribute — their unread never accumulates there.
+function _updateChatNavBadge() {
+  const badge = $('chatOnlineBadge');
+  if (!badge) return;
+  const total = Object.keys(CHAT_ROOMS)
+    .filter(room => !_roomLocked(room))
+    .reduce((sum, room) => sum + (_chatUnread[room] || 0), 0);
+  badge.textContent = total;
+  badge.style.display = total > 0 ? 'inline' : 'none';
 }
 
 let _chatPendingImg = null;
