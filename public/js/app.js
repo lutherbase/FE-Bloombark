@@ -3472,6 +3472,14 @@ window.chatPayUnlock = async function(room) {
 
   try {
     if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = 'Confirm in wallet…'; }
+    // Force the wallet onto the gate's actual chain first — without this, a
+    // wallet left on a different network (e.g. leftover testnet selection)
+    // would silently send the payment there instead of the intended chain.
+    if (g.chainKey && TRADE_CHAINS[g.chainKey]) {
+      if (btn) btn.textContent = 'Switching network…';
+      await _ensureChain(g.chainKey);
+      if (btn) btn.textContent = 'Confirm in wallet…';
+    }
     const valueWei = BigInt(Math.round(g.amountEth * 1e18));
     const txHash = await window.ethereum.request({
       method: 'eth_sendTransaction',
