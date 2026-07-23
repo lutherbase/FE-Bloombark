@@ -3372,11 +3372,23 @@ function renderChatLockScreen(room) {
     </div>`;
 }
 
+// localStorage key holding a sent-but-not-yet-verified payment tx for a room.
+function _pendingPayKey(wallet, room) { return 'bloomPrivatePay:' + String(wallet || '').toLowerCase() + ':' + room; }
+
 function _renderPaidLockScreen(room, g) {
   const el = $('chatMessages');
   if (!el) return;
   const connected = !!window._privyWallet;
   const treasury  = g.treasury || '';
+  // If we already sent a payment for this wallet+room that hasn't been recorded
+  // yet (verify failed / a refresh happened mid-verify), offer to re-verify
+  // instead of paying again — and auto-attempt it below.
+  const hasPending = connected && !!localStorage.getItem(_pendingPayKey(window._privyWallet, room));
+  const primaryBtn = !connected
+    ? `<button onclick="openWalletModal()" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`
+    : hasPending
+      ? `<button id="chatPayBtn" onclick="chatRetryVerify('${room}')" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Verify Payment</button>`
+      : `<button id="chatPayBtn" onclick="chatPayUnlock('${room}')" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Pay ${g.amountEth} ${g.symbol} to Unlock</button>`;
   el.innerHTML = `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;gap:14px">
       <div style="font-size:52px;line-height:1">🔐</div>
@@ -3386,16 +3398,26 @@ function _renderPaidLockScreen(room, g) {
       </div>
       <div style="font-size:10px;color:#4b5563;font-family:monospace">${treasury.slice(0,10)}…${treasury.slice(-8)}</div>
       <div id="chatPayStatus" style="display:none;font-size:12px;color:var(--accent-blue)"></div>
-      <div style="display:flex;gap:10px;margin-top:6px">
-        ${connected
-          ? `<button id="chatPayBtn" onclick="chatPayUnlock('${room}')" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Pay ${g.amountEth} ${g.symbol} to Unlock</button>`
-          : `<button onclick="openWalletModal()" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`}
-      </div>
+      <div style="display:flex;gap:10px;margin-top:6px">${primaryBtn}</div>
+      ${hasPending ? `<div style="font-size:10px;color:#8b92a8;max-width:320px">We detected a payment you already sent — verifying it now…</div>` : ''}
     </div>`;
+  // Auto-recover: if a payment tx is pending verification, try once on render.
+  if (hasPending) setTimeout(() => chatRetryVerify(room), 300);
 }
 
 // Send the one-time unlock payment via MetaMask, then have the backend verify
 // it on-chain before marking the room unlocked for this wallet.
+// POST the tx to the backend, which verifies it on-chain and records the unlock.
+// Idempotent server-side (tx_hash is unique), so it's safe to call repeatedly.
+async function _submitPaymentVerify(room, txHash, wallet) {
+  const res = await fetch(`${API_BASE}/community/pay-verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ wallet, room, txHash }),
+  });
+  return res.json();
+}
+
 window.chatPayUnlock = async function(room) {
   const g = _chatGates[room];
   if (!g || g.kind !== 'paid') return;
@@ -3414,26 +3436,55 @@ window.chatPayUnlock = async function(room) {
       method: 'eth_sendTransaction',
       params: [{ from: wallet, to: g.treasury, value: '0x' + valueWei.toString(16) }],
     });
+    // Persist the tx immediately — if verification (or the whole page) dies now,
+    // the payment isn't lost: on next visit we auto-retry verifying this hash.
+    try { localStorage.setItem(_pendingPayKey(wallet, room), txHash); } catch (_) {}
     setStatus('⏳ Verifying payment on-chain…');
     if (btn) btn.textContent = 'Verifying…';
 
-    const res = await fetch(`${API_BASE}/community/pay-verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallet, room, txHash }),
-    });
-    const j = await res.json();
+    const j = await _submitPaymentVerify(room, txHash, wallet);
     if (!j.ok) throw new Error(j.error || 'Verification failed');
 
+    try { localStorage.removeItem(_pendingPayKey(wallet, room)); } catch (_) {}
     showToast('🔓 Private channel unlocked!');
     await checkChatGates();
   } catch (e) {
-    const msg = e?.message?.includes('User denied') || e?.code === 4001
-      ? 'Payment cancelled'
-      : (e?.message || 'Payment failed');
-    showToast(msg);
-    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = `Pay ${g.amountEth} ${g.symbol} to Unlock`; }
-    if (status) status.style.display = 'none';
+    const cancelled = e?.code === 4001 || /user denied|user rejected/i.test(e?.message || '');
+    if (cancelled) {
+      // Nothing was sent — clear any stale pending marker and reset the button.
+      try { localStorage.removeItem(_pendingPayKey(wallet, room)); } catch (_) {}
+      showToast('Payment cancelled');
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = `Pay ${g.amountEth} ${g.symbol} to Unlock`; }
+      if (status) status.style.display = 'none';
+    } else {
+      // The tx likely went through but verify failed — keep the pending hash and
+      // re-render into the "Verify Payment" state so the user can retry (no re-pay).
+      showToast((e?.message || 'Verification failed') + ' — you can retry, no need to pay again');
+      switchChatRoom(room);
+    }
+  }
+};
+
+// Re-verify a payment the user already sent (from the stored tx hash) without
+// paying again. Used by the "Verify Payment" button and the auto-retry.
+window.chatRetryVerify = async function(room) {
+  const wallet = window._privyWallet;
+  if (!wallet) { openWalletModal(); return; }
+  const txHash = localStorage.getItem(_pendingPayKey(wallet, room));
+  if (!txHash) { switchChatRoom(room); return; }
+  const btn = $('chatPayBtn');
+  const status = $('chatPayStatus');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.textContent = 'Verifying…'; }
+  if (status) { status.textContent = '⏳ Verifying your payment on-chain…'; status.style.display = 'block'; }
+  try {
+    const j = await _submitPaymentVerify(room, txHash, wallet);
+    if (!j.ok) throw new Error(j.error || 'Verification failed');
+    try { localStorage.removeItem(_pendingPayKey(wallet, room)); } catch (_) {}
+    showToast('🔓 Private channel unlocked!');
+    await checkChatGates();
+  } catch (e) {
+    showToast((e?.message || 'Still verifying') + ' — try again in a moment');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.textContent = 'Verify Payment'; }
   }
 };
 
