@@ -2160,11 +2160,16 @@ const DASH_HEADER = `
 function _dashRowHtml(t, i) {
   const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
   const chg = t.priceChange24h || 0;
+  const chgStr = (chg >= 0 ? '+' : '') + chg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
   const chgColor = chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
   const chainColor = CHAIN_COLOR[t.networkId] || '#8b92a8';
   const logo = dashLogoUrl(t);
   const initial = (t.name || '?').trim().charAt(0).toUpperCase();
-  return `<div class="dash-vol-row" onclick="openInAnalyzer('${t.address}','${t.networkId}')">
+  const addr = t.address || '';
+  const caLine = addr
+    ? `<span class="dash-vol-ca" title="Copy contract address" onclick="event.stopPropagation();navigator.clipboard.writeText('${addr}').then(()=>showToast('Contract address copied'))">${addr}</span>`
+    : '';
+  return `<div class="dash-vol-row" onclick="openInAnalyzer('${addr}','${t.networkId}')">
     <span class="dash-vol-rank ${rankClass}">${i+1}</span>
     <div class="dash-vol-token">
       <span class="dash-vol-logo" style="background:${chainColor}22;color:${chainColor}">${initial}${logo ? `<img src="${logo}" alt="" loading="lazy" onload="this.style.opacity=1" onerror="this.remove()">` : ''}</span>
@@ -2173,16 +2178,17 @@ function _dashRowHtml(t, i) {
         <span class="dash-vol-pair">
           <span class="dash-chain-badge" style="background:${chainColor}22;color:${chainColor}">${t.network}</span>
         </span>
+        ${caLine}
       </div>
     </div>
     <span class="dash-vol-price">${dashFmtPrice(t.price)}</span>
-    <span class="dash-vol-change" style="color:${chgColor}">${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%</span>
+    <span class="dash-vol-change" style="color:${chgColor}">${chgStr}</span>
     <span class="dash-vol-volume">${dashFmtVol(t.volume24h)}</span>
     <span class="dash-vol-liq">${dashFmtVol(t.fdv)}</span>
     <span class="dash-vol-liq">${dashFmtVol(t.liquidity)}</span>
     <span class="dash-vol-liq" style="color:var(--accent-blue)">${dashAge(t.createdAt) || '-'}</span>
-    <span class="dash-vol-liq" style="color:var(--accent-green)">${t.buys24h || 0}</span>
-    <span class="dash-vol-liq" style="color:var(--accent-red)">${t.sells24h || 0}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-green)">${(t.buys24h || 0).toLocaleString('en-US')}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-red)">${(t.sells24h || 0).toLocaleString('en-US')}</span>
   </div>`;
 }
 
