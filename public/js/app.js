@@ -2259,11 +2259,38 @@ async function fetchDashboard(chain) {
   }
 }
 
+async function loadChainVolumes() {
+  const el = $('chainVolumeGrid');
+  if (!el) return;
+  const CHAIN_LABEL = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
+  try {
+    const res  = await fetch(`${API_BASE}/chain-volumes`);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    el.innerHTML = Object.entries(CHAIN_LABEL).map(([key, label]) => {
+      const c = json.data[key];
+      const vol = c ? dashFmtVol(c.volume24h) : '—';
+      const chg = c && typeof c.change24h === 'number'
+        ? `<span style="color:${c.change24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:11px;font-weight:700">${c.change24h >= 0 ? '+' : ''}${c.change24h.toFixed(2)}%</span>`
+        : '';
+      return `
+        <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px">${label.toUpperCase()}</span>
+          <span style="font-size:20px;font-weight:800;color:var(--text-primary)">${vol}</span>
+          ${chg}
+        </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="dash-loading" style="color:var(--accent-red)">Failed to load chain volume</div>`;
+  }
+}
+
 async function loadDashboard() {
   _dashChain = 'all';
   renderDashFilter();
   $('dashVolSub').textContent   = 'All Chains · 24h';
   $('dashTrendSub').textContent = 'All Chains';
+  loadChainVolumes();
   await fetchDashboard('all');
 }
 

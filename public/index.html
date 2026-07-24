@@ -493,6 +493,17 @@
         <!-- Other pages (placeholder) -->
         <div class="page" id="page-dashboard">
           <div class="dashboard-wrap">
+            <!-- Chain Volume (DefiLlama) -->
+            <div class="dash-section">
+              <div class="dash-section-header">
+                <span class="dash-section-title">📊 CHAIN VOLUME</span>
+                <span class="dash-section-sub">24h DEX volume</span>
+              </div>
+              <div id="chainVolumeGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                <div class="dash-loading">Loading…</div>
+              </div>
+              <div class="dash-source-note">Data source: DefiLlama</div>
+            </div>
             <!-- Chain Filter -->
             <div class="dash-filter-bar" id="dashFilterBar">
               <button class="dash-filter-btn active" data-chain="all">All Chains</button>
@@ -1109,6 +1120,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=134"></script>
+  <script src="js/app.js?v=135"></script>
 </body>
 </html>
