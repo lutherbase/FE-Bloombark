@@ -2146,8 +2146,6 @@ window.addEventListener('resize', () => {
 });
 
 /* ─── Dashboard ───────────────────────────────────────────────────────────── */
-let _dashData    = null;
-let _dashChain   = 'all';
 
 const CHAIN_COLOR = {
   ethereum:'#627EEA', base:'#0052FF',
@@ -2192,11 +2190,6 @@ function openInAnalyzer(address, networkId) {
     document.querySelector('[data-page="ai-analyzer"]').click();
     document.getElementById('scanBtn').click();
   });
-}
-
-function filterByChain(arr) {
-  if (_dashChain === 'all') return arr;
-  return arr.filter(p => p.networkId === _dashChain);
 }
 
 // Token logo for a dashboard row. Prefer a backend-provided imageUrl; otherwise
@@ -2251,83 +2244,65 @@ function _dashRowHtml(t, i) {
   </div>`;
 }
 
-function renderBestVolume(items) {
-  const el = $('dashVolumeGrid');
-  const filtered = filterByChain(items).slice(0, 10);
-  if (!filtered.length) { el.innerHTML = '<div class="dash-loading">No data for this chain</div>'; return; }
-  el.innerHTML = DASH_HEADER + filtered.map(_dashRowHtml).join('');
+// Market Overview tabs (Robinhood-chain launch view): Pools, Trending, Top
+// Gainers, New Pools — all sourced from /api/market/:tab (GeckoTerminal).
+let _marketTab = 'pools';
+let _marketTabBarInit = false;
+const MARKET_TAB_LABEL = { pools: '💧 POOLS', trending: '🔥 TRENDING', gainers: '📈 TOP GAINERS', 'new-pools': '🆕 NEW POOLS' };
+
+function renderMarketTabList(items) {
+  const el = $('marketTabGrid');
+  if (!el) return;
+  if (!items.length) { el.innerHTML = '<div class="dash-loading">No data available</div>'; return; }
+  el.innerHTML = DASH_HEADER + items.map(_dashRowHtml).join('');
 }
 
-function renderDashList(items, el) {
-  const filtered = filterByChain(items).slice(0, 10);
-  if (!filtered.length) { el.innerHTML = '<div class="dash-loading">No data for this chain</div>'; return; }
-  el.innerHTML = DASH_HEADER + filtered.map(_dashRowHtml).join('');
-}
-
-function renderDashFilter() {
-  const bar = $('dashFilterBar');
-  const STATIC_CHAINS = [
-    { id: 'ethereum',  label: 'Ethereum' },
-    { id: 'base',      label: 'Base' },
-    { id: 'robinhood', label: 'Robinhood' },
-  ];
-  bar.innerHTML = `<button class="dash-filter-btn ${_dashChain==='all'?'active':''}" data-chain="all">All Chains</button>` +
-    STATIC_CHAINS.map(c => `<button class="dash-filter-btn ${_dashChain===c.id?'active':''}" data-chain="${c.id}">${c.label}</button>`).join('');
-  bar.querySelectorAll('.dash-filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.dataset.chain === _dashChain) return;
-      bar.querySelectorAll('.dash-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
-      fetchDashboard(btn.dataset.chain);
-    });
-  });
-}
-
-function _setDashLoading() {
-  ['dashVolumeGrid','dashTrendingList'].forEach(id => {
-    const el = $(id);
-    if (el) el.innerHTML = `<div class="dash-loading">Loading...</div>`;
-  });
-}
-
-async function fetchDashboard(chain) {
-  _dashChain = chain;
-  const label = chain === 'all' ? 'All Chains' : ({ ethereum:'Ethereum', base:'Base', robinhood:'Robinhood' }[chain] || chain);
-  $('dashVolSub').textContent   = `${label} · 24h`;
-  $('dashTrendSub').textContent = label;
-  _setDashLoading();
+async function fetchMarketTab(tab) {
+  _marketTab = tab;
+  if ($('marketTabTitle')) $('marketTabTitle').textContent = MARKET_TAB_LABEL[tab] || tab.toUpperCase();
+  const el = $('marketTabGrid');
+  if (el) el.innerHTML = '<div class="dash-loading">Loading…</div>';
   try {
-    const url  = chain === 'all' ? `${API_BASE}/dashboard` : `${API_BASE}/dashboard?chain=${chain}`;
-    const res  = await fetch(url);
+    const res  = await fetch(`${API_BASE}/market/${tab}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.error);
-    if (json.empty) {
-      const msg = `<div class="dash-loading" style="color:var(--text-muted);text-align:center;padding:32px 0">🚧 ${label} data is coming soon — chain not yet indexed</div>`;
-      ['dashVolumeGrid','dashTrendingList'].forEach(id => { const el = $(id); if (el) el.innerHTML = msg; });
-      return;
-    }
-    _dashData = json.data;
-    renderBestVolume(_dashData.bestVolume);
-    renderDashList(_dashData.trending,  $('dashTrendingList'));
+    const chainLabel = json.chain || 'robinhood';
+    if ($('marketTabSub')) $('marketTabSub').textContent = chainLabel.charAt(0).toUpperCase() + chainLabel.slice(1) + ' Chain';
+    renderMarketTabList(json.data || []);
   } catch (e) {
-    ['dashVolumeGrid','dashTrendingList'].forEach(id => {
-      const el = $(id);
-      if (el) el.innerHTML = `<div class="dash-loading" style="color:var(--accent-red)">Failed to load data</div>`;
-    });
+    if (el) el.innerHTML = '<div class="dash-loading" style="color:var(--accent-red)">Failed to load data</div>';
   }
+}
+
+function _initMarketTabBar() {
+  if (_marketTabBarInit) return;
+  _marketTabBarInit = true;
+  const bar = $('marketTabBar');
+  if (!bar) return;
+  bar.querySelectorAll('.dash-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === _marketTab) return;
+      bar.querySelectorAll('.dash-filter-btn').forEach(b => b.classList.toggle('active', b === btn));
+      fetchMarketTab(btn.dataset.tab);
+    });
+  });
 }
 
 async function loadChainVolumes() {
   const el = $('chainVolumeGrid');
   if (!el) return;
-  const CHAIN_LABEL = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
+  const LABELS = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
   try {
     const res  = await fetch(`${API_BASE}/chain-volumes`);
     const json = await res.json();
     if (!json.success) throw new Error(json.error);
-    el.innerHTML = Object.entries(CHAIN_LABEL).map(([key, label]) => {
+    const keys = Object.keys(json.data || {});
+    if (!keys.length) { el.innerHTML = '<div class="dash-loading">No chain volume data available</div>'; return; }
+    el.innerHTML = keys.map(key => {
       const c = json.data[key];
-      const vol = c ? dashFmtVol(c.volume24h) : '—';
-      const chg = c && typeof c.change24h === 'number'
+      const label = LABELS[key] || key;
+      const vol = dashFmtVol(c.volume24h);
+      const chg = typeof c.change24h === 'number'
         ? `<span style="color:${c.change24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:11px;font-weight:700">${c.change24h >= 0 ? '+' : ''}${c.change24h.toFixed(2)}%</span>`
         : '';
       return `
@@ -2343,12 +2318,9 @@ async function loadChainVolumes() {
 }
 
 async function loadDashboard() {
-  _dashChain = 'all';
-  renderDashFilter();
-  $('dashVolSub').textContent   = 'All Chains · 24h';
-  $('dashTrendSub').textContent = 'All Chains';
+  _initMarketTabBar();
   loadChainVolumes();
-  await fetchDashboard('all');
+  await fetchMarketTab(_marketTab);
 }
 
 /* ─── Privy Wallet Connect ─────────────────────────────────────────────────── */

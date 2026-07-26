@@ -504,35 +504,24 @@
               </div>
               <div class="dash-source-note">Data source: DefiLlama</div>
             </div>
-            <!-- Chain Filter -->
-            <div class="dash-filter-bar" id="dashFilterBar">
-              <button class="dash-filter-btn active" data-chain="all">All Chains</button>
+            <!-- Market tabs (Robinhood chain) -->
+            <div class="dash-filter-bar" id="marketTabBar">
+              <button class="dash-filter-btn active" data-tab="pools">Pools</button>
+              <button class="dash-filter-btn" data-tab="trending">Trending</button>
+              <button class="dash-filter-btn" data-tab="gainers">Top Gainers</button>
+              <button class="dash-filter-btn" data-tab="new-pools">New Pools</button>
             </div>
-            <!-- Best Volume -->
             <div class="dash-section">
               <div class="dash-section-header">
-                <span class="dash-section-title">🏆 BEST VOLUME TOP 10</span>
-                <span class="dash-section-sub" id="dashVolSub">All Chains · 24h</span>
+                <span class="dash-section-title" id="marketTabTitle">💧 POOLS</span>
+                <span class="dash-section-sub" id="marketTabSub">Robinhood Chain</span>
               </div>
               <div class="dash-vol-wrap">
-                <div class="dash-volume-grid" id="dashVolumeGrid">
+                <div class="dash-volume-grid" id="marketTabGrid">
                   <div class="dash-loading">Loading…</div>
                 </div>
               </div>
-              <div class="dash-source-note">Data source: DexScreener</div>
-            </div>
-            <!-- Trending (full-width, same layout as Best Volume) -->
-            <div class="dash-section">
-              <div class="dash-section-header">
-                <span class="dash-section-title">🔥 TRENDING TOKENS</span>
-                <span class="dash-section-sub" id="dashTrendSub">All Chains</span>
-              </div>
-              <div class="dash-vol-wrap">
-                <div class="dash-volume-grid" id="dashTrendingList">
-                  <div class="dash-loading">Loading…</div>
-                </div>
-              </div>
-              <div class="dash-source-note">Data source: DexScreener</div>
+              <div class="dash-source-note">Data source: GeckoTerminal</div>
             </div>
           </div>
         </div>
@@ -1120,6 +1109,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=141"></script>
+  <script src="js/app.js?v=142"></script>
 </body>
 </html>
