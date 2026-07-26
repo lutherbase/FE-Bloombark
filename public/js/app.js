@@ -2385,9 +2385,9 @@ async function loadChainSummary() {
       const txCount = (tx.transactionsToday || 0).toLocaleString('en-US');
       const volStr  = vol ? dashFmtVol(vol.volume24h) : 'N/A';
       const chgStr  = vol && typeof vol.change24h === 'number'
-        ? `, a <b style="color:${vol.change24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${vol.change24h >= 0 ? '+' : ''}${vol.change24h.toFixed(2)}%</b> change as compared to yesterday`
+        ? `in trading volume, reflecting a <b style="color:${vol.change24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${vol.change24h >= 0 ? '+' : ''}${vol.change24h.toFixed(2)}%</b> decline from the previous day.`
         : '';
-      return `<div>The number of transactions in the last 24 hours on <b style="color:var(--text-primary)">${label}</b> is <b style="color:var(--text-primary)">${txCount}</b> with a trading volume of <b style="color:var(--text-primary)">${volStr}</b>${chgStr}.</div>`;
+      return `<div>During the last 24 hours, <b style="color:var(--text-primary)">${label}</b> handled <b style="color:var(--text-primary)">${txCount}</b> transactions, totaling <b style="color:var(--text-primary)">${volStr}</b>${chgStr}.</div>`;
     }).join('');
   } catch (e) {
     el.innerHTML = '';
