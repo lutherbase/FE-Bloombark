@@ -220,7 +220,13 @@ const PAGE_ROUTES = {
   'watchlist':      '/watchlist',
 };
 const ROUTE_TO_PAGE = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([p, r]) => [r, p]));
-const _pageFromPath = path => ROUTE_TO_PAGE[path] || null;
+// Community additionally supports a room sub-route (/community/general etc.)
+// — treat any path under it as the community page; the specific room is
+// resolved separately by _communityRoomFromPath once CHAT_ROOMS exists.
+const _pageFromPath = path =>
+  (path === PAGE_ROUTES.community || path.startsWith(PAGE_ROUTES.community + '/'))
+    ? 'community'
+    : (ROUTE_TO_PAGE[path] || null);
 
 // Activates a page: swaps the visible .page / active nav-item, sets the
 // header, runs the page's load function, and (unless told not to) pushes the
@@ -316,14 +322,18 @@ window.addEventListener('popstate', () => {
 });
 
 // Initial load: land directly on whatever page the URL specifies (e.g. a
-// hard refresh or shared link to /aianalyzer), replacing history so back
-// from there doesn't loop back to itself. Falls through to the landing-page
-// default below when the URL doesn't match a known route.
+// hard refresh or shared link to /aianalyzer, or /community/general),
+// replacing history so back from there doesn't loop back to itself. Falls
+// through to the landing-page default below when the URL doesn't match a
+// known route. The actual activation is deferred (setTimeout 0) because
+// page-specific data this early in the script (e.g. CHAT_ROOMS, defined much
+// further down) isn't defined yet during this file's first synchronous pass.
 const _routedInitialPage = _pageFromPath(location.pathname);
 (function _initRouteFromUrl() {
   if (_routedInitialPage && _routedInitialPage !== 'landing') {
-    _activatePage(_routedInitialPage, { pushUrl: false });
-    history.replaceState({ page: _routedInitialPage }, '', PAGE_ROUTES[_routedInitialPage]);
+    const initialPath = location.pathname; // preserve any sub-route (e.g. /community/general)
+    setTimeout(() => _activatePage(_routedInitialPage, { pushUrl: false }), 0);
+    history.replaceState({ page: _routedInitialPage }, '', initialPath);
   } else if (location.pathname !== PAGE_ROUTES.landing) {
     history.replaceState({ page: 'landing' }, '', PAGE_ROUTES.landing);
   }
@@ -3190,6 +3200,14 @@ const CHAT_ROOMS = {
   private:   { name: 'Private',    icon: '🔐', desc: 'Pay to unlock', gated: true },
 };
 
+// Resolves a URL like /community/general -> 'general', only if it's a real room.
+function _communityRoomFromPath(path) {
+  const prefix = PAGE_ROUTES.community + '/';
+  if (!path.startsWith(prefix)) return null;
+  const room = path.slice(prefix.length);
+  return CHAT_ROOMS[room] ? room : null;
+}
+
 // Keep the Moon room's label in sync with the DB-parameterized ticker
 // ($BBRK today, whatever it becomes at launch) once /api/config/public loads.
 function _syncMoonRoomName(ticker) {
@@ -3257,7 +3275,7 @@ async function checkChatGates() {
 }
 
 let _chatWs        = null;
-let _chatRoom      = 'general';
+let _chatRoom      = null; // null = no channel picked yet — show the channel list, not a default room
 let _chatMessages  = {};   // room -> [{...}]
 let _chatUnread    = {};   // room -> count
 let _chatConnected = false;
@@ -3308,13 +3326,42 @@ function _openUsernamePrompt() {
 
 function initCommunity() {
   checkChatGates();
+  // Only auto-open a room if the URL explicitly names one (e.g. a shared
+  // /community/freeshill link or browser back/forward) — otherwise land on
+  // the channel list and let the user pick.
+  const roomFromUrl = _communityRoomFromPath(location.pathname);
   if (_chatWs && _chatWs.readyState === WebSocket.OPEN) {
     renderChatRooms();
-    switchChatRoom(_chatRoom);
+    if (roomFromUrl) switchChatRoom(roomFromUrl, { pushUrl: false });
+    else _showCommunityChannelListOnly();
     return;
   }
+  _chatRoom = roomFromUrl || null;
   renderChatRooms();
+  // Show the placeholder immediately rather than a blank pane while the WS
+  // connects — chat_history will refresh this once real data arrives (and
+  // will switch straight to roomFromUrl if one was requested).
+  if (!roomFromUrl) _showCommunityChannelListOnly();
   connectChat();
+}
+
+// Neutral placeholder shown in the message pane when no channel is selected
+// yet — the channel list (sidebar) is always visible regardless.
+function _showCommunityChannelListOnly() {
+  const el = $('chatMessages');
+  if (el) el.innerHTML = `
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;gap:10px;color:var(--text-muted)">
+      <div style="font-size:40px;line-height:1">💬</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary)">Pick a channel to start chatting</div>
+      <div style="font-size:12px">Select any channel from the list on the left.</div>
+    </div>`;
+  if ($('chatRoomIcon')) $('chatRoomIcon').textContent = '💬';
+  if ($('chatRoomName')) $('chatRoomName').textContent = 'Select a channel';
+  if ($('chatRoomDesc')) $('chatRoomDesc').textContent = '';
+  const inputBar = $('chatInputBar');
+  if (inputBar) inputBar.style.display = 'none';
+  _updateReadOnlyBanner(false);
+  renderChatRooms();
 }
 
 function connectChat() {
@@ -3342,7 +3389,9 @@ function connectChat() {
         _chatMutedUntil = d.mutedUntil || null;
         _updateMuteBanner();
         updateOnlineCount(d.online || 0);
-        if (CHAT_ROOMS[_chatRoom]?.gated) switchChatRoom(_chatRoom); else renderChatMessages();
+        if (!_chatRoom) _showCommunityChannelListOnly();
+        else if (CHAT_ROOMS[_chatRoom]?.gated) switchChatRoom(_chatRoom, { pushUrl: false });
+        else renderChatMessages();
       } else if (d.type === 'chat_muted') {
         _chatMutedUntil = d.mutedUntil || null;
         _updateMuteBanner();
@@ -3411,11 +3460,15 @@ function renderChatRooms() {
   _updateChatNavBadge();
 }
 
-function switchChatRoom(room) {
+function switchChatRoom(room, { pushUrl = true } = {}) {
   _chatRoom = room;
   _chatUnread[room] = 0;
   // Clear any pending reply/edit context carried over from another room.
   if (typeof chatCancelContext === 'function') chatCancelContext();
+  if (pushUrl) {
+    const url = PAGE_ROUTES.community + '/' + room;
+    if (location.pathname !== url) history.pushState({ page: 'community', room }, '', url);
+  }
   const r = CHAT_ROOMS[room];
   if ($('chatRoomIcon'))  $('chatRoomIcon').textContent  = r.icon;
   if ($('chatRoomName'))  $('chatRoomName').textContent  = r.name;
@@ -3644,7 +3697,7 @@ function isMine(m) {
 
 function _chatAvatarHtml(m, size = 30) {
   const src = m.avatar || blockieDataUrl(m.wallet || m.displayName || 'anon');
-  const ring = m.isSenderAdmin ? 'box-shadow:0 0 0 2px #f5a623;' : '';
+  const ring = m.isSenderAdmin ? 'box-shadow:0 0 0 2px #f5a623;' : m.isDiamondHolder ? 'box-shadow:0 0 0 2px #6ec6ff;' : '';
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0;${ring}"><img src="${src}" style="width:100%;height:100%;object-fit:cover"></div>`;
 }
 
@@ -3712,8 +3765,10 @@ function buildMsgHtml(m) {
   }
 
   const nameHtml = m.isSenderAdmin
-    ? `<span style="color:#f5a623;font-weight:800">👑 ${_escapeHtml(m.displayName)}</span>`
-    : _escapeHtml(m.displayName);
+    ? `<span style="color:#f5a623;font-weight:800">👑${m.isDiamondHolder ? '💎' : ''} ${_escapeHtml(m.displayName)}</span>`
+    : m.isDiamondHolder
+      ? `<span style="color:#6ec6ff;font-weight:800">💎 ${_escapeHtml(m.displayName)}</span>`
+      : _escapeHtml(m.displayName);
   return `<div class="chat-msg-row" id="msg-${m.id}" style="display:flex;padding:3px 0;gap:8px;align-items:flex-end">
     ${avatarHtml}
     <div style="max-width:72%;display:flex;flex-direction:column;align-items:flex-start">
