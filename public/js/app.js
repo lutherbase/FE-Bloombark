@@ -207,89 +207,136 @@ window.toggleSidebar = function(force) {
   app.classList.toggle('nav-open', open);
 };
 
+// Page id -> URL path (and back). Only pages that actually activate (not the
+// "coming soon" WIP ones, which never navigate anywhere) get a route.
+const PAGE_ROUTES = {
+  'landing':        '/landingpage',
+  'ai-analyzer':    '/aianalyzer',
+  'trade':          '/trade',
+  'dashboard':      '/marketoverview',
+  'wallet-tracker': '/wallettracker',
+  'narrative':      '/narrative',
+  'community':      '/community',
+  'watchlist':      '/watchlist',
+};
+const ROUTE_TO_PAGE = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([p, r]) => [r, p]));
+const _pageFromPath = path => ROUTE_TO_PAGE[path] || null;
+
+// Activates a page: swaps the visible .page / active nav-item, sets the
+// header, runs the page's load function, and (unless told not to) pushes the
+// matching URL. Shared by nav clicks, popstate (back/forward), and the
+// initial load-time route parse below — so all three stay in sync.
+function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
+  const el = navEl || document.querySelector(`.nav-item[data-page="${page}"]`);
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el?.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+  const titles = {
+    'dashboard':    ['MARKET OVERVIEW',  'Real-time market data across chains'],
+    'ai-analyzer':  ['AI ANALYZER',     'Analyze token risk, insider activity & wallet behavior from contract address'],
+    'trade':        ['TRADE',           'Bloombark native swap — best route via KyberSwap (EVM)'],
+    'wallet-tracker':['WALLET TRACKER', 'Track and monitor specific wallets in real-time'],
+    'smart-money':  ['SMART MONEY',     'Follow smart money wallets and their moves'],
+    'insider-scan': ['INSIDER SCAN',    'Detect insider wallets, team allocation, hidden connections & suspicious activity'],
+    'narrative':    ['NARRATIVE',       'Track trending narratives and market sectors'],
+    'community':    ['BLOOMBARK COMMUNITY', 'Chat, shill, and connect with other traders'],
+    'ai-trading':   ['AI TRADING AGENT','Automated trading signals powered by AI models'],
+    'auto-research':['AUTO RESEARCH',   'Automated token research and report generation'],
+    'alerts':       ['ALERTS',          'Your configured alerts and notifications'],
+    'watchlist':    ['WATCHLIST',       'Your saved tokens and watchlist'],
+    'portfolio':    ['PORTFOLIO',       'Your portfolio performance and holdings'],
+    'leaderboard':  ['LEADERBOARD',     'Top traders and wallets by performance'],
+    'settings':     ['SETTINGS',        'Configure your Bloombark Terminal preferences'],
+    'docs':         ['DOCUMENTATION',   'API docs, guides, and reference'],
+    'landing':      ['LANDING PAGE',    'About Bloombark Terminal'],
+  };
+  const _wip = ['smart-money','insider-scan','ai-trading','auto-research','alerts','portfolio','leaderboard'];
+  if (_wip.includes(page)) {
+    el?.classList.remove('active');
+    showWipModal();
+    return;
+  }
+
+  // Community entry guards. Both bounce the user back to the previous page
+  // (they never actually land in Community until the requirement is met).
+  if (page === 'community') {
+    // 1. Must have a connected wallet.
+    if (!window._privyWallet) {
+      _bounceToPrevPage(el);
+      showToast('Connect your wallet to join the Community');
+      openWalletModal();
+      return;
+    }
+    // 2. Must have picked a real username (not the default 0xAB…CD12 form).
+    //    Prompt for one and only enter Community after it's saved.
+    if (!_hasCustomUsername()) {
+      _bounceToPrevPage(el);
+      _pendingCommunityEntry = true;
+      _openUsernamePrompt();
+      return;
+    }
+  }
+  _prevActivePage = page;
+
+  const [title, sub] = titles[page] || ['BLOOMBARK TERMINAL', ''];
+  $('pageTitle').textContent    = title;
+  $('pageSubtitle').textContent = sub;
+
+  const isAnalyzer = page === 'ai-analyzer';
+  $('networkSelector').style.display = isAnalyzer ? '' : 'none';
+  $('exportBtn').style.display       = isAnalyzer ? '' : 'none';
+
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'watchlist') renderWatchlistPage();
+  if (page === 'landing') loadLandingCA();
+  if (page === 'narrative') loadNarrative();
+  if (page === 'community') initCommunity();
+  if (page === 'trade') initTradePage();
+
+  if (pushUrl && PAGE_ROUTES[page] && location.pathname !== PAGE_ROUTES[page]) {
+    history.pushState({ page }, '', PAGE_ROUTES[page]);
+  }
+}
+
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', e => {
     e.preventDefault();
     // On mobile, selecting a destination closes the drawer.
     toggleSidebar(false);
-    const page = el.dataset.page;
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    el.classList.add('active');
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    const target = document.getElementById('page-' + page);
-    if (target) target.classList.add('active');
-    const titles = {
-      'dashboard':    ['MARKET OVERVIEW',  'Real-time market data across chains'],
-      'ai-analyzer':  ['AI ANALYZER',     'Analyze token risk, insider activity & wallet behavior from contract address'],
-      'trade':        ['TRADE',           'Bloombark native swap — best route via KyberSwap (EVM)'],
-      'wallet-tracker':['WALLET TRACKER', 'Track and monitor specific wallets in real-time'],
-      'smart-money':  ['SMART MONEY',     'Follow smart money wallets and their moves'],
-      'insider-scan': ['INSIDER SCAN',    'Detect insider wallets, team allocation, hidden connections & suspicious activity'],
-      'narrative':    ['NARRATIVE',       'Track trending narratives and market sectors'],
-      'community':    ['BLOOMBARK COMMUNITY', 'Chat, shill, and connect with other traders'],
-      'ai-trading':   ['AI TRADING AGENT','Automated trading signals powered by AI models'],
-      'auto-research':['AUTO RESEARCH',   'Automated token research and report generation'],
-      'alerts':       ['ALERTS',          'Your configured alerts and notifications'],
-      'watchlist':    ['WATCHLIST',       'Your saved tokens and watchlist'],
-      'portfolio':    ['PORTFOLIO',       'Your portfolio performance and holdings'],
-      'leaderboard':  ['LEADERBOARD',     'Top traders and wallets by performance'],
-      'settings':     ['SETTINGS',        'Configure your Bloombark Terminal preferences'],
-      'docs':         ['DOCUMENTATION',   'API docs, guides, and reference'],
-      'landing':      ['LANDING PAGE',    'About Bloombark Terminal'],
-    };
-    const _wip = ['smart-money','insider-scan','ai-trading','auto-research','alerts','portfolio','leaderboard'];
-    if (_wip.includes(page)) {
-      el.classList.remove('active');
-      showWipModal();
-      return;
-    }
-
-    // Community entry guards. Both bounce the user back to the previous page
-    // (they never actually land in Community until the requirement is met).
-    if (page === 'community') {
-      // 1. Must have a connected wallet.
-      if (!window._privyWallet) {
-        _bounceToPrevPage(el);
-        showToast('Connect your wallet to join the Community');
-        openWalletModal();
-        return;
-      }
-      // 2. Must have picked a real username (not the default 0xAB…CD12 form).
-      //    Prompt for one and only enter Community after it's saved.
-      if (!_hasCustomUsername()) {
-        _bounceToPrevPage(el);
-        _pendingCommunityEntry = true;
-        _openUsernamePrompt();
-        return;
-      }
-    }
-    _prevActivePage = page;
-
-    const [title, sub] = titles[page] || ['BLOOMBARK TERMINAL', ''];
-    $('pageTitle').textContent    = title;
-    $('pageSubtitle').textContent = sub;
-
-    const isAnalyzer = page === 'ai-analyzer';
-    $('networkSelector').style.display = isAnalyzer ? '' : 'none';
-    $('exportBtn').style.display       = isAnalyzer ? '' : 'none';
-
-    if (page === 'dashboard') loadDashboard();
-    if (page === 'watchlist') renderWatchlistPage();
-    if (page === 'landing') loadLandingCA();
-    if (page === 'narrative') loadNarrative();
-    if (page === 'community') initCommunity();
-    if (page === 'trade') initTradePage();
+    _activatePage(el.dataset.page, { navEl: el, pushUrl: true });
   });
 });
 
-// Initial setup — always start on landing page
-(function() {
+// Back/forward browser navigation — re-activate without pushing a new entry.
+window.addEventListener('popstate', () => {
+  const page = _pageFromPath(location.pathname) || 'landing';
+  _activatePage(page, { pushUrl: false });
+});
+
+// Initial load: land directly on whatever page the URL specifies (e.g. a
+// hard refresh or shared link to /aianalyzer), replacing history so back
+// from there doesn't loop back to itself. Falls through to the landing-page
+// default below when the URL doesn't match a known route.
+const _routedInitialPage = _pageFromPath(location.pathname);
+(function _initRouteFromUrl() {
+  if (_routedInitialPage && _routedInitialPage !== 'landing') {
+    _activatePage(_routedInitialPage, { pushUrl: false });
+    history.replaceState({ page: _routedInitialPage }, '', PAGE_ROUTES[_routedInitialPage]);
+  } else if (location.pathname !== PAGE_ROUTES.landing) {
+    history.replaceState({ page: 'landing' }, '', PAGE_ROUTES.landing);
+  }
+})();
+
+// Initial setup — default to landing page unless the URL routed elsewhere above.
+if (!_routedInitialPage || _routedInitialPage === 'landing') {
   $('networkSelector').style.display = 'none';
   $('exportBtn').style.display       = 'none';
   $('pageTitle').textContent    = 'LANDING PAGE';
   $('pageSubtitle').textContent = 'About Bloombark Terminal';
   loadLandingCA();
-})();
+}
 
 /* ─── Live Clock ──────────────────────────────────────────────────────────── */
 setInterval(() => {
