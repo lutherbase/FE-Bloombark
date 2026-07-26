@@ -3644,7 +3644,8 @@ function isMine(m) {
 
 function _chatAvatarHtml(m, size = 30) {
   const src = m.avatar || blockieDataUrl(m.wallet || m.displayName || 'anon');
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0"><img src="${src}" style="width:100%;height:100%;object-fit:cover"></div>`;
+  const ring = m.isSenderAdmin ? 'box-shadow:0 0 0 2px #f5a623;' : '';
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex-shrink:0;${ring}"><img src="${src}" style="width:100%;height:100%;object-fit:cover"></div>`;
 }
 
 function _escapeHtml(s) {
@@ -3710,10 +3711,13 @@ function buildMsgHtml(m) {
     </div>`;
   }
 
+  const nameHtml = m.isSenderAdmin
+    ? `<span style="color:#f5a623;font-weight:800">👑 ${_escapeHtml(m.displayName)}</span>`
+    : _escapeHtml(m.displayName);
   return `<div class="chat-msg-row" id="msg-${m.id}" style="display:flex;padding:3px 0;gap:8px;align-items:flex-end">
     ${avatarHtml}
     <div style="max-width:72%;display:flex;flex-direction:column;align-items:flex-start">
-      <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${_escapeHtml(m.displayName)} · ${fmtChatTime(m.ts)}${editedHtml}</span>
+      <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${nameHtml} · ${fmtChatTime(m.ts)}${editedHtml}</span>
       <div style="background:var(--bg-card);border:1px solid var(--border-light);color:var(--text-primary);padding:9px 13px;border-radius:16px 16px 16px 4px;font-size:13px;line-height:1.5;word-break:break-word;max-width:100%">
         ${replyQuote}${textHtml}${imgHtml}
       </div>
