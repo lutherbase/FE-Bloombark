@@ -2257,21 +2257,41 @@ function renderMarketTabList(items) {
   el.innerHTML = DASH_HEADER + items.map(_dashRowHtml).join('');
 }
 
-async function fetchMarketTab(tab) {
+// Switching tabs just shows whatever's already stored on the backend —
+// instant, no live GeckoTerminal call. Pass refresh:true (from the Refresh
+// button) to force a fresh fetch instead.
+async function fetchMarketTab(tab, { refresh = false } = {}) {
   _marketTab = tab;
   if ($('marketTabTitle')) $('marketTabTitle').textContent = MARKET_TAB_LABEL[tab] || tab.toUpperCase();
   const el = $('marketTabGrid');
-  if (el) el.innerHTML = '<div class="dash-loading">Loading…</div>';
+  const btn = $('marketTabRefreshBtn');
+  if (refresh && btn) { btn.disabled = true; btn.textContent = '↻ Refreshing…'; }
+  if (el && !refresh) el.innerHTML = '<div class="dash-loading">Loading…</div>';
   try {
-    const res  = await fetch(`${API_BASE}/market/${tab}`);
+    const res  = await fetch(`${API_BASE}/market/${tab}${refresh ? '?refresh=1' : ''}`);
     const json = await res.json();
     if (!json.success) throw new Error(json.error);
     const chainLabel = json.chain || 'robinhood';
     if ($('marketTabSub')) $('marketTabSub').textContent = chainLabel.charAt(0).toUpperCase() + chainLabel.slice(1) + ' Chain';
+    if ($('marketTabUpdated')) $('marketTabUpdated').textContent = json.lastUpdated ? `Updated ${_relTime(json.lastUpdated)}` : '';
     renderMarketTabList(json.data || []);
   } catch (e) {
     if (el) el.innerHTML = '<div class="dash-loading" style="color:var(--accent-red)">Failed to load data</div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
   }
+}
+
+function refreshMarketTab() {
+  fetchMarketTab(_marketTab, { refresh: true });
+}
+
+function _relTime(ts) {
+  const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  return `${Math.floor(m / 60)}h ago`;
 }
 
 function _initMarketTabBar() {
@@ -2317,9 +2337,68 @@ async function loadChainVolumes() {
   }
 }
 
+async function loadChainTransactions() {
+  const el = $('chainTxGrid');
+  if (!el) return;
+  const LABELS = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
+  try {
+    const res  = await fetch(`${API_BASE}/chain-transactions`);
+    const json = await res.json();
+    if (!json.success) throw new Error(json.error);
+    const keys = Object.keys(json.data || {});
+    if (!keys.length) { el.innerHTML = '<div class="dash-loading">No chain transaction data available</div>'; return; }
+    el.innerHTML = keys.map(key => {
+      const c = json.data[key];
+      const label = LABELS[key] || key;
+      return `
+        <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px">${label.toUpperCase()}</span>
+          <span style="font-size:20px;font-weight:800;color:var(--text-primary)">${(c.transactionsToday || 0).toLocaleString('en-US')}</span>
+          <span style="font-size:10px;color:var(--text-muted)">${(c.totalTransactions || 0).toLocaleString('en-US')} all-time</span>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<div class="dash-loading" style="color:var(--accent-red)">Failed to load chain transactions</div>`;
+  }
+}
+
+// A Bloombark version of GeckoTerminal's own summary line (e.g. "The number
+// of transactions in the last 24 hours on Robinhood is 2.83M with a trading
+// volume of $347.54M, a -5.74% change as compared to yesterday.") — built
+// from our own two sources (Blockscout tx count + DefiLlama volume) rather
+// than GeckoTerminal's private/undocumented API.
+async function loadChainSummary() {
+  const el = $('chainSummaryText');
+  if (!el) return;
+  const LABELS = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
+  try {
+    const [volRes, txRes] = await Promise.all([
+      fetch(`${API_BASE}/chain-volumes`).then(r => r.json()),
+      fetch(`${API_BASE}/chain-transactions`).then(r => r.json()),
+    ]);
+    const chains = Object.keys(txRes.data || {});
+    if (!chains.length) { el.innerHTML = ''; return; }
+    el.innerHTML = chains.map(key => {
+      const tx    = txRes.data[key];
+      const vol   = volRes.data?.[key];
+      const label = LABELS[key] || key;
+      const txCount = (tx.transactionsToday || 0).toLocaleString('en-US');
+      const volStr  = vol ? dashFmtVol(vol.volume24h) : 'N/A';
+      const chgStr  = vol && typeof vol.change24h === 'number'
+        ? `, a <b style="color:${vol.change24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${vol.change24h >= 0 ? '+' : ''}${vol.change24h.toFixed(2)}%</b> change as compared to yesterday`
+        : '';
+      return `<div>The number of transactions in the last 24 hours on <b style="color:var(--text-primary)">${label}</b> is <b style="color:var(--text-primary)">${txCount}</b> with a trading volume of <b style="color:var(--text-primary)">${volStr}</b>${chgStr}.</div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '';
+  }
+}
+
 async function loadDashboard() {
   _initMarketTabBar();
   loadChainVolumes();
+  loadChainTransactions();
+  loadChainSummary();
   await fetchMarketTab(_marketTab);
 }
 

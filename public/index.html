@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23E86C3A'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23F5A623'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%2327C97F'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%234a90d9'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/main.css?v=8" />
+  <link rel="stylesheet" href="css/main.css?v=9" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -493,17 +493,30 @@
         <!-- Other pages (placeholder) -->
         <div class="page" id="page-dashboard">
           <div class="dashboard-wrap">
-            <!-- Chain Volume (DefiLlama) -->
-            <div class="dash-section">
-              <div class="dash-section-header">
-                <span class="dash-section-title">📊 CHAIN VOLUME</span>
-                <span class="dash-section-sub">24h DEX volume</span>
+            <!-- Chain Volume + Chain Transactions -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div class="dash-section">
+                <div class="dash-section-header">
+                  <span class="dash-section-title">📊 CHAIN VOLUME</span>
+                  <span class="dash-section-sub">24h DEX volume</span>
+                </div>
+                <div id="chainVolumeGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                  <div class="dash-loading">Loading…</div>
+                </div>
+                <div class="dash-source-note">Data source: DefiLlama</div>
               </div>
-              <div id="chainVolumeGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
-                <div class="dash-loading">Loading…</div>
+              <div class="dash-section">
+                <div class="dash-section-header">
+                  <span class="dash-section-title">🔗 CHAIN TRANSACTIONS</span>
+                  <span class="dash-section-sub">24h network activity</span>
+                </div>
+                <div id="chainTxGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                  <div class="dash-loading">Loading…</div>
+                </div>
+                <div class="dash-source-note">Data source: Blockscout</div>
               </div>
-              <div class="dash-source-note">Data source: DefiLlama</div>
             </div>
+            <div id="chainSummaryText" style="font-size:12px;color:var(--text-muted);line-height:1.6;padding:2px 2px 4px"></div>
             <!-- Market tabs (Robinhood chain) -->
             <div class="dash-filter-bar" id="marketTabBar">
               <button class="dash-filter-btn active" data-tab="pools">Pools</button>
@@ -515,6 +528,10 @@
               <div class="dash-section-header">
                 <span class="dash-section-title" id="marketTabTitle">💧 POOLS</span>
                 <span class="dash-section-sub" id="marketTabSub">Robinhood Chain</span>
+                <span style="margin-left:auto;display:flex;align-items:center;gap:10px">
+                  <span id="marketTabUpdated" style="font-size:10px;color:var(--text-muted)"></span>
+                  <button id="marketTabRefreshBtn" onclick="refreshMarketTab()" style="background:var(--bg-secondary);border:1px solid var(--border-light);color:var(--text-primary);font-size:11px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:5px">↻ Refresh</button>
+                </span>
               </div>
               <div class="dash-vol-wrap">
                 <div class="dash-volume-grid" id="marketTabGrid">
@@ -1109,6 +1126,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=142"></script>
+  <script src="js/app.js?v=145"></script>
 </body>
 </html>
