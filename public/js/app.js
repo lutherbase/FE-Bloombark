@@ -3184,10 +3184,10 @@ const CHAT_ROOMS = {
   trading:   { name: 'Trading',    icon: '📈', desc: 'Token analysis & calls' },
   alpha:     { name: 'Alpha',      icon: '🔥', desc: 'Early alpha & gems' },
   freeshill: { name: 'Free Shill', icon: '📣', desc: 'Shill your token here 🚀' },
-  holders:   { name: 'Holders',    icon: '💎', desc: 'Token holders only', gated: true },
-  private:   { name: 'Private',    icon: '🔐', desc: 'Pay to unlock', gated: true },
   // Read-only BloomBuy feed — name tracks the live ticker (see _syncMoonRoomName).
   moon:      { name: '$BBRK Moon', icon: '🚀', desc: 'Live buy feed — read only', readOnly: true },
+  holders:   { name: 'Holders',    icon: '💎', desc: 'Token holders only', gated: true },
+  private:   { name: 'Private',    icon: '🔐', desc: 'Pay to unlock', gated: true },
 };
 
 // Keep the Moon room's label in sync with the DB-parameterized ticker
