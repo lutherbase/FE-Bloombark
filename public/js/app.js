@@ -2882,6 +2882,56 @@ async function _loadWatchlist() {
   } catch(_) {}
 }
 
+// Watchlist row — same market-stat fields/layout as Market Overview's
+// dash-vol-row (price, 24h change, volume, mcap, liq, age, buys, sells),
+// with a trailing actions column for the alert bell + remove-heart button.
+function _watchRowHtml(t, i, hasAlert) {
+  const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+  const chg = t.priceChange24h || 0;
+  const chgStr = (chg >= 0 ? '+' : '') + chg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  const chgColor = chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+  const chainColor = CHAIN_COLOR[t.networkId] || '#8b92a8';
+  const logo = dashLogoUrl(t);
+  const initial = (t.name || '?').trim().charAt(0).toUpperCase();
+  const addr = t.address || '';
+  const symEsc = (t.symbol || '').replace(/'/g, "\\'");
+  const nameEsc = (t.name || '').replace(/'/g, "\\'");
+  const caLine = addr
+    ? `<span class="dash-vol-ca" title="Copy contract address" onclick="event.stopPropagation();navigator.clipboard.writeText('${addr}').then(()=>showToast('Contract address copied'))">${addr}</span>`
+    : '';
+  return `<div class="dash-vol-row watch-vol-row" onclick="openInAnalyzer('${addr}','${t.networkId}')">
+    <span class="dash-vol-rank ${rankClass}">${i+1}</span>
+    <div class="dash-vol-token">
+      <span class="dash-vol-logo" style="background:${chainColor}22;color:${chainColor}">${initial}${logo ? `<img src="${logo}" alt="" loading="lazy" onload="this.style.opacity=1" onerror="this.remove()">` : ''}</span>
+      <div class="dash-vol-info">
+        <span class="dash-vol-name">${t.name}</span>
+        <span class="dash-vol-pair">
+          <span class="dash-chain-badge" style="background:${chainColor}22;color:${chainColor}">${t.network}</span>
+        </span>
+        ${caLine}
+      </div>
+    </div>
+    <span class="dash-vol-price">${dashFmtPrice(t.price)}</span>
+    <span class="dash-vol-change" style="color:${chgColor}">${chgStr}</span>
+    <span class="dash-vol-volume">${dashFmtVol(t.volume24h)}</span>
+    <span class="dash-vol-liq">${dashFmtVol(t.fdv)}</span>
+    <span class="dash-vol-liq">${dashFmtVol(t.liquidity)}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-blue)">${dashAge(t.createdAt) || '-'}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-green)">${(t.buys24h || 0).toLocaleString('en-US')}</span>
+    <span class="dash-vol-liq" style="color:var(--accent-red)">${(t.sells24h || 0).toLocaleString('en-US')}</span>
+    <span class="watch-vol-actions">
+      <button onclick="event.stopPropagation();openAlertModal('${addr}','${t.chain||''}','${symEsc}','${nameEsc}')" title="${hasAlert ? 'Alert set — click to edit' : 'Set alert'}"
+        style="background:none;border:none;cursor:pointer;padding:2px;display:flex;align-items:center;color:${hasAlert ? 'var(--accent-green)' : 'var(--text-muted)'};opacity:${hasAlert ? '1' : '0.7'}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="${hasAlert ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+      <button onclick="event.stopPropagation();removeFromWatchlist('${addr}')" title="Remove"
+        style="background:none;border:none;cursor:pointer;padding:2px;color:#ff6b8a;font-size:14px;opacity:0.7">♥</button>
+    </span>
+  </div>`;
+}
+
 async function renderWatchlistPage() {
   const el = document.getElementById('watchlistContent');
   if (!el) return;
@@ -2915,32 +2965,45 @@ async function renderWatchlistPage() {
       </div>`;
       return;
     }
-    el.innerHTML = items.map(item => {
-      const hasAlert = alertAddrs.has(item.address.toLowerCase());
-      return `
-      <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px;cursor:pointer"
-           onclick="openInAnalyzer('${item.address}')">
-        <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:36px;height:36px;border-radius:50%;background:#1e2235;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#e2e8f0;overflow:hidden;flex-shrink:0">
-            ${(item.imageUrl || item.image_url)
-              ? `<img src="${item.imageUrl || item.image_url}" style="width:36px;height:36px;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent='${(item.symbol||'?').charAt(0)}'">`
-              : (item.symbol||'?').charAt(0)}
-          </div>
-          <div>
-            <div style="font-size:14px;font-weight:600;color:#e2e8f0">${item.name || item.symbol || 'Unknown'}</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:2px">${item.symbol || ''} · ${(item.chain||'').toUpperCase()} · ${item.address.slice(0,6)}…${item.address.slice(-4)}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <button onclick="event.stopPropagation();openAlertModal('${item.address}','${item.chain||''}','${(item.symbol||'').replace(/'/g,"\\'")}','${(item.name||'').replace(/'/g,"\\'")}')" title="${hasAlert ? 'Alert set — click to edit' : 'Set alert'}"
-            style="background:none;border:none;cursor:pointer;padding:4px;color:${hasAlert ? '#27c97f' : '#6b7280'};font-size:16px;opacity:${hasAlert ? '1' : '0.7'};transition:opacity 0.2s"
-            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='${hasAlert ? '1' : '0.7'}'">🔔</button>
-          <button onclick="event.stopPropagation();removeFromWatchlist('${item.address}')" title="Remove"
-            style="background:none;border:none;cursor:pointer;padding:4px;color:#ff6b8a;font-size:16px;opacity:0.7;transition:opacity 0.2s"
-            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">♥</button>
-        </div>
-      </div>
-    `; }).join('');
+
+    // Pull live market stats (price/volume/mcap/liq/age/buys/sells) per token
+    // from DexScreener — same source used by Market Overview — so the fields
+    // shown here match exactly.
+    const rows = await Promise.all(items.map(async item => {
+      const base = {
+        address: item.address, chain: item.chain, networkId: item.chain,
+        network: (item.chain || '').charAt(0).toUpperCase() + (item.chain || '').slice(1),
+        name: item.name || item.symbol || 'Unknown', symbol: item.symbol || '',
+        imageUrl: item.imageUrl || item.image_url,
+        price: 0, priceChange24h: 0, volume24h: 0, fdv: 0, liquidity: 0, createdAt: null, buys24h: 0, sells24h: 0,
+      };
+      try {
+        const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${item.address}`);
+        const j = await r.json();
+        const pairs = (j.pairs || []).filter(p => p.chainId === item.chain)
+          .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
+        if (pairs.length) {
+          const p = pairs[0];
+          base.price = parseFloat(p.priceUsd || 0);
+          base.priceChange24h = parseFloat(p.priceChange?.h24 || 0);
+          base.volume24h = parseFloat(p.volume?.h24 || 0);
+          base.fdv = parseFloat(p.fdv || p.marketCap || 0);
+          base.liquidity = parseFloat(p.liquidity?.usd || 0);
+          base.createdAt = p.pairCreatedAt ? new Date(p.pairCreatedAt).toISOString() : null;
+          base.buys24h = p.txns?.h24?.buys || 0;
+          base.sells24h = p.txns?.h24?.sells || 0;
+        }
+      } catch(e) {}
+      return base;
+    }));
+
+    el.innerHTML = `<div class="dash-vol-wrap"><div class="dash-volume-grid">` +
+      `<div class="dash-vol-header watch-vol-header"><span>#</span><span style="padding-left:33px">TOKEN / PAIR</span><span style="text-align:right">PRICE</span>` +
+      `<span style="text-align:right">24H CHANGE</span><span style="text-align:right">24H VOLUME</span>` +
+      `<span style="text-align:right">MCAP</span><span style="text-align:right">LIQ</span>` +
+      `<span style="text-align:right">AGE</span><span style="text-align:right">BUYS</span><span style="text-align:right">SELLS</span><span></span></div>` +
+      rows.map((t, i) => _watchRowHtml(t, i, alertAddrs.has(t.address.toLowerCase()))).join('') +
+      `</div></div>`;
   } catch(e) {
     el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading watchlist</div>`;
   }
