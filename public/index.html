@@ -552,10 +552,16 @@
               <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:14px">
                 <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent-orange);margin-bottom:8px">PASTE TOKEN ADDRESS TO TRADE · ROBINHOOD ONLY</div>
                 <div style="display:flex;gap:8px">
-                  <input id="tradeTokenInput" placeholder="0x… Robinhood token contract address"
-                    style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--text-primary);font-family:monospace;outline:none;min-width:0"
-                    onkeydown="if(event.key==='Enter') tradeLoadToken()"
-                    onfocus="this.style.borderColor='#27c97f'" onblur="this.style.borderColor='var(--border-light)'">
+                  <div style="flex:1;display:flex;align-items:center;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;min-width:0" id="tradeTokenInputWrap">
+                    <input id="tradeTokenInput" placeholder="0x… Robinhood token contract address"
+                      style="flex:1;background:transparent;border:none;padding:11px 14px;font-size:12px;color:var(--text-primary);font-family:monospace;outline:none;min-width:0"
+                      onkeydown="if(event.key==='Enter') tradeLoadToken()"
+                      onfocus="document.getElementById('tradeTokenInputWrap').style.borderColor='#27c97f'"
+                      onblur="document.getElementById('tradeTokenInputWrap').style.borderColor='var(--border-light)'">
+                    <button class="copy-btn" id="tradeCopyBtn" title="Copy">
+                      <svg width="16" height="16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                  </div>
                   <button onclick="tradeLoadToken()" style="background:#27c97f;border:none;border-radius:10px;padding:11px 22px;cursor:pointer;color:#000;font-size:11px;font-weight:800;letter-spacing:1px;white-space:nowrap;flex-shrink:0">LOAD</button>
                 </div>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:9px">
@@ -630,8 +636,8 @@
                         <button onclick="swapPresetPct(100)" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px;font-size:10px;font-weight:700;color:#27c97f;cursor:pointer">MAX</button>
                       </div>
                     </div>
-                    <div style="display:flex;justify-content:center;margin:2px 0">
-                      <div style="width:30px;height:30px;border-radius:50%;background:var(--bg-secondary);border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;z-index:1;margin:-6px 0">↓</div>
+                    <div style="display:flex;justify-content:center;margin:10px 0">
+                      <div style="width:30px;height:30px;border-radius:50%;background:var(--bg-secondary);border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:14px;z-index:1">↓</div>
                     </div>
                     <div style="margin-bottom:14px">
                       <div style="font-size:9px;color:var(--text-muted);font-weight:700;margin-bottom:6px;letter-spacing:0.5px">YOU RECEIVE (est.)</div>
@@ -1126,6 +1132,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=146"></script>
+  <script src="js/app.js?v=148"></script>
 </body>
 </html>

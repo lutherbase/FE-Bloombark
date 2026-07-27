@@ -436,6 +436,14 @@ $('copyBtn').addEventListener('click', () => {
     showToast('Contract address copied to clipboard');
   });
 });
+$('tradeCopyBtn')?.addEventListener('click', () => {
+  const val = $('tradeTokenInput').value;
+  if (val) navigator.clipboard.writeText(val).then(() => {
+    $('tradeCopyBtn').style.color = 'var(--accent-green)';
+    setTimeout(() => ($('tradeCopyBtn').style.color = ''), 1000);
+    showToast('Contract address copied to clipboard');
+  });
+});
 
 /* ─── Loading Steps ───────────────────────────────────────────────────────── */
 let _defaultLoadingStepsHTML = null;
@@ -4432,6 +4440,7 @@ function swapSetSide(side) {
   $('swapExecBtn').style.color      = side === 'buy' ? '#000' : '#fff';
   $('swapAmountIn').value = '';
   _clearQuote();
+  _updateSwapExecBtn();
   _loadPayBalance();
 }
 
@@ -4460,7 +4469,7 @@ async function _loadPayBalance() {
   const lbl = $('swapBalanceLabel');
   if (lbl) lbl.textContent = '';
   const w = window._privyWallet, t = _tradeToken;
-  if (!w || !t) return;
+  if (!w || !t) { _updateSwapExecBtn(); return; }
   try {
     if (_tradeSide === 'buy') {
       const raw = await _nativeBalance(t.chain, w);
@@ -4472,6 +4481,25 @@ async function _loadPayBalance() {
       if (lbl) lbl.textContent = 'Balance: ' + _fmtAmt(_tradeBalance) + ' ' + t.symbol;
     }
   } catch (_) {}
+  _updateSwapExecBtn();
+}
+
+// Disables the Buy/Sell button and relabels it whenever the entered amount
+// exceeds the wallet's known balance for the current side — same rule for
+// both buy (native ETH balance) and sell (token balance).
+function _updateSwapExecBtn() {
+  const btn = $('swapExecBtn');
+  if (!btn) return;
+  const amt = parseFloat($('swapAmountIn')?.value);
+  const insufficient = _tradeBalance != null && amt > 0 && amt > _tradeBalance;
+  btn.disabled = insufficient;
+  btn.style.opacity = insufficient ? '0.5' : '1';
+  btn.style.cursor  = insufficient ? 'not-allowed' : 'pointer';
+  if (insufficient) {
+    btn.textContent = 'Insufficient Balance';
+  } else if (_tradeToken) {
+    btn.textContent = (_tradeSide === 'buy' ? 'BUY ' : 'SELL ') + _tradeToken.symbol;
+  }
 }
 
 function swapPresetPct(pct) {
@@ -4485,6 +4513,7 @@ function swapPresetPct(pct) {
 
 // ── Quote (KyberSwap route) ──────────────────────────────────────────────────
 function swapScheduleQuote() {
+  _updateSwapExecBtn(); // instant balance check, not debounced like the quote itself
   clearTimeout(_tradeTimer);
   const st = $('swapQuoteStatus');
   if (st) st.textContent = 'Fetching quote…';
@@ -4583,6 +4612,8 @@ async function swapExecute() {
   if (!t || !q) return showToast('Get a quote first');
   if (!w) return showToast('Connect wallet first (top-right button)');
   if (!window.ethereum) return showToast('MetaMask not found');
+  const amt = parseFloat($('swapAmountIn')?.value);
+  if (_tradeBalance != null && amt > _tradeBalance) return showToast('Insufficient balance');
 
   const btn = $('swapExecBtn');
   const txSt = $('swapTxStatus');
