@@ -258,7 +258,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'docs':         ['DOCUMENTATION',   'API docs, guides, and reference'],
     'landing':      ['LANDING PAGE',    'About Bloombark Terminal'],
   };
-  const _wip = ['smart-money','insider-scan','ai-trading','auto-research','alerts','portfolio','leaderboard'];
+  const _wip = ['smart-money','insider-scan','ai-trading','auto-research','portfolio','leaderboard'];
   if (_wip.includes(page)) {
     el?.classList.remove('active');
     showWipModal();
@@ -296,6 +296,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
 
   if (page === 'dashboard') loadDashboard();
   if (page === 'watchlist') renderWatchlistPage();
+  if (page === 'alerts') renderAlertsPage();
   if (page === 'landing') loadLandingCA();
   if (page === 'narrative') loadNarrative();
   if (page === 'community') initCommunity();
@@ -2896,9 +2897,16 @@ async function renderWatchlistPage() {
   try {
     const token = localStorage.getItem('bb_jwt');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    const res = await fetch(`${API_BASE}/watchlist`, { credentials: 'include', headers });
+    const [res, alertsRes] = await Promise.all([
+      fetch(`${API_BASE}/watchlist`, { credentials: 'include', headers }),
+      fetch(`${API_BASE}/alerts`, { credentials: 'include', headers }).catch(() => null),
+    ]);
     const data = await res.json();
     const items = data.items || [];
+    let alertAddrs = new Set();
+    if (alertsRes) {
+      try { alertAddrs = new Set((await alertsRes.json()).items?.map(a => a.address.toLowerCase()) || []); } catch(e) {}
+    }
     if (items.length === 0) {
       el.innerHTML = `<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">
         <div style="font-size:28px;margin-bottom:12px">♡</div>
@@ -2907,7 +2915,9 @@ async function renderWatchlistPage() {
       </div>`;
       return;
     }
-    el.innerHTML = items.map(item => `
+    el.innerHTML = items.map(item => {
+      const hasAlert = alertAddrs.has(item.address.toLowerCase());
+      return `
       <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px;cursor:pointer"
            onclick="openInAnalyzer('${item.address}')">
         <div style="display:flex;align-items:center;gap:12px">
@@ -2921,11 +2931,16 @@ async function renderWatchlistPage() {
             <div style="font-size:11px;color:#6b7280;margin-top:2px">${item.symbol || ''} · ${(item.chain||'').toUpperCase()} · ${item.address.slice(0,6)}…${item.address.slice(-4)}</div>
           </div>
         </div>
-        <button onclick="event.stopPropagation();removeFromWatchlist('${item.address}')" title="Remove"
-          style="background:none;border:none;cursor:pointer;padding:4px;color:#ff6b8a;font-size:16px;opacity:0.7;transition:opacity 0.2s"
-          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">♥</button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button onclick="event.stopPropagation();openAlertModal('${item.address}','${item.chain||''}','${(item.symbol||'').replace(/'/g,"\\'")}','${(item.name||'').replace(/'/g,"\\'")}')" title="${hasAlert ? 'Alert set — click to edit' : 'Set alert'}"
+            style="background:none;border:none;cursor:pointer;padding:4px;color:${hasAlert ? '#27c97f' : '#6b7280'};font-size:16px;opacity:${hasAlert ? '1' : '0.7'};transition:opacity 0.2s"
+            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity='${hasAlert ? '1' : '0.7'}'">🔔</button>
+          <button onclick="event.stopPropagation();removeFromWatchlist('${item.address}')" title="Remove"
+            style="background:none;border:none;cursor:pointer;padding:4px;color:#ff6b8a;font-size:16px;opacity:0.7;transition:opacity 0.2s"
+            onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">♥</button>
+        </div>
       </div>
-    `).join('');
+    `; }).join('');
   } catch(e) {
     el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading watchlist</div>`;
   }
@@ -2942,6 +2957,207 @@ async function removeFromWatchlist(address) {
     renderWatchlistPage();
     showToast('Removed from watchlist');
   } catch(e) { showToast('Error: ' + e.message); }
+}
+
+/* ─── Token Alerts (per-watchlist-token MCAP/Volume % move alerts) ────────── */
+async function openAlertModal(address, chain, symbol, name) {
+  const existing = document.getElementById('alertModal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'alertModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px);z-index:9998;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#161822;border:1px solid #1e2235;border-radius:16px;padding:24px;width:340px;box-shadow:0 16px 48px rgba(0,0,0,0.7)">
+      <div style="font-size:14px;font-weight:800;color:#e2e8f0;margin-bottom:4px">Set Alert — ${symbol || name || 'Token'}</div>
+      <div id="alertModalStatus" style="font-size:11px;color:#6b7280;margin-bottom:16px">Loading current market data…</div>
+      <div id="alertModalBody" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button id="alertMetricMcap" class="alert-metric-btn" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Market Cap</button>
+          <button id="alertMetricVolume" class="alert-metric-btn" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Volume (24h)</button>
+        </div>
+        <div style="font-size:11px;color:#6b7280;margin-bottom:14px">Existing: <span id="alertBaselineDisplay" style="color:#e2e8f0;font-weight:700"></span></div>
+        <div style="font-size:11px;color:#8b92a8;margin-bottom:6px">Alert direction</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button id="alertDirUp" class="alert-dir-btn" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">▲ Up</button>
+          <button id="alertDirDown" class="alert-dir-btn" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">▼ Down</button>
+          <button id="alertDirBoth" class="alert-dir-btn" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">↕ Both</button>
+        </div>
+        <div style="font-size:11px;color:#8b92a8;margin-bottom:6px">Threshold %</div>
+        <input id="alertThresholdInput" type="number" min="0.1" step="0.1" placeholder="e.g. 10" value="10"
+          style="width:100%;background:#0d0f18;border:1px solid #2d3748;border-radius:8px;color:#e2e8f0;font-size:13px;padding:10px 12px;margin-bottom:18px;box-sizing:border-box">
+        <div style="display:flex;gap:8px">
+          <button id="alertRemoveBtn" style="display:none;flex:1;background:#ff4d4d12;border:1px solid #ff4d4d44;border-radius:10px;color:#ff6b6b;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Remove Alert</button>
+          <button id="alertCancelBtn" style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Cancel</button>
+          <button id="alertSaveBtn" style="flex:1;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Save Alert</button>
+        </div>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  overlay.querySelector('#alertCancelBtn').onclick = () => overlay.remove();
+
+  let metric = 'mcap';
+  let direction = 'both';
+  let mcapVal = 0, volumeVal = 0;
+  let existingAlertId = null;
+
+  function styleMetricBtns() {
+    ['Mcap','Volume'].forEach(k => {
+      const btn = overlay.querySelector(`#alertMetric${k}`);
+      const active = (k === 'Mcap' && metric === 'mcap') || (k === 'Volume' && metric === 'volume');
+      btn.style.background = active ? '#27c97f15' : '#1e2235';
+      btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
+      btn.style.color = active ? '#27c97f' : '#8b92a8';
+    });
+    overlay.querySelector('#alertBaselineDisplay').textContent = metric === 'mcap'
+      ? '$' + Number(mcapVal).toLocaleString()
+      : '$' + Number(volumeVal).toLocaleString();
+  }
+  function styleDirBtns() {
+    [['Up','up'],['Down','down'],['Both','both']].forEach(([k,v]) => {
+      const btn = overlay.querySelector(`#alertDir${k}`);
+      const active = direction === v;
+      btn.style.background = active ? '#27c97f15' : '#1e2235';
+      btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
+      btn.style.color = active ? '#27c97f' : '#8b92a8';
+    });
+  }
+
+  overlay.querySelector('#alertMetricMcap').onclick = () => { metric = 'mcap'; styleMetricBtns(); };
+  overlay.querySelector('#alertMetricVolume').onclick = () => { metric = 'volume'; styleMetricBtns(); };
+  overlay.querySelector('#alertDirUp').onclick = () => { direction = 'up'; styleDirBtns(); };
+  overlay.querySelector('#alertDirDown').onclick = () => { direction = 'down'; styleDirBtns(); };
+  overlay.querySelector('#alertDirBoth').onclick = () => { direction = 'both'; styleDirBtns(); };
+
+  try {
+    const token = localStorage.getItem('bb_jwt');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const [dexRes, existingRes] = await Promise.all([
+      fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`),
+      fetch(`${API_BASE}/alerts`, { credentials: 'include', headers }).catch(() => null),
+    ]);
+    const dexJson = await dexRes.json();
+    const pairs = (dexJson.pairs || []).filter(p => p.chainId === chain)
+      .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
+    if (!pairs.length) throw new Error('Could not fetch current market data for this token');
+    const p = pairs[0];
+    mcapVal = parseFloat(p.fdv || p.marketCap || 0);
+    volumeVal = parseFloat(p.volume?.h24 || 0);
+
+    if (existingRes) {
+      try {
+        const existingAlerts = (await existingRes.json()).items || [];
+        const mine = existingAlerts.find(a => a.address.toLowerCase() === address.toLowerCase());
+        if (mine) {
+          existingAlertId = mine.id;
+          metric = mine.metric;
+          direction = mine.direction;
+          overlay.querySelector('#alertThresholdInput').value = mine.threshold_pct;
+          overlay.querySelector('#alertRemoveBtn').style.display = 'block';
+        }
+      } catch(e) {}
+    }
+
+    overlay.querySelector('#alertModalStatus').style.display = 'none';
+    overlay.querySelector('#alertModalBody').style.display = 'block';
+    styleMetricBtns();
+    styleDirBtns();
+  } catch(e) {
+    overlay.querySelector('#alertModalStatus').textContent = 'Error: ' + e.message;
+    overlay.querySelector('#alertModalStatus').style.color = '#ff6b6b';
+    return;
+  }
+
+  overlay.querySelector('#alertRemoveBtn').onclick = async () => {
+    try {
+      const token = localStorage.getItem('bb_jwt');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await fetch(`${API_BASE}/alerts/token/${address}`, { method: 'DELETE', credentials: 'include', headers });
+      overlay.remove();
+      showToast('Alert removed');
+      renderWatchlistPage();
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  overlay.querySelector('#alertSaveBtn').onclick = async () => {
+    const thresholdPct = parseFloat(overlay.querySelector('#alertThresholdInput').value);
+    if (!(thresholdPct > 0)) return showToast('Enter a valid threshold %');
+    const baselineValue = metric === 'mcap' ? mcapVal : volumeVal;
+    if (!(baselineValue > 0)) return showToast('No current market data available for this metric');
+    try {
+      const token = localStorage.getItem('bb_jwt');
+      const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+      const res = await fetch(`${API_BASE}/alerts`, {
+        method: 'POST', credentials: 'include', headers,
+        body: JSON.stringify({ address, chain, name, symbol, metric, baselineValue, thresholdPct, direction }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Failed to save alert');
+      overlay.remove();
+      showToast('Alert set');
+      renderWatchlistPage();
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+}
+
+async function renderAlertsPage() {
+  const el = document.getElementById('alertsContent');
+  if (!el) return;
+  if (!_privyUser && !localStorage.getItem('bb_jwt')) {
+    el.innerHTML = `<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">
+      <div style="font-size:28px;margin-bottom:12px">🔔</div>
+      Connect wallet to see your alerts
+      <br><button onclick="openWalletModal()" style="margin-top:16px;background:#27c97f;border:none;border-radius:8px;color:#000;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Connect Wallet</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#6b7280;font-size:13px">Loading…</div>`;
+  try {
+    const token = localStorage.getItem('bb_jwt');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE}/alerts/notifications`, { credentials: 'include', headers });
+    const data = await res.json();
+    const items = data.items || [];
+
+    const badge = $('alertsNavBadge');
+    if (badge) {
+      if (data.unread > 0) { badge.textContent = data.unread; badge.style.display = ''; }
+      else badge.style.display = 'none';
+    }
+
+    if (items.length === 0) {
+      el.innerHTML = `<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">
+        <div style="font-size:28px;margin-bottom:12px">🔔</div>
+        No alerts triggered yet.<br>
+        <span style="color:#9ca3af">Set an alert on a watchlist token to get notified of big MCAP/Volume moves.</span>
+      </div>`;
+    } else {
+      el.innerHTML = items.map(n => {
+        const up = n.direction === 'up';
+        const label = n.metric === 'mcap' ? 'Market Cap' : 'Volume';
+        const when = new Date(Number(n.ts)).toLocaleString();
+        return `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${n.is_read ? '#1e2235' : '#27c97f40'};border-radius:10px;padding:12px 16px;cursor:pointer"
+             onclick="openInAnalyzer('${n.address}')">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:50%;background:${up ? '#27c97f15' : '#ff4d4d15'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+              ${up ? '📈' : '📉'}
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:#e2e8f0">${n.symbol || n.name || 'Token'} — ${label} ${up ? 'Up' : 'Down'} ${Math.abs(n.change_pct).toFixed(1)}%</div>
+              <div style="font-size:11px;color:#6b7280;margin-top:2px">${(n.chain||'').toUpperCase()} · ${when}</div>
+            </div>
+          </div>
+          <div style="color:${up ? '#27c97f' : '#ff6b8a'};font-size:13px;font-weight:700">${up ? '+' : ''}${n.change_pct.toFixed(1)}%</div>
+        </div>
+      `; }).join('');
+    }
+
+    if (data.unread > 0) {
+      fetch(`${API_BASE}/alerts/notifications/mark-read`, { method: 'POST', credentials: 'include', headers }).catch(() => {});
+    }
+  } catch(e) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading alerts</div>`;
+  }
 }
 
 /* ─── Narrative Tracker ───────────────────────────────────────────────────── */

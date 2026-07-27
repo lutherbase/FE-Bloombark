@@ -78,10 +78,10 @@
 
         <div class="nav-divider"></div>
 
-        <a href="#" class="nav-item" data-page="alerts" style="display:none">
+        <a href="#" class="nav-item" data-page="alerts">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           Alerts
-          <span class="nav-badge">3</span>
+          <span id="alertsNavBadge" class="nav-badge" style="display:none">0</span>
         </a>
         <a href="#" class="nav-item" data-page="watchlist">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
@@ -893,8 +893,17 @@
         <div class="page placeholder-page" id="page-auto-research">
           <div class="placeholder-content"><h2>Auto Research</h2><p>Automated token research and reports.</p></div>
         </div>
-        <div class="page placeholder-page" id="page-alerts">
-          <div class="placeholder-content"><h2>Alerts</h2><p>Your configured alerts and notifications.</p></div>
+        <div class="page ai-analyzer-page" id="page-alerts">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">ALERTS</div>
+              <div style="font-size:13px;color:#9ca3af">Triggered MCAP & Volume alerts from your watchlist</div>
+            </div>
+            <button onclick="renderAlertsPage()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+          </div>
+          <div id="alertsContent" style="display:flex;flex-direction:column;gap:8px">
+            <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Connect wallet to see your alerts</div>
+          </div>
         </div>
         <div class="page ai-analyzer-page" id="page-watchlist">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -1132,6 +1141,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=148"></script>
+  <script src="js/app.js?v=149"></script>
 </body>
 </html>
