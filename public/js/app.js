@@ -3061,8 +3061,9 @@ async function openAlertModal(address, chain, symbol, name) {
 
   let metric = 'mcap';
   let direction = 'both';
-  let mcapVal = 0, volumeVal = 0;
-  let existingAlertId = null;
+  let mine = null; // existing saved alert for this token, if any (frozen baseline lives here)
+
+  function fmtUsd(v) { return '$' + Number(v || 0).toLocaleString(); }
 
   function styleMetricBtns() {
     ['Mcap','Volume'].forEach(k => {
@@ -3072,9 +3073,16 @@ async function openAlertModal(address, chain, symbol, name) {
       btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
       btn.style.color = active ? '#27c97f' : '#8b92a8';
     });
-    overlay.querySelector('#alertBaselineDisplay').textContent = metric === 'mcap'
-      ? '$' + Number(mcapVal).toLocaleString()
-      : '$' + Number(volumeVal).toLocaleString();
+    const display = overlay.querySelector('#alertBaselineDisplay');
+    // Baseline shown here is the FROZEN value captured when the alert was
+    // last saved — it does not track live price moves. It only refreshes to
+    // the current MCAP/Volume the moment the user actually saves (i.e. sets
+    // a new alert or edits this one), never just from opening/viewing.
+    if (mine && mine.metric === metric) {
+      display.textContent = fmtUsd(mine.baseline_value) + ' (saved)';
+    } else {
+      display.textContent = 'Will use current value when you save';
+    }
   }
   function styleDirBtns() {
     [['Up','up'],['Down','down'],['Both','both']].forEach(([k,v]) => {
@@ -3095,30 +3103,14 @@ async function openAlertModal(address, chain, symbol, name) {
   try {
     const token = localStorage.getItem('bb_jwt');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    const [dexRes, existingRes] = await Promise.all([
-      fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`),
-      fetch(`${API_BASE}/alerts`, { credentials: 'include', headers }).catch(() => null),
-    ]);
-    const dexJson = await dexRes.json();
-    const pairs = (dexJson.pairs || []).filter(p => p.chainId === chain)
-      .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
-    if (!pairs.length) throw new Error('Could not fetch current market data for this token');
-    const p = pairs[0];
-    mcapVal = parseFloat(p.fdv || p.marketCap || 0);
-    volumeVal = parseFloat(p.volume?.h24 || 0);
-
-    if (existingRes) {
-      try {
-        const existingAlerts = (await existingRes.json()).items || [];
-        const mine = existingAlerts.find(a => a.address.toLowerCase() === address.toLowerCase());
-        if (mine) {
-          existingAlertId = mine.id;
-          metric = mine.metric;
-          direction = mine.direction;
-          overlay.querySelector('#alertThresholdInput').value = mine.threshold_pct;
-          overlay.querySelector('#alertRemoveBtn').style.display = 'block';
-        }
-      } catch(e) {}
+    const existingAlerts = await fetch(`${API_BASE}/alerts`, { credentials: 'include', headers })
+      .then(r => r.json()).then(j => j.items || []).catch(() => []);
+    mine = existingAlerts.find(a => a.address.toLowerCase() === address.toLowerCase()) || null;
+    if (mine) {
+      metric = mine.metric;
+      direction = mine.direction;
+      overlay.querySelector('#alertThresholdInput').value = mine.threshold_pct;
+      overlay.querySelector('#alertRemoveBtn').style.display = 'block';
     }
 
     overlay.querySelector('#alertModalStatus').style.display = 'none';
@@ -3145,9 +3137,22 @@ async function openAlertModal(address, chain, symbol, name) {
   overlay.querySelector('#alertSaveBtn').onclick = async () => {
     const thresholdPct = parseFloat(overlay.querySelector('#alertThresholdInput').value);
     if (!(thresholdPct > 0)) return showToast('Enter a valid threshold %');
-    const baselineValue = metric === 'mcap' ? mcapVal : volumeVal;
-    if (!(baselineValue > 0)) return showToast('No current market data available for this metric');
+    const saveBtn = overlay.querySelector('#alertSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Fetching latest…';
     try {
+      // Only fetch live MCAP/Volume right here, at the moment of saving —
+      // this is the one point where a fresh baseline gets captured. It
+      // never auto-updates otherwise (see styleMetricBtns()).
+      const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
+      const dexJson = await dexRes.json();
+      const pairs = (dexJson.pairs || []).filter(p => p.chainId === chain)
+        .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
+      if (!pairs.length) throw new Error('Could not fetch current market data for this token');
+      const p = pairs[0];
+      const baselineValue = metric === 'mcap' ? parseFloat(p.fdv || p.marketCap || 0) : parseFloat(p.volume?.h24 || 0);
+      if (!(baselineValue > 0)) throw new Error('No current market data available for this metric');
+
       const token = localStorage.getItem('bb_jwt');
       const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
       const res = await fetch(`${API_BASE}/alerts`, {
@@ -3158,7 +3163,11 @@ async function openAlertModal(address, chain, symbol, name) {
       overlay.remove();
       showToast('Alert set');
       renderWatchlistPage();
-    } catch(e) { showToast('Error: ' + e.message); }
+    } catch(e) {
+      showToast('Error: ' + e.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Alert';
+    }
   };
 }
 
