@@ -4242,6 +4242,7 @@ const DEXSCREENER_CHAIN_MAP = { ethereum:'ethereum', base:'base', arbitrum:'arbi
 
 let NETWORK_ENV  = 'mainnet';
 let IS_TESTNET   = false;
+let _enabledChains = ['robinhood']; // safe default, matches the backend's until config loads
 const NATIVE_SYMBOL_BY_CHAIN = { ethereum:'ETH', base:'ETH', arbitrum:'ETH', polygon:'MATIC', optimism:'ETH', robinhood:'ETH' };
 
 // Pulls the backend's active network config (testnet/mainnet) and patches
@@ -4252,6 +4253,7 @@ async function _loadNetworkConfig() {
     const cfg = await res.json();
     NETWORK_ENV = cfg.networkEnv || 'mainnet';
     IS_TESTNET  = !!cfg.isTestnet;
+    if (Array.isArray(cfg.enabledChains) && cfg.enabledChains.length) _enabledChains = cfg.enabledChains;
     for (const [key, c] of Object.entries(cfg.chains || {})) {
       if (!TRADE_CHAINS[key] || !c) continue;
       TRADE_CHAINS[key] = {
@@ -4352,10 +4354,13 @@ async function tradeLoadToken() {
     try {
       const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`);
       const j = await r.json();
+      // Only trade on chains that are actually turned on (default: Robinhood
+      // only) — so the ETH taken from the wallet is always Robinhood-chain
+      // ETH, the same way the Private channel payment is pinned to Robinhood.
       const pairs = (j.pairs || [])
-        .filter(p => DEXSCREENER_CHAIN_MAP[p.chainId])
+        .filter(p => DEXSCREENER_CHAIN_MAP[p.chainId] && _enabledChains.includes(DEXSCREENER_CHAIN_MAP[p.chainId]))
         .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
-      if (!pairs.length) throw new Error('Token not found on a supported EVM chain (Ethereum, Base, Arbitrum, Polygon, Optimism, Robinhood)');
+      if (!pairs.length) throw new Error(`Token not found on an enabled chain (${_enabledChains.join(', ')})`);
       const p = pairs[0];
       const chain = DEXSCREENER_CHAIN_MAP[p.chainId];
 
