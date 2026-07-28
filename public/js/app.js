@@ -256,7 +256,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'leaderboard':  ['LEADERBOARD',     'Top traders and wallets by performance'],
     'settings':     ['SETTINGS',        'Configure your Bloombark Terminal preferences'],
     'docs':         ['DOCUMENTATION',   'API docs, guides, and reference'],
-    'landing':      ['LANDING PAGE',    'About Bloombark Terminal'],
+    'landing':      ['HOME',    'About Bloombark Terminal'],
   };
   const _wip = ['smart-money','insider-scan','ai-trading','auto-research','portfolio','leaderboard'];
   if (_wip.includes(page)) {
