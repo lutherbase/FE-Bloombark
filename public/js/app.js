@@ -3062,8 +3062,21 @@ async function openAlertModal(address, chain, symbol, name) {
   let metric = 'mcap';
   let direction = 'both';
   let mine = null; // existing saved alert for this token, if any (frozen baseline lives here)
+  let liveData = null; // {mcap, volume} fetched once on first switch to a non-saved metric, then cached
 
   function fmtUsd(v) { return '$' + Number(v || 0).toLocaleString(); }
+
+  async function ensureLiveData() {
+    if (liveData) return liveData;
+    const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
+    const dexJson = await dexRes.json();
+    const pairs = (dexJson.pairs || []).filter(p => p.chainId === chain)
+      .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
+    if (!pairs.length) throw new Error('Could not fetch current market data for this token');
+    const p = pairs[0];
+    liveData = { mcap: parseFloat(p.fdv || p.marketCap || 0), volume: parseFloat(p.volume?.h24 || 0) };
+    return liveData;
+  }
 
   function styleMetricBtns() {
     ['Mcap','Volume'].forEach(k => {
@@ -3073,15 +3086,25 @@ async function openAlertModal(address, chain, symbol, name) {
       btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
       btn.style.color = active ? '#27c97f' : '#8b92a8';
     });
+  }
+
+  // Baseline shown here is the FROZEN value captured when the alert was last
+  // saved for this exact metric — switching back to the originally-saved
+  // metric always shows that frozen value again. Switching to the OTHER
+  // metric resets and fetches the current value for it right away (not
+  // deferred to save time) — that fresh value is what gets used on Save.
+  async function refreshBaselineDisplay() {
     const display = overlay.querySelector('#alertBaselineDisplay');
-    // Baseline shown here is the FROZEN value captured when the alert was
-    // last saved — it does not track live price moves. It only refreshes to
-    // the current MCAP/Volume the moment the user actually saves (i.e. sets
-    // a new alert or edits this one), never just from opening/viewing.
     if (mine && mine.metric === metric) {
       display.textContent = fmtUsd(mine.baseline_value) + ' (saved)';
-    } else {
-      display.textContent = 'Will use current value when you save';
+      return;
+    }
+    display.textContent = `Fetching current ${metric === 'mcap' ? 'market cap' : 'volume'}…`;
+    try {
+      const d = await ensureLiveData();
+      display.textContent = fmtUsd(metric === 'mcap' ? d.mcap : d.volume) + ' (current)';
+    } catch(e) {
+      display.textContent = 'Error fetching current data';
     }
   }
   function styleDirBtns() {
@@ -3094,8 +3117,8 @@ async function openAlertModal(address, chain, symbol, name) {
     });
   }
 
-  overlay.querySelector('#alertMetricMcap').onclick = () => { metric = 'mcap'; styleMetricBtns(); };
-  overlay.querySelector('#alertMetricVolume').onclick = () => { metric = 'volume'; styleMetricBtns(); };
+  overlay.querySelector('#alertMetricMcap').onclick = () => { metric = 'mcap'; styleMetricBtns(); refreshBaselineDisplay(); };
+  overlay.querySelector('#alertMetricVolume').onclick = () => { metric = 'volume'; styleMetricBtns(); refreshBaselineDisplay(); };
   overlay.querySelector('#alertDirUp').onclick = () => { direction = 'up'; styleDirBtns(); };
   overlay.querySelector('#alertDirDown').onclick = () => { direction = 'down'; styleDirBtns(); };
   overlay.querySelector('#alertDirBoth').onclick = () => { direction = 'both'; styleDirBtns(); };
@@ -3117,6 +3140,7 @@ async function openAlertModal(address, chain, symbol, name) {
     overlay.querySelector('#alertModalBody').style.display = 'block';
     styleMetricBtns();
     styleDirBtns();
+    refreshBaselineDisplay();
   } catch(e) {
     overlay.querySelector('#alertModalStatus').textContent = 'Error: ' + e.message;
     overlay.querySelector('#alertModalStatus').style.color = '#ff6b6b';
@@ -3139,18 +3163,20 @@ async function openAlertModal(address, chain, symbol, name) {
     if (!(thresholdPct > 0)) return showToast('Enter a valid threshold %');
     const saveBtn = overlay.querySelector('#alertSaveBtn');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Fetching latest…';
+    saveBtn.textContent = 'Saving…';
     try {
-      // Only fetch live MCAP/Volume right here, at the moment of saving —
-      // this is the one point where a fresh baseline gets captured. It
-      // never auto-updates otherwise (see styleMetricBtns()).
-      const dexRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`);
-      const dexJson = await dexRes.json();
-      const pairs = (dexJson.pairs || []).filter(p => p.chainId === chain)
-        .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
-      if (!pairs.length) throw new Error('Could not fetch current market data for this token');
-      const p = pairs[0];
-      const baselineValue = metric === 'mcap' ? parseFloat(p.fdv || p.marketCap || 0) : parseFloat(p.volume?.h24 || 0);
+      // If the user never changed the metric away from what was already
+      // saved, keep that frozen baseline untouched. Otherwise use the fresh
+      // value fetched the moment they switched metric (see
+      // refreshBaselineDisplay) — falls back to a fetch here only if that
+      // somehow never happened (e.g. it errored silently).
+      let baselineValue;
+      if (mine && mine.metric === metric) {
+        baselineValue = mine.baseline_value;
+      } else {
+        const d = await ensureLiveData();
+        baselineValue = metric === 'mcap' ? d.mcap : d.volume;
+      }
       if (!(baselineValue > 0)) throw new Error('No current market data available for this metric');
 
       const token = localStorage.getItem('bb_jwt');
@@ -3171,6 +3197,177 @@ async function openAlertModal(address, chain, symbol, name) {
   };
 }
 
+/* ─── Alerts page: notifications list (token moves / Bloombark updates /
+   mute notices) + admin-only Blast tab ─────────────────────────────────── */
+let _alertsTab = 'notifications';
+let _alertsById = new Map();   // id -> notification, for the detail popup lookup
+let _alertsSelected = new Set();
+let _alertsIsAdmin = null;     // cached tri-state: null=unchecked, true/false once known
+
+function switchAlertsTab(tab) {
+  _alertsTab = tab;
+  document.querySelectorAll('.alerts-tab-btn').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.style.background = active ? '#27c97f15' : '#1e2235';
+    btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
+    btn.style.color = active ? '#27c97f' : '#8b92a8';
+  });
+  $('alertsTabNotifications').style.display = tab === 'notifications' ? 'block' : 'none';
+  $('alertsTabBlast').style.display = tab === 'blast' ? 'block' : 'none';
+}
+
+async function _checkAlertsAdmin() {
+  if (_alertsIsAdmin !== null) return _alertsIsAdmin;
+  try {
+    const token = localStorage.getItem('bb_jwt');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include', headers });
+    const data = await res.json();
+    _alertsIsAdmin = !!data.isAdmin;
+  } catch(e) { _alertsIsAdmin = false; }
+  return _alertsIsAdmin;
+}
+
+// Category → icon/label used in the collapsed list row.
+const ALERT_CATEGORY_META = {
+  token_movement:   { icon: '📊', label: 'Token Movement' },
+  bloombark_update: { icon: '📢', label: 'Bloombark Update' },
+  muted:            { icon: '🔇', label: 'Channel Notice' },
+};
+
+function _alertRowHtml(n) {
+  const when = new Date(Number(n.ts)).toLocaleString();
+  const unread = !n.is_read;
+  const checked = _alertsSelected.has(n.id);
+  const checkbox = `<input type="checkbox" onclick="event.stopPropagation()" onchange="toggleAlertSelect(${n.id}, this.checked)" ${checked ? 'checked' : ''} style="margin-right:2px;cursor:pointer">`;
+
+  if (n.category === 'token_movement') {
+    const up = n.direction === 'up';
+    const label = n.metric === 'mcap' ? 'Market Cap' : 'Volume';
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? '#27c97f40' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
+           onclick="openInAnalyzer('${n.address}')">
+        <div style="display:flex;align-items:center;gap:12px">
+          ${checkbox}
+          <div style="width:36px;height:36px;border-radius:50%;background:${up ? '#27c97f15' : '#ff4d4d15'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+            ${up ? '📈' : '📉'}
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#e2e8f0">${n.symbol || n.name || 'Token'} — ${label} ${up ? 'Up' : 'Down'} ${Math.abs(n.change_pct).toFixed(1)}%</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px">${(n.chain||'').toUpperCase()} · ${when}</div>
+          </div>
+        </div>
+        <div style="color:${up ? '#27c97f' : '#ff6b8a'};font-size:13px;font-weight:700">${up ? '+' : ''}${n.change_pct.toFixed(1)}%</div>
+      </div>`;
+  }
+
+  // Non-token-movement categories: list shows Title + Sub Title only —
+  // full Description is revealed in a popup on click.
+  const meta = ALERT_CATEGORY_META[n.category] || { icon: '🔔', label: 'Notice' };
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? '#27c97f40' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
+         onclick="openAlertDetailPopup(${n.id})">
+      <div style="display:flex;align-items:center;gap:12px;min-width:0">
+        ${checkbox}
+        <div style="width:36px;height:36px;border-radius:50%;background:#8b92a815;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+          ${meta.icon}
+        </div>
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.title || meta.label}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n.subtitle || ''}${n.subtitle ? ' · ' : ''}${when}</div>
+        </div>
+      </div>
+      <div style="color:#6b7280;font-size:11px;flex-shrink:0;margin-left:10px">${meta.label}</div>
+    </div>`;
+}
+
+function openAlertDetailPopup(id) {
+  const n = _alertsById.get(id);
+  if (!n) return;
+  const existing = document.getElementById('alertDetailModal');
+  if (existing) existing.remove();
+  const meta = ALERT_CATEGORY_META[n.category] || { icon: '🔔', label: 'Notice' };
+  const when = new Date(Number(n.ts)).toLocaleString();
+  const overlay = document.createElement('div');
+  overlay.id = 'alertDetailModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px);z-index:9998;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#161822;border:1px solid #1e2235;border-radius:16px;padding:24px;width:360px;max-height:80vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.7)">
+      <div style="font-size:20px;margin-bottom:10px">${meta.icon}</div>
+      <div style="font-size:15px;font-weight:800;color:#e2e8f0;margin-bottom:4px">${n.title || meta.label}</div>
+      ${n.subtitle ? `<div style="font-size:12px;color:#9ca3af;margin-bottom:12px">${n.subtitle}</div>` : ''}
+      <div style="font-size:13px;color:#c5cad6;line-height:1.6;white-space:pre-wrap;margin-bottom:16px">${n.detail || 'No further details.'}</div>
+      <div style="font-size:10px;color:#4b5563;margin-bottom:18px">${when}</div>
+      <button onclick="document.getElementById('alertDetailModal').remove()" style="width:100%;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Close</button>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function toggleAlertSelect(id, checked) {
+  if (checked) _alertsSelected.add(id); else _alertsSelected.delete(id);
+  const count = $('alertsSelectedCount');
+  if (count) count.textContent = `${_alertsSelected.size} selected`;
+  const selectAll = $('alertsSelectAll');
+  if (selectAll) selectAll.checked = _alertsSelected.size > 0 && _alertsSelected.size === _alertsById.size;
+}
+
+function toggleSelectAllAlerts(checked) {
+  _alertsSelected = checked ? new Set(_alertsById.keys()) : new Set();
+  renderAlertsPage();
+}
+
+async function deleteSelectedAlerts() {
+  if (!_alertsSelected.size) return showToast('Nothing selected');
+  const ids = Array.from(_alertsSelected);
+  try {
+    const token = localStorage.getItem('bb_jwt');
+    const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    await fetch(`${API_BASE}/alerts/notifications/delete`, { method: 'POST', credentials: 'include', headers, body: JSON.stringify({ ids }) });
+    _alertsSelected = new Set();
+    showToast('Deleted');
+    renderAlertsPage();
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+function deleteAllAlerts() {
+  bloombarkConfirm('Delete all alerts? This cannot be undone.', async () => {
+    try {
+      const token = localStorage.getItem('bb_jwt');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      await fetch(`${API_BASE}/alerts/notifications/delete-all`, { method: 'POST', credentials: 'include', headers });
+      _alertsSelected = new Set();
+      showToast('All alerts deleted');
+      renderAlertsPage();
+    } catch(e) { showToast('Error: ' + e.message); }
+  });
+}
+
+async function sendAlertBlast() {
+  const title = $('blastTitleInput')?.value?.trim();
+  const subtitle = $('blastSubtitleInput')?.value?.trim();
+  const detail = $('blastDescInput')?.value?.trim();
+  if (!title) return showToast('Title is required');
+  const btn = $('blastSendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try {
+    const token = localStorage.getItem('bb_jwt');
+    const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+    const res = await fetch(`${API_BASE}/admin/alerts/blast`, {
+      method: 'POST', credentials: 'include', headers,
+      body: JSON.stringify({ title, subtitle, detail }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to send');
+    showToast(`Sent to ${data.sent} user${data.sent === 1 ? '' : 's'}`);
+    $('blastTitleInput').value = '';
+    $('blastSubtitleInput').value = '';
+    $('blastDescInput').value = '';
+  } catch(e) { showToast('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Send to All Users'; }
+}
+
 async function renderAlertsPage() {
   const el = document.getElementById('alertsContent');
   if (!el) return;
@@ -3182,6 +3379,12 @@ async function renderAlertsPage() {
     </div>`;
     return;
   }
+
+  const isAdmin = await _checkAlertsAdmin();
+  const blastTabBtn = $('alertsBlastTabBtn');
+  if (blastTabBtn) blastTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+  if (!isAdmin && _alertsTab === 'blast') switchAlertsTab('notifications');
+
   el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#6b7280;font-size:13px">Loading…</div>`;
   try {
     const token = localStorage.getItem('bb_jwt');
@@ -3189,6 +3392,8 @@ async function renderAlertsPage() {
     const res = await fetch(`${API_BASE}/alerts/notifications`, { credentials: 'include', headers });
     const data = await res.json();
     const items = data.items || [];
+    _alertsById = new Map(items.map(n => [n.id, n]));
+    _alertsSelected = new Set(Array.from(_alertsSelected).filter(id => _alertsById.has(id)));
 
     const badge = $('alertsNavBadge');
     if (badge) {
@@ -3196,32 +3401,21 @@ async function renderAlertsPage() {
       else badge.style.display = 'none';
     }
 
+    const selectBar = $('alertsSelectBar');
+    if (selectBar) selectBar.style.display = items.length ? 'flex' : 'none';
+    const selectAll = $('alertsSelectAll');
+    if (selectAll) selectAll.checked = _alertsSelected.size > 0 && _alertsSelected.size === items.length;
+    const count = $('alertsSelectedCount');
+    if (count) count.textContent = `${_alertsSelected.size} selected`;
+
     if (items.length === 0) {
       el.innerHTML = `<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">
         <div style="font-size:28px;margin-bottom:12px">🔔</div>
-        No alerts triggered yet.<br>
-        <span style="color:#9ca3af">Set an alert on a watchlist token to get notified of big MCAP/Volume moves.</span>
+        No alerts yet.<br>
+        <span style="color:#9ca3af">Set an alert on a watchlist token, or wait for a Bloombark update.</span>
       </div>`;
     } else {
-      el.innerHTML = items.map(n => {
-        const up = n.direction === 'up';
-        const label = n.metric === 'mcap' ? 'Market Cap' : 'Volume';
-        const when = new Date(Number(n.ts)).toLocaleString();
-        return `
-        <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${n.is_read ? '#1e2235' : '#27c97f40'};border-radius:10px;padding:12px 16px;cursor:pointer"
-             onclick="openInAnalyzer('${n.address}')">
-          <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:36px;height:36px;border-radius:50%;background:${up ? '#27c97f15' : '#ff4d4d15'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
-              ${up ? '📈' : '📉'}
-            </div>
-            <div>
-              <div style="font-size:13px;font-weight:600;color:#e2e8f0">${n.symbol || n.name || 'Token'} — ${label} ${up ? 'Up' : 'Down'} ${Math.abs(n.change_pct).toFixed(1)}%</div>
-              <div style="font-size:11px;color:#6b7280;margin-top:2px">${(n.chain||'').toUpperCase()} · ${when}</div>
-            </div>
-          </div>
-          <div style="color:${up ? '#27c97f' : '#ff6b8a'};font-size:13px;font-weight:700">${up ? '+' : ''}${n.change_pct.toFixed(1)}%</div>
-        </div>
-      `; }).join('');
+      el.innerHTML = items.map(_alertRowHtml).join('');
     }
 
     if (data.unread > 0) {
