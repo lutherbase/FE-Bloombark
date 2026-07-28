@@ -344,7 +344,7 @@ const _routedInitialPage = _pageFromPath(location.pathname);
 if (!_routedInitialPage || _routedInitialPage === 'landing') {
   $('networkSelector').style.display = 'none';
   $('exportBtn').style.display       = 'none';
-  $('pageTitle').textContent    = 'LANDING PAGE';
+  $('pageTitle').textContent    = 'HOME';
   $('pageSubtitle').textContent = 'About Bloombark Terminal';
   loadLandingCA();
 }
