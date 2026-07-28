@@ -210,7 +210,7 @@ window.toggleSidebar = function(force) {
 // Page id -> URL path (and back). Only pages that actually activate (not the
 // "coming soon" WIP ones, which never navigate anywhere) get a route.
 const PAGE_ROUTES = {
-  'landing':        '/landingpage',
+  'landing':        '/home',
   'ai-analyzer':    '/aianalyzer',
   'trade':          '/trade',
   'dashboard':      '/marketoverview',
