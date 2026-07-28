@@ -217,6 +217,7 @@ const PAGE_ROUTES = {
   'wallet-tracker': '/wallettracker',
   'narrative':      '/narrative',
   'community':      '/community',
+  'alerts':         '/alerts',
   'watchlist':      '/watchlist',
 };
 const ROUTE_TO_PAGE = Object.fromEntries(Object.entries(PAGE_ROUTES).map(([p, r]) => [r, p]));
