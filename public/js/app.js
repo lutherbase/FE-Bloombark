@@ -2360,11 +2360,16 @@ async function loadChainTransactions() {
     el.innerHTML = keys.map(key => {
       const c = json.data[key];
       const label = LABELS[key] || key;
+      const gas = c.gasPriceGwei;
+      const gasLine = gas
+        ? `<span style="font-size:10px;color:var(--accent-green)">⛽ ${gas.average != null ? gas.average.toFixed(gas.average < 1 ? 3 : 2) : '—'} Gwei <span style="color:var(--text-muted)">(avg)</span></span>`
+        : '';
       return `
         <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
           <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px">${label.toUpperCase()}</span>
           <span style="font-size:20px;font-weight:800;color:var(--text-primary)">${(c.transactionsToday || 0).toLocaleString('en-US')}</span>
           <span style="font-size:10px;color:var(--text-muted)">${(c.totalTransactions || 0).toLocaleString('en-US')} all-time</span>
+          ${gasLine}
         </div>`;
     }).join('');
   } catch (e) {
