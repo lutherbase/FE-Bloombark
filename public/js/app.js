@@ -107,6 +107,51 @@ function showToast(msg, type = 'success') {
   }, 2000);
 }
 
+/* ─── Action sound effect ─────────────────────────────────────────────────── */
+// A short synthesized two-layer "confirm" chime (Web Audio API — no audio
+// file needed) played when the user kicks off a scan/load/track action, so
+// there's audible feedback the moment the click registers.
+let _sfxCtx = null;
+function _getSfxCtx() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!_sfxCtx) _sfxCtx = new Ctx();
+  if (_sfxCtx.state === 'suspended') _sfxCtx.resume();
+  return _sfxCtx;
+}
+function playActionSound() {
+  try {
+    const ctx = _getSfxCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    // Main tone: quick upward sweep (520Hz → 1040Hz)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(1040, now + 0.09);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.24);
+
+    // Shimmer layer: a brief high overtone for a techy sparkle
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1560, now + 0.05);
+    gain2.gain.setValueAtTime(0, now + 0.05);
+    gain2.gain.linearRampToValueAtTime(0.08, now + 0.06);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(now + 0.05);
+    osc2.stop(now + 0.26);
+  } catch (e) {}
+}
+
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 // Backend origin. Override at runtime via `window.BLOOMBARK_API_ORIGIN` (e.g. an
 // injected <script>). In dev (localhost/127.0.0.1) this points at the local
@@ -427,6 +472,7 @@ $('scanBtn').addEventListener('click', () => {
     setTimeout(() => ($('contractInput').style.borderColor = ''), 1200);
     return;
   }
+  playActionSound();
   requireWallet(() => scanToken(addr));
 });
 $('contractInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('scanBtn').click(); });
@@ -2088,6 +2134,7 @@ async function loadTrending() {
     if (!address) return;
     if (!_privyUser) { openWalletModal(); return; }
 
+    playActionSound();
     show('wtLoading');
     if (loadingMsg()) loadingMsg().textContent = `Fetching ${evmChain} wallet data…`;
 
@@ -4846,6 +4893,7 @@ async function tradeLoadToken() {
   if (!addr) return showToast('Paste a token address first');
   if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) return showToast('Invalid EVM address — must start with 0x');
 
+  playActionSound();
   runLoadingSteps(async () => {
     try {
       const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${addr}`);
