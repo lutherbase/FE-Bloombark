@@ -389,6 +389,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', e => {
     e.preventDefault();
+    playActionSound();
     // On mobile, selecting a destination closes the drawer.
     toggleSidebar(false);
     _activatePage(el.dataset.page, { navEl: el, pushUrl: true });
@@ -1692,6 +1693,7 @@ async function runPrediction() {
   const d = _currentTokenData;
   if (!d?.address) return showToast('Scan a token first');
 
+  playActionSound();
   const btn = $('predictionBtn');
   const content = $('predictionContent');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Analyzing…'; }
