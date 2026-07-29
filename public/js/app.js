@@ -214,6 +214,18 @@ function playClickSound() {
   } catch (e) {}
 }
 
+/* ─── Browser tab title badge ────────────────────────────────────────────── */
+// Shows "Bloombark Terminal Apps (N)" where N = unread Alerts + unread
+// Community messages combined, so a pending notification is visible even
+// when the tab isn't focused. Falls back to the plain title when N is 0.
+const _BASE_TITLE = document.title;
+let _titleAlertsUnread    = 0;
+let _titleCommunityUnread = 0;
+function _updateTabTitle() {
+  const total = _titleAlertsUnread + _titleCommunityUnread;
+  document.title = total > 0 ? `${_BASE_TITLE} (${total})` : _BASE_TITLE;
+}
+
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 // Backend origin. Override at runtime via `window.BLOOMBARK_API_ORIGIN` (e.g. an
 // injected <script>). In dev (localhost/127.0.0.1) this points at the local
@@ -3363,6 +3375,8 @@ function _updateAlertsBadge(unread) {
   }
   _alertsLastUnreadCount = unread;
   localStorage.setItem('bb_alerts_last_unread', String(unread));
+  _titleAlertsUnread = unread;
+  _updateTabTitle();
 }
 async function _pollAlertsForSound() {
   const token = localStorage.getItem('bb_jwt');
@@ -4547,6 +4561,8 @@ function _updateChatNavBadge() {
     .reduce((sum, room) => sum + (_chatUnread[room] || 0), 0);
   badge.textContent = total;
   badge.style.display = total > 0 ? 'inline' : 'none';
+  _titleCommunityUnread = total;
+  _updateTabTitle();
 }
 
 let _chatPendingImg = null;
