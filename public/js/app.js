@@ -470,6 +470,37 @@ document.querySelectorAll('.nav-item').forEach(el => {
   });
 });
 
+// Every other clickable element in the app gets the same subtle click sound
+// as the sidebar, except actions that already have their own distinct sound
+// (scan/load/track/predict → playActionSound, refresh buttons →
+// playRefreshSound) and most of Community/Alerts, which have their own
+// click/bell semantics and would get noisy under a blanket rule — with two
+// carve-outs that DO get the click sound despite living in those pages:
+// switching channels in Community, and clicking a non-token-movement Alerts
+// notification (Bloombark update / mute notice) to open its detail popup.
+const _CLICK_SOUND_EXCLUDE_IDS = new Set(['scanBtn', 'wtScanBtn', 'marketTabRefreshBtn']);
+const _CLICK_SOUND_EXCLUDE_ONCLICK = [
+  'tradeLoadToken(', 'runPrediction(', 'refreshMarketTab(', 'playRefreshSound(',
+  'openAlertModal(', 'openAnalyzerAlertModal(', 'playClickSound(', 'playActionSound(',
+];
+const _CLICK_SOUND_ALLOW_ONCLICK = ['switchChatRoom(', 'openAlertDetailPopup('];
+// Capture phase, deliberately — some click handlers (e.g. switchChatRoom)
+// re-render their own container on click to update active-state highlighting,
+// which detaches the clicked element from the DOM before a bubble-phase
+// listener would run, silently breaking the closest()-based exclusion checks
+// below. Capture fires before the target's own onclick, so it always sees
+// the DOM as it was at the moment of the actual click.
+document.addEventListener('click', e => {
+  const el = e.target.closest('button, [onclick], [role="button"]');
+  if (!el || el.classList.contains('nav-item')) return;
+  const onclickAttr = el.getAttribute('onclick') || '';
+  const allowed = _CLICK_SOUND_ALLOW_ONCLICK.some(fn => onclickAttr.includes(fn));
+  if (!allowed && el.closest('#page-community, #page-alerts, #alertModal, #alertDetailModal')) return;
+  if (_CLICK_SOUND_EXCLUDE_IDS.has(el.id)) return;
+  if (_CLICK_SOUND_EXCLUDE_ONCLICK.some(fn => onclickAttr.includes(fn))) return;
+  playClickSound();
+}, true);
+
 // Back/forward browser navigation — re-activate without pushing a new entry.
 window.addEventListener('popstate', () => {
   const page = _pageFromPath(location.pathname) || 'landing';
