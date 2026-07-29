@@ -152,6 +152,39 @@ function playActionSound() {
   } catch (e) {}
 }
 
+// A bright single "tiing" bell tone — played when a new Alerts notification
+// shows up, distinct in character from playActionSound()'s ascending chime.
+function playNotificationSound() {
+  try {
+    const ctx = _getSfxCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1760, now); // A6 — bright "ting"
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.22, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.46);
+
+    // Fifth-above harmonic layer for a bell-like shimmer
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(2637, now); // E7
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(0.09, now + 0.01);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(now);
+    osc2.stop(now + 0.36);
+  } catch (e) {}
+}
+
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 // Backend origin. Override at runtime via `window.BLOOMBARK_API_ORIGIN` (e.g. an
 // injected <script>). In dev (localhost/127.0.0.1) this points at the local
@@ -3257,6 +3290,45 @@ let _alertsById = new Map();   // id -> notification, for the detail popup looku
 let _alertsSelected = new Set();
 let _alertsIsAdmin = null;     // cached tri-state: null=unchecked, true/false once known
 
+// Background poll for new alerts (any page, not just while Alerts is open) —
+// plays the "tiing" sound and lights up the nav badge the moment a new
+// notification shows up server-side, without waiting for the user to visit
+// the Alerts page.
+let _alertsLastSeenId = parseInt(localStorage.getItem('bb_alerts_last_seen_id') || '0', 10);
+async function _pollAlertsForSound() {
+  const token = localStorage.getItem('bb_jwt');
+  if (!token && !_privyUser) return;
+  try {
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE}/alerts/notifications`, { credentials: 'include', headers });
+    const data = await res.json();
+    const items = data.items || [];
+    if (!items.length) return;
+    const maxId = Math.max(...items.map(n => n.id));
+
+    if (_alertsLastSeenId === 0) {
+      // First poll this session — just establish a baseline, don't treat
+      // pre-existing history as "new".
+      _alertsLastSeenId = maxId;
+      localStorage.setItem('bb_alerts_last_seen_id', String(maxId));
+      return;
+    }
+    if (maxId > _alertsLastSeenId) {
+      playNotificationSound();
+      _alertsLastSeenId = maxId;
+      localStorage.setItem('bb_alerts_last_seen_id', String(maxId));
+    }
+
+    const badge = $('alertsNavBadge');
+    if (badge) {
+      if (data.unread > 0) { badge.textContent = data.unread; badge.style.display = ''; }
+      else badge.style.display = 'none';
+    }
+  } catch (e) {}
+}
+setTimeout(_pollAlertsForSound, 5000);
+setInterval(_pollAlertsForSound, 30000);
+
 function switchAlertsTab(tab) {
   _alertsTab = tab;
   document.querySelectorAll('.alerts-tab-btn').forEach(btn => {
@@ -4947,6 +5019,7 @@ async function tradeLoadToken() {
       _tradeTrades = [];
       tradeLoadTxs(true);
       tradeStartLive();
+      _loadTradeGasPrice(chain);
 
       $('loadingOverlay').style.display = 'none';
       showToast(`${_tradeToken.symbol} ready to trade on ${chain}`);
@@ -5308,6 +5381,28 @@ let _tradeChartTimer = null;
 let _tradeTxTimer    = null;
 let _tradePairAddr   = null;
 let _tradeCreatedAt  = null;
+let _tradeGasGwei    = null; // {slow,average,fast} for the loaded token's chain
+
+// Live network gas price (Gwei) for the chain being traded — reuses the same
+// Blockscout-backed endpoint as Market Overview's Chain Transactions card.
+// Fetched once per token load (gas price doesn't need 10s-quote-refresh
+// frequency); re-renders the already-visible "Est. gas" row once it lands.
+async function _loadTradeGasPrice(chain) {
+  _tradeGasGwei = null;
+  try {
+    const res  = await fetch(`${API_BASE}/chain-transactions`);
+    const json = await res.json();
+    _tradeGasGwei = json.data?.[chain]?.gasPriceGwei || null;
+  } catch (e) { _tradeGasGwei = null; }
+  if (_tradeToken?.chain === chain) _renderTradeGasGwei();
+}
+
+function _renderTradeGasGwei() {
+  const el = $('swapGasGwei');
+  if (!el) return;
+  const avg = _tradeGasGwei?.average;
+  el.textContent = avg != null ? `⛽ ${avg.toFixed(avg < 1 ? 3 : 2)} Gwei` : '';
+}
 
 function _tradePageActive() {
   return document.getElementById('page-trade')?.classList.contains('active');
@@ -5463,7 +5558,14 @@ async function tradeLoadTxs(showLoading = true) {
     const j = await r.json();
     const allTrades = j.trades || [];
     if (!allTrades.length) {
-      list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">No recent trades data for this pool</div>';
+      // Before anything has ever loaded, an empty response just means the
+      // data hasn't arrived yet (the chart above is still on its own
+      // "Loading chart…" placeholder too) — say so, and let the periodic
+      // poll retry. Only call it "no data" once we know trades genuinely
+      // aren't showing up after a real load has already happened.
+      list.innerHTML = _tradeTrades.length === 0
+        ? '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Loading transactions…</div>'
+        : '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">No recent trades data for this pool</div>';
       return;
     }
 
