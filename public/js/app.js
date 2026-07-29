@@ -214,6 +214,39 @@ function playClickSound() {
   } catch (e) {}
 }
 
+// A soft "ssshhh" whoosh — used for refresh actions (Market Overview tabs,
+// Trade Holdings). Filtered noise with a swell-in/fade-out envelope and a
+// rising bandpass sweep, distinct from the percussive nav click.
+function playRefreshSound() {
+  try {
+    const ctx = _getSfxCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const dur = 0.35;
+
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.Q.value = 0.7;
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.exponentialRampToValueAtTime(3200, now + dur);
+
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.16, now + 0.06);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + dur);
+  } catch (e) {}
+}
+
 /* ─── Browser tab title badge ────────────────────────────────────────────── */
 // Shows "Bloombark Terminal Apps (N)" where N = unread Alerts + unread
 // Community messages combined, so a pending notification is visible even
@@ -2416,6 +2449,7 @@ async function fetchMarketTab(tab, { refresh = false } = {}) {
 }
 
 function refreshMarketTab() {
+  playRefreshSound();
   fetchMarketTab(_marketTab, { refresh: true });
 }
 

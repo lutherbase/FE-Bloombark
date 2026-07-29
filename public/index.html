@@ -724,7 +724,7 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2" style="flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8L2 7h20l-6-4z"/></svg>
                     <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-primary);white-space:nowrap">HOLDINGS</span>
                   </div>
-                  <button onclick="tradeLoadHoldings(true)" title="Refresh" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:4px 7px;cursor:pointer;color:var(--text-muted);font-size:11px;flex-shrink:0">↻</button>
+                  <button onclick="playRefreshSound();tradeLoadHoldings(true)" title="Refresh" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:4px 7px;cursor:pointer;color:var(--text-muted);font-size:11px;flex-shrink:0">↻</button>
                 </div>
                 <div id="tradeHoldingsTotal" style="padding:12px 16px;font-size:20px;font-weight:800;color:var(--text-primary);font-family:monospace;border-bottom:1px solid var(--border-light)"></div>
                 <div id="tradeHoldingsList" style="max-height:520px;overflow-y:auto"></div>
@@ -1177,6 +1177,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=165"></script>
+  <script src="js/app.js?v=166"></script>
 </body>
 </html>
