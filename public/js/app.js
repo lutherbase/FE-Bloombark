@@ -185,6 +185,35 @@ function playNotificationSound() {
   } catch (e) {}
 }
 
+// A short, subtle "mouse click" tick — used for sidebar nav clicks, kept
+// deliberately plain/percussive so it reads as UI feedback rather than a
+// melodic sound like playActionSound()/playNotificationSound().
+function playClickSound() {
+  try {
+    const ctx = _getSfxCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const dur = 0.02;
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 2500;
+    filter.Q.value = 1.2;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    noise.connect(filter).connect(gain).connect(ctx.destination);
+    noise.start(now);
+    noise.stop(now + dur);
+  } catch (e) {}
+}
+
 /* ─── Config ──────────────────────────────────────────────────────────────── */
 // Backend origin. Override at runtime via `window.BLOOMBARK_API_ORIGIN` (e.g. an
 // injected <script>). In dev (localhost/127.0.0.1) this points at the local
@@ -389,7 +418,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
 document.querySelectorAll('.nav-item').forEach(el => {
   el.addEventListener('click', e => {
     e.preventDefault();
-    playActionSound();
+    playClickSound();
     // On mobile, selecting a destination closes the drawer.
     toggleSidebar(false);
     _activatePage(el.dataset.page, { navEl: el, pushUrl: true });
