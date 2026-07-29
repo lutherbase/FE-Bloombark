@@ -206,7 +206,7 @@ function playClickSound() {
     filter.frequency.value = 2500;
     filter.Q.value = 1.2;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.setValueAtTime(0.42, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
     noise.connect(filter).connect(gain).connect(ctx.destination);
     noise.start(now);
