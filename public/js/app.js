@@ -2965,6 +2965,20 @@ function _authHeaders() {
   return t ? { 'Authorization': `Bearer ${t}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
 }
 
+// The AI Analyzer alert bell only becomes usable once the token is actually
+// saved to the watchlist (mirrors how alerts work everywhere else in the
+// app — always attached to a watchlist entry).
+function _setAnalyzerAlertBtnEnabled(enabled) {
+  const btn  = $('analyzerAlertBtn');
+  const bell = $('analyzerAlertBell');
+  if (!btn || !bell) return;
+  btn.disabled = !enabled;
+  btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  btn.style.opacity = enabled ? '0.7' : '0.25';
+  btn.title = enabled ? 'Set alert' : 'Save to watchlist first to set an alert';
+  bell.setAttribute('stroke', enabled ? '#27c97f' : '#8b92a8');
+}
+
 async function _updateWatchlistBtn(address) {
   const btn   = $('watchlistBtn');
   const heart = $('watchlistHeart');
@@ -2975,6 +2989,7 @@ async function _updateWatchlistBtn(address) {
   heart.setAttribute('fill', memInList ? '#ff6b8a' : 'none');
   btn.style.opacity = memInList ? '1' : '0.6';
   btn.title = memInList ? 'Remove from watchlist' : 'Add to watchlist';
+  _setAnalyzerAlertBtnEnabled(memInList);
   // Always confirm from DB if logged in
   if (!localStorage.getItem('bb_jwt')) return;
   try {
@@ -2985,7 +3000,17 @@ async function _updateWatchlistBtn(address) {
     heart.setAttribute('fill', inWatchlist ? '#ff6b8a' : 'none');
     btn.style.opacity = inWatchlist ? '1' : '0.6';
     btn.title = inWatchlist ? 'Remove from watchlist' : 'Add to watchlist';
+    _setAnalyzerAlertBtnEnabled(inWatchlist);
   } catch(_) {}
+}
+
+function openAnalyzerAlertModal() {
+  const d = _currentTokenData;
+  const addr = d?.address;
+  if (!addr || !_watchlist.has(addr.toLowerCase())) {
+    return showToast('Save this token to your watchlist first');
+  }
+  openAlertModal(addr, d.chain, d.symbol, d.name);
 }
 
 async function _loadWatchlist() {
@@ -3133,6 +3158,8 @@ async function removeFromWatchlist(address) {
     const headers = token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
     await fetch(`${API_BASE}/watchlist/${addr}`, { method: 'DELETE', credentials: 'include', headers });
     _watchlist.delete(addr);
+    // Alerts are always tied to a watchlist entry — remove it too.
+    fetch(`${API_BASE}/alerts/token/${addr}`, { method: 'DELETE', credentials: 'include', headers }).catch(() => {});
     if (_currentTokenData?.address?.toLowerCase() === addr) _updateWatchlistBtn(addr);
     renderWatchlistPage();
     showToast('Removed from watchlist');
@@ -3322,10 +3349,21 @@ let _alertsSelected = new Set();
 let _alertsIsAdmin = null;     // cached tri-state: null=unchecked, true/false once known
 
 // Background poll for new alerts (any page, not just while Alerts is open) —
-// plays the "tiing" sound and lights up the nav badge the moment a new
-// notification shows up server-side, without waiting for the user to visit
-// the Alerts page.
-let _alertsLastSeenId = parseInt(localStorage.getItem('bb_alerts_last_seen_id') || '0', 10);
+// plays the bell sound every time the unread COUNT on the sidebar badge goes
+// up (0→1, 1→2, …), not just once regardless of how many arrived.
+let _alertsLastUnreadCount = parseInt(localStorage.getItem('bb_alerts_last_unread') ?? '-1', 10);
+function _updateAlertsBadge(unread) {
+  const badge = $('alertsNavBadge');
+  if (badge) {
+    if (unread > 0) { badge.textContent = unread; badge.style.display = ''; }
+    else badge.style.display = 'none';
+  }
+  if (_alertsLastUnreadCount !== -1 && unread > _alertsLastUnreadCount) {
+    playNotificationSound();
+  }
+  _alertsLastUnreadCount = unread;
+  localStorage.setItem('bb_alerts_last_unread', String(unread));
+}
 async function _pollAlertsForSound() {
   const token = localStorage.getItem('bb_jwt');
   if (!token && !_privyUser) return;
@@ -3333,28 +3371,7 @@ async function _pollAlertsForSound() {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     const res = await fetch(`${API_BASE}/alerts/notifications`, { credentials: 'include', headers });
     const data = await res.json();
-    const items = data.items || [];
-    if (!items.length) return;
-    const maxId = Math.max(...items.map(n => n.id));
-
-    if (_alertsLastSeenId === 0) {
-      // First poll this session — just establish a baseline, don't treat
-      // pre-existing history as "new".
-      _alertsLastSeenId = maxId;
-      localStorage.setItem('bb_alerts_last_seen_id', String(maxId));
-      return;
-    }
-    if (maxId > _alertsLastSeenId) {
-      playNotificationSound();
-      _alertsLastSeenId = maxId;
-      localStorage.setItem('bb_alerts_last_seen_id', String(maxId));
-    }
-
-    const badge = $('alertsNavBadge');
-    if (badge) {
-      if (data.unread > 0) { badge.textContent = data.unread; badge.style.display = ''; }
-      else badge.style.display = 'none';
-    }
+    _updateAlertsBadge(data.unread || 0);
   } catch (e) {}
 }
 setTimeout(_pollAlertsForSound, 5000);
@@ -3551,11 +3568,7 @@ async function renderAlertsPage() {
     _alertsById = new Map(items.map(n => [n.id, n]));
     _alertsSelected = new Set(Array.from(_alertsSelected).filter(id => _alertsById.has(id)));
 
-    const badge = $('alertsNavBadge');
-    if (badge) {
-      if (data.unread > 0) { badge.textContent = data.unread; badge.style.display = ''; }
-      else badge.style.display = 'none';
-    }
+    _updateAlertsBadge(data.unread || 0);
 
     const selectBar = $('alertsSelectBar');
     if (selectBar) selectBar.style.display = items.length ? 'flex' : 'none';
@@ -3727,6 +3740,9 @@ async function toggleWatchlist() {
       const res = await fetch(`${API_BASE}/watchlist/${addr}`, { method: 'DELETE', credentials: 'include', headers });
       if (!res.ok) throw new Error('Failed to remove');
       _watchlist.delete(addr);
+      // Alerts are always tied to a watchlist entry — remove it too so it
+      // doesn't keep firing (or showing as "set") for a token no longer tracked.
+      fetch(`${API_BASE}/alerts/token/${addr}`, { method: 'DELETE', credentials: 'include', headers: _authHeaders() }).catch(() => {});
       showToast('Removed from watchlist');
     } else {
       const res = await fetch(`${API_BASE}/watchlist`, {
