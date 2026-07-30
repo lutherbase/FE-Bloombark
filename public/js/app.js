@@ -5459,7 +5459,6 @@ async function _waitForTx(chain, hash) {
 
 // ── Wallet holdings on Trade page ────────────────────────────────────────────
 let _holdingsLoaded = false;
-let _tradeHoldingsData = [];
 
 // Adds a Robinhood-chain token to MetaMask via the standard wallet_watchAsset
 // RPC — restricted to Robinhood only since that's the only chain this app
@@ -5482,12 +5481,6 @@ async function _watchAssetOnMetamask({ address, symbol, decimals, icon }) {
     if (e.code !== 4001) showToast('Error: ' + e.message);
     return false;
   }
-}
-
-async function tradeImportToMetamask(index) {
-  const h = _tradeHoldingsData[index];
-  if (!h || h.native || h.chain !== 'robinhood' || !h.address) return;
-  await _watchAssetOnMetamask(h);
 }
 
 // "+ Address" — save a token by CA so it's tracked in Bloombark's Holdings
@@ -5568,19 +5561,11 @@ async function tradeLoadHoldings(force = false) {
     const total = hs.reduce((s, h) => s + (h.usd || 0), 0);
     $('tradeHoldingsTotal').textContent = '$' + total.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-    list.innerHTML = hs.map((h, i) => {
+    list.innerHTML = hs.map(h => {
       const iconHtml = h.icon
         ? `<img src="${h.icon}" style="width:30px;height:30px;border-radius:50%;flex-shrink:0" onerror="this.outerHTML='<div style=\\'width:30px;height:30px;border-radius:50%;background:#27c97f1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#27c97f;flex-shrink:0\\'>${(h.symbol||'?')[0]}</div>'">`
         : `<div style="width:30px;height:30px;border-radius:50%;background:#27c97f1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#27c97f;flex-shrink:0">${(h.symbol||'?')[0]}</div>`;
       const clickable = !h.native;
-      // Import-to-MetaMask is Robinhood-chain only, by design — this app only
-      // trades Robinhood-chain tokens by default (same restriction as
-      // enabled_chains elsewhere), so importing tokens from other chains
-      // isn't offered here.
-      const canImport = !h.native && h.chain === 'robinhood' && h.address;
-      const importBtn = canImport
-        ? `<button onclick="event.stopPropagation();tradeImportToMetamask(${i})" title="Import to MetaMask" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:3px 6px;cursor:pointer;color:var(--text-muted);font-size:9px;flex-shrink:0;margin-left:6px">+MM</button>`
-        : '';
       return `<div ${clickable ? `onclick="tradeSelectHolding('${h.address}')" ` : ''}style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-light);${clickable ? 'cursor:pointer' : ''}"
         ${clickable ? `onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''" title="Click to trade ${h.symbol}"` : ''}>
         ${iconHtml}
@@ -5591,16 +5576,12 @@ async function tradeLoadHoldings(force = false) {
           </div>
           <div style="font-size:9px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">${h.name || ''}</div>
         </div>
-        <div style="margin-left:auto;text-align:right;flex-shrink:0;display:flex;align-items:center">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text-primary);font-family:monospace">${_fmtAmt(h.balance)}</div>
-            <div style="font-size:9px;color:${h.usd != null ? '#27c97f' : 'var(--text-muted)'}">${h.usd != null ? '$' + h.usd.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</div>
-          </div>
-          ${importBtn}
+        <div style="margin-left:auto;text-align:right;flex-shrink:0">
+          <div style="font-size:11px;font-weight:700;color:var(--text-primary);font-family:monospace">${_fmtAmt(h.balance)}</div>
+          <div style="font-size:9px;color:${h.usd != null ? '#27c97f' : 'var(--text-muted)'}">${h.usd != null ? '$' + h.usd.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</div>
         </div>
       </div>`;
     }).join('');
-    _tradeHoldingsData = hs;
   } catch (e) {
     list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Failed to load holdings</div>';
   }
