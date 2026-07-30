@@ -707,7 +707,10 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#27c97f" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
                     <span style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text-primary)">RECENT TRANSACTIONS</span>
                   </div>
-                  <span id="tradeTxUpdated" style="font-size:9px;color:var(--text-muted)"></span>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span id="tradeTxUpdated" style="font-size:9px;color:var(--text-muted)"></span>
+                    <button onclick="playRefreshSound();tradeLoadTxs(true)" title="Refresh" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:4px 7px;cursor:pointer;color:var(--text-muted);font-size:11px;flex-shrink:0">↻</button>
+                  </div>
                 </div>
                 <div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 62px 34px;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border-light);font-size:9px;font-weight:700;letter-spacing:0.5px;color:var(--text-muted)">
                   <span>TYPE</span><span style="text-align:right">PRICE</span><span style="text-align:right">VALUE</span><span>WALLET</span><span style="text-align:right">TIME</span><span style="text-align:right">TX</span>
