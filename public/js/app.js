@@ -5145,6 +5145,7 @@ async function tradeLoadToken() {
       $('tradeTxCard').style.display = '';
       $('tradeChart').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:11px">Loading chart from transactions…</div>';
       _tradeTrades = [];
+      _tradeTxFetchAttempted = false;
       tradeLoadTxs(true);
       tradeStartLive();
       _loadTradeGasPrice(chain);
@@ -5580,6 +5581,12 @@ function _tradeBuildChart(samplePrice) {
 
 // Cached transaction history — the single source of truth for the chart
 let _tradeTrades = [];
+// Recent Transactions list's OWN loading state — deliberately independent of
+// _tradeTrades/the chart above it. Tracks whether a fetch for the current
+// token has ever completed, so the list can tell "still loading" apart from
+// "genuinely has zero trades" instead of showing "Loading…" forever for a
+// pool that legitimately has no trade history.
+let _tradeTxFetchAttempted = false;
 
 // Bucket transaction prices into OHLC candles for the selected interval
 function _buildCandlesFromTrades(trades) {
@@ -5686,16 +5693,19 @@ async function tradeLoadTxs(showLoading = true) {
     const j = await r.json();
     const allTrades = j.trades || [];
     if (!allTrades.length) {
-      // Before anything has ever loaded, an empty response just means the
-      // data hasn't arrived yet (the chart above is still on its own
-      // "Loading chart…" placeholder too) — say so, and let the periodic
-      // poll retry. Only call it "no data" once we know trades genuinely
-      // aren't showing up after a real load has already happened.
-      list.innerHTML = _tradeTrades.length === 0
+      // Only the very first fetch attempt for this token shows "Loading…" —
+      // once that attempt has actually completed (this line), an empty
+      // result means the pool genuinely has no trade history, so say that
+      // instead of looping on "Loading…" forever. This is tracked with its
+      // own flag rather than piggybacking on _tradeTrades (shared with the
+      // chart above), which is what caused the two to look coupled.
+      list.innerHTML = !_tradeTxFetchAttempted
         ? '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Loading transactions…</div>'
         : '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">No recent trades data for this pool</div>';
+      _tradeTxFetchAttempted = true;
       return;
     }
+    _tradeTxFetchAttempted = true;
 
     // Chart = transaction history (rebuild only on first load / new data)
     const firstBuild = _tradeTrades.length === 0;
