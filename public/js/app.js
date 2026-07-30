@@ -5459,6 +5459,87 @@ async function _waitForTx(chain, hash) {
 
 // ── Wallet holdings on Trade page ────────────────────────────────────────────
 let _holdingsLoaded = false;
+let _tradeHoldingsData = [];
+
+// Adds a Robinhood-chain token to MetaMask via the standard wallet_watchAsset
+// RPC — restricted to Robinhood only since that's the only chain this app
+// trades by default (see enabled_chains). MetaMask always shows its own
+// confirmation popup; we can't (and shouldn't) skip that.
+async function _watchAssetOnMetamask({ address, symbol, decimals, icon }) {
+  if (!window.ethereum) { showToast('MetaMask not found'); return false; }
+  try {
+    await _ensureChain('robinhood');
+    const added = await window.ethereum.request({
+      method: 'wallet_watchAsset',
+      params: {
+        type: 'ERC20',
+        options: { address, symbol, decimals: decimals || 18, image: icon || undefined },
+      },
+    });
+    if (added) showToast(`${symbol} added to MetaMask`);
+    return added;
+  } catch (e) {
+    if (e.code !== 4001) showToast('Error: ' + e.message);
+    return false;
+  }
+}
+
+async function tradeImportToMetamask(index) {
+  const h = _tradeHoldingsData[index];
+  if (!h || h.native || h.chain !== 'robinhood' || !h.address) return;
+  await _watchAssetOnMetamask(h);
+}
+
+// "+ Address" — save a token by CA so it's tracked in Bloombark's Holdings
+// list (even before/without an on-chain balance being auto-detected) and
+// added to MetaMask in the same step. Robinhood chain only — enforced
+// server-side in POST /api/trade/custom-tokens, not just here.
+function openAddTokenModal() {
+  if (!window._privyWallet) return showToast('Connect wallet first');
+  const existing = document.getElementById('addTokenModal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'addTokenModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(2px);z-index:9998;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#161822;border:1px solid #1e2235;border-radius:16px;padding:24px;width:340px;box-shadow:0 16px 48px rgba(0,0,0,0.7)">
+      <div style="font-size:14px;font-weight:800;color:#e2e8f0;margin-bottom:4px">Add Token by Address</div>
+      <div style="font-size:11px;color:#6b7280;margin-bottom:16px">Robinhood chain only. Saves it to your Holdings list and adds it to MetaMask.</div>
+      <input id="addTokenInput" type="text" placeholder="0x…" spellcheck="false"
+        style="width:100%;background:#0d0f18;border:1px solid #2d3748;border-radius:8px;color:#e2e8f0;font-size:12px;font-family:monospace;padding:10px 12px;margin-bottom:18px;box-sizing:border-box">
+      <div style="display:flex;gap:8px">
+        <button id="addTokenCancelBtn" style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Cancel</button>
+        <button id="addTokenSaveBtn" style="flex:1;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Save</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  overlay.querySelector('#addTokenCancelBtn').onclick = () => overlay.remove();
+
+  overlay.querySelector('#addTokenSaveBtn').onclick = async () => {
+    const address = overlay.querySelector('#addTokenInput').value.trim();
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return showToast('Invalid EVM address — must start with 0x');
+    const saveBtn = overlay.querySelector('#addTokenSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+    try {
+      const res = await fetch(`${API_BASE}/trade/custom-tokens`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet: window._privyWallet, address }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save token');
+      overlay.remove();
+      showToast(`${data.token.symbol} saved to Holdings`);
+      await _watchAssetOnMetamask(data.token);
+      tradeLoadHoldings(true);
+    } catch (e) {
+      showToast('Error: ' + e.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }
+  };
+}
 
 async function tradeLoadHoldings(force = false) {
   const w = window._privyWallet;
@@ -5487,11 +5568,19 @@ async function tradeLoadHoldings(force = false) {
     const total = hs.reduce((s, h) => s + (h.usd || 0), 0);
     $('tradeHoldingsTotal').textContent = '$' + total.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-    list.innerHTML = hs.map(h => {
+    list.innerHTML = hs.map((h, i) => {
       const iconHtml = h.icon
         ? `<img src="${h.icon}" style="width:30px;height:30px;border-radius:50%;flex-shrink:0" onerror="this.outerHTML='<div style=\\'width:30px;height:30px;border-radius:50%;background:#27c97f1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#27c97f;flex-shrink:0\\'>${(h.symbol||'?')[0]}</div>'">`
         : `<div style="width:30px;height:30px;border-radius:50%;background:#27c97f1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#27c97f;flex-shrink:0">${(h.symbol||'?')[0]}</div>`;
       const clickable = !h.native;
+      // Import-to-MetaMask is Robinhood-chain only, by design — this app only
+      // trades Robinhood-chain tokens by default (same restriction as
+      // enabled_chains elsewhere), so importing tokens from other chains
+      // isn't offered here.
+      const canImport = !h.native && h.chain === 'robinhood' && h.address;
+      const importBtn = canImport
+        ? `<button onclick="event.stopPropagation();tradeImportToMetamask(${i})" title="Import to MetaMask" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:3px 6px;cursor:pointer;color:var(--text-muted);font-size:9px;flex-shrink:0;margin-left:6px">+MM</button>`
+        : '';
       return `<div ${clickable ? `onclick="tradeSelectHolding('${h.address}')" ` : ''}style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-light);${clickable ? 'cursor:pointer' : ''}"
         ${clickable ? `onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''" title="Click to trade ${h.symbol}"` : ''}>
         ${iconHtml}
@@ -5502,12 +5591,16 @@ async function tradeLoadHoldings(force = false) {
           </div>
           <div style="font-size:9px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">${h.name || ''}</div>
         </div>
-        <div style="margin-left:auto;text-align:right;flex-shrink:0">
-          <div style="font-size:11px;font-weight:700;color:var(--text-primary);font-family:monospace">${_fmtAmt(h.balance)}</div>
-          <div style="font-size:9px;color:${h.usd != null ? '#27c97f' : 'var(--text-muted)'}">${h.usd != null ? '$' + h.usd.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</div>
+        <div style="margin-left:auto;text-align:right;flex-shrink:0;display:flex;align-items:center">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-primary);font-family:monospace">${_fmtAmt(h.balance)}</div>
+            <div style="font-size:9px;color:${h.usd != null ? '#27c97f' : 'var(--text-muted)'}">${h.usd != null ? '$' + h.usd.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</div>
+          </div>
+          ${importBtn}
         </div>
       </div>`;
     }).join('');
+    _tradeHoldingsData = hs;
   } catch (e) {
     list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Failed to load holdings</div>';
   }
