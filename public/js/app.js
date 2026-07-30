@@ -5708,7 +5708,7 @@ async function tradeLoadTxs(showLoading = true) {
     // Fetch up to 300 trades: top 30 shown in the list, all of them feed the chart
     const r = await fetch(`${API_BASE}/recent-trades`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ poolAddress: _tradePairAddr, network: net, limit: 300 }),
+      body: JSON.stringify({ poolAddress: _tradePairAddr, network: net, chain: t.chain, limit: 300 }),
     });
     const j = await r.json();
     const allTrades = j.trades || [];
