@@ -3044,16 +3044,34 @@ function _authHeaders() {
 
 // The AI Analyzer alert bell only becomes usable once the token is actually
 // saved to the watchlist (mirrors how alerts work everywhere else in the
-// app — always attached to a watchlist entry).
-function _setAnalyzerAlertBtnEnabled(enabled) {
+// app — always attached to a watchlist entry). Its look matches the bell
+// used in the Watchlist rows exactly: outline + muted grey when there's no
+// alert yet, filled + green once one is actually set (not just "settable").
+function _setAnalyzerAlertBtnState(enabled, hasAlert = false) {
   const btn  = $('analyzerAlertBtn');
   const bell = $('analyzerAlertBell');
   if (!btn || !bell) return;
   btn.disabled = !enabled;
   btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
-  btn.style.opacity = enabled ? '0.7' : '0.25';
-  btn.title = enabled ? 'Set alert' : 'Save to watchlist first to set an alert';
-  bell.setAttribute('stroke', enabled ? '#27c97f' : '#8b92a8');
+  btn.style.opacity = !enabled ? '0.25' : (hasAlert ? '1' : '0.7');
+  btn.title = !enabled ? 'Save to watchlist first to set an alert' : (hasAlert ? 'Alert set — click to edit' : 'Set alert');
+  bell.setAttribute('stroke', hasAlert ? '#27c97f' : (enabled ? '#8b92a8' : '#8b92a8'));
+  bell.setAttribute('fill', hasAlert ? '#27c97f' : 'none');
+}
+
+async function _refreshAnalyzerAlertBtn(address, inWatchlist) {
+  if (!inWatchlist) { _setAnalyzerAlertBtnState(false, false); return; }
+  let hasAlert = false;
+  if (localStorage.getItem('bb_jwt')) {
+    try {
+      const res = await fetch(`${API_BASE}/alerts`, { credentials: 'include', headers: _authHeaders() });
+      if (res.ok) {
+        const { items } = await res.json();
+        hasAlert = !!items?.some(a => a.address.toLowerCase() === address.toLowerCase());
+      }
+    } catch(_) {}
+  }
+  _setAnalyzerAlertBtnState(true, hasAlert);
 }
 
 async function _updateWatchlistBtn(address) {
@@ -3066,7 +3084,7 @@ async function _updateWatchlistBtn(address) {
   heart.setAttribute('fill', memInList ? '#ff6b8a' : 'none');
   btn.style.opacity = memInList ? '1' : '0.6';
   btn.title = memInList ? 'Remove from watchlist' : 'Add to watchlist';
-  _setAnalyzerAlertBtnEnabled(memInList);
+  _refreshAnalyzerAlertBtn(addr, memInList);
   // Always confirm from DB if logged in
   if (!localStorage.getItem('bb_jwt')) return;
   try {
@@ -3077,7 +3095,7 @@ async function _updateWatchlistBtn(address) {
     heart.setAttribute('fill', inWatchlist ? '#ff6b8a' : 'none');
     btn.style.opacity = inWatchlist ? '1' : '0.6';
     btn.title = inWatchlist ? 'Remove from watchlist' : 'Add to watchlist';
-    _setAnalyzerAlertBtnEnabled(inWatchlist);
+    _refreshAnalyzerAlertBtn(addr, inWatchlist);
   } catch(_) {}
 }
 
@@ -3376,6 +3394,7 @@ async function openAlertModal(address, chain, symbol, name) {
       overlay.remove();
       showToast('Alert removed');
       renderWatchlistPage();
+      if (_currentTokenData?.address?.toLowerCase() === address.toLowerCase()) _refreshAnalyzerAlertBtn(address, true);
     } catch(e) { showToast('Error: ' + e.message); }
   };
 
@@ -3410,6 +3429,7 @@ async function openAlertModal(address, chain, symbol, name) {
       overlay.remove();
       showToast('Alert set');
       renderWatchlistPage();
+      if (_currentTokenData?.address?.toLowerCase() === address.toLowerCase()) _refreshAnalyzerAlertBtn(address, true);
     } catch(e) {
       showToast('Error: ' + e.message);
       saveBtn.disabled = false;
