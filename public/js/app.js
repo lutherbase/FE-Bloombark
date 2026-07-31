@@ -369,6 +369,7 @@ const PAGE_ROUTES = {
   'wallet-tracker': '/wallettracker',
   'narrative':      '/narrative',
   'community':      '/community',
+  'sniper':         '/sniper',
   'alerts':         '/alerts',
   'watchlist':      '/watchlist',
 };
@@ -450,6 +451,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
   if (page === 'dashboard') loadDashboard();
   if (page === 'watchlist') renderWatchlistPage();
   if (page === 'alerts') renderAlertsPage();
+  if (page === 'sniper') initSniperPage();
   if (page === 'landing') loadLandingCA();
   if (page === 'narrative') loadNarrative();
   if (page === 'community') initCommunity();
@@ -3651,6 +3653,89 @@ async function sendAlertBlast() {
     $('blastDescInput').value = '';
   } catch(e) { showToast('Error: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = 'Send to All Users'; }
+}
+
+/* ─── Sniper Assistance ───────────────────────────────────────────────────
+   Newly-created pools on Robinhood chain, detected on-chain (not sourced
+   from GeckoTerminal/DexScreener) — see backend's _scanNewPools. Purely
+   informational/detection: clicking a row jumps to Trade with the token
+   pre-loaded, same as everywhere else in the app — the user still confirms
+   every swap themselves in MetaMask, no auto-buy. */
+let _sniperTimer = null;
+let _sniperLastCount = -1;
+
+function initSniperPage() {
+  loadSniperPools(true);
+  clearInterval(_sniperTimer);
+  _sniperTimer = setInterval(() => {
+    if (document.getElementById('page-sniper')?.classList.contains('active')) loadSniperPools(false);
+  }, 5000);
+}
+
+function sniperGoToTrade(address) {
+  document.querySelector('.nav-item[data-page="trade"]')?.click();
+  const inp = $('tradeTokenInput');
+  if (inp) inp.value = address;
+  tradeLoadToken();
+}
+
+async function loadSniperPools(showLoadingState) {
+  const el = $('sniperContent');
+  if (!el) return;
+  if (showLoadingState) el.innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading…</div>';
+  try {
+    const res = await fetch(`${API_BASE}/sniper/pools?limit=50`);
+    const data = await res.json();
+    const pools = data.pools || [];
+
+    const badge = $('sniperNavBadge');
+    if (badge) {
+      if (_sniperLastCount !== -1 && pools.length > _sniperLastCount) playNotificationSound();
+      _sniperLastCount = pools.length;
+    }
+
+    if (!pools.length) {
+      el.innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">' +
+        '<div style="font-size:28px;margin-bottom:12px">🎯</div>No new pools detected yet.<br>' +
+        '<span style="color:#9ca3af">Checking the chain every few seconds — this list fills in as pools launch.</span></div>';
+      return;
+    }
+
+    const nowMs = Date.now();
+    el.innerHTML = pools.map(p => {
+      const ageMs = nowMs - Number(p.detected_at);
+      const ageStr = ageMs < 60000 ? `${Math.floor(ageMs/1000)}s ago`
+        : ageMs < 3600000 ? `${Math.floor(ageMs/60000)}m ago`
+        : `${Math.floor(ageMs/3600000)}h ago`;
+      const isFresh = ageMs < 60000;
+      const sourceLabel = p.source === 'v3_pool' ? 'V3' : 'V2';
+      const enriched = p.enriched_at != null;
+      const addr = p.token_address;
+      return `<div onclick="sniperGoToTrade('${addr}')"
+        style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${isFresh ? '#27c97f40' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
+        onmouseover="this.style.background='#161822'" onmouseout="this.style.background='#12141e'">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0">
+          <div style="width:36px;height:36px;border-radius:50%;background:#27c97f15;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#27c97f;flex-shrink:0">${(p.symbol||'?').charAt(0)}</div>
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:13px;font-weight:700;color:#e2e8f0">${p.symbol || '?'}</span>
+              <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:#1e2235;color:#6b7280;border:1px solid #2d3144">${sourceLabel}</span>
+              ${isFresh ? `<span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;background:#27c97f20;color:#27c97f">NEW</span>` : ''}
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px">${p.name || ''} · ${addr.slice(0,6)}…${addr.slice(-4)} · ${ageStr}</div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${enriched
+            ? `<div style="font-size:11px;font-weight:700;color:#e2e8f0">${p.mcap_usd ? '$' + Number(p.mcap_usd).toLocaleString('en-US',{maximumFractionDigits:0}) : '—'}</div>
+               <div style="font-size:9px;color:#6b7280">Liq $${p.liquidity_usd ? Number(p.liquidity_usd).toLocaleString('en-US',{maximumFractionDigits:0}) : '—'}</div>`
+            : `<div style="font-size:10px;color:#6b7280">Pricing not indexed yet</div>`}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading new pools</div>';
+  }
 }
 
 async function renderAlertsPage() {

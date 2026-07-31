@@ -78,6 +78,11 @@
 
         <div class="nav-divider"></div>
 
+        <a href="#" class="nav-item" data-page="sniper">
+          <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+          Sniper Assistance
+          <span id="sniperNavBadge" class="nav-badge" style="display:none">0</span>
+        </a>
         <a href="#" class="nav-item" data-page="alerts">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           Alerts
@@ -945,6 +950,19 @@
         <div class="page placeholder-page" id="page-auto-research">
           <div class="placeholder-content"><h2>Auto Research</h2><p>Automated token research and reports.</p></div>
         </div>
+        <div class="page ai-analyzer-page" id="page-sniper">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">SNIPER ASSISTANCE</div>
+              <div style="font-size:13px;color:#9ca3af">Newly-created pools on Robinhood chain, detected on-chain in real time — not a swap bot, you still confirm every trade yourself</div>
+            </div>
+            <button id="sniperRefreshBtn" onclick="loadSniperPools(true)" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+          </div>
+          <div id="sniperContent" style="display:flex;flex-direction:column;gap:8px">
+            <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading…</div>
+          </div>
+        </div>
+
         <div class="page ai-analyzer-page" id="page-alerts">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div>
@@ -1222,6 +1240,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=178"></script>
+  <script src="js/app.js?v=179"></script>
 </body>
 </html>
