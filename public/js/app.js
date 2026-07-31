@@ -6243,6 +6243,14 @@ function _applyColorblindMode(on) {
   document.documentElement.setAttribute('data-colorblind', on ? 'true' : 'false');
   const label = $('colorblindToggleLabel');
   if (label) label.textContent = `Colorblind mode: ${on ? 'On' : 'Off'}`;
+  const swatches = $('colorblindSwatches');
+  if (swatches) swatches.style.display = on ? 'inline-flex' : 'none';
+  const btn = $('colorblindToggleBtn');
+  if (btn) {
+    btn.style.borderColor = on ? 'var(--accent-blue)' : 'var(--border)';
+    btn.style.color = on ? 'var(--accent-blue)' : 'var(--text-secondary)';
+    btn.style.boxShadow = on ? '0 0 0 1px var(--accent-blue), 0 0 8px 1px rgba(74,144,226,0.35)' : 'none';
+  }
 }
 function toggleColorblindMode() {
   const on = document.documentElement.getAttribute('data-colorblind') !== 'true';
