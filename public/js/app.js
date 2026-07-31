@@ -1868,7 +1868,7 @@ async function runPrediction() {
     if (txt) txt.textContent = 'Prediction ready!';
     await new Promise(r => setTimeout(r, 500));
 
-    const sigColor = { bullish:'var(--accent-green)', bearish:'var(--accent-red)', neutral:'#F5A623' };
+    const sigColor = { bullish:_resolveCssVar('var(--accent-green)'), bearish:_resolveCssVar('var(--accent-red)'), neutral:'#F5A623' };
     const sigIcon  = { bullish:'▲', bearish:'▼', neutral:'◆' };
     const sigLabel = { bullish:'BULLISH', bearish:'BEARISH', neutral:'NEUTRAL' };
     const c = sigColor[data.signal] || '#F5A623';
@@ -2054,8 +2054,8 @@ function renderVolumeChart(d) {
     data: {
       labels: vp.map(v => v.hour + 'h'),
       datasets: [
-        { label:'Buys',  data: vp.map(v => v.buys  || 0), backgroundColor:'rgba(39,201,127,0.7)', stack:'v' },
-        { label:'Sells', data: vp.map(v => -(v.sells||0)),backgroundColor:'rgba(240,72,75,0.7)',  stack:'v' },
+        { label:'Buys',  data: vp.map(v => v.buys  || 0), backgroundColor:_resolveCssVar('var(--accent-green)')+'b3', stack:'v' },
+        { label:'Sells', data: vp.map(v => -(v.sells||0)),backgroundColor:_resolveCssVar('var(--accent-red)')+'b3',  stack:'v' },
       ],
     },
     options: {
@@ -6384,6 +6384,7 @@ function _refreshChartColorsForColorblindMode() {
     if (typeof renderRiskScore === 'function')      renderRiskScore(_currentTokenData);
     if (typeof renderDistribution === 'function')   renderDistribution(_currentTokenData);
     if (typeof renderHolderStats === 'function')    renderHolderStats(_currentTokenData);
+    if (typeof renderVolumeChart === 'function')    renderVolumeChart(_currentTokenData);
   }
 }
 function toggleColorblindMode() {
