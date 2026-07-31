@@ -859,7 +859,7 @@ function renderRiskScore(d) {
 /* ─── Alerts ──────────────────────────────────────────────────────────────── */
 const ALERT_EMOJI = { team:'👥', insider:'🕵️', stealth:'🚀', liquidity:'⚠️', distribution:'📊' };
 function renderAlerts(d) {
-  const SEV_COLOR = { critical:'var(--accent-red)', high:'#FF6B35', medium:'#F5A623', low:'var(--accent-green)' };
+  const SEV_COLOR = { critical:_resolveCssVar('var(--accent-red)'), high:'#FF6B35', medium:'#F5A623', low:_resolveCssVar('var(--accent-green)') };
   const SEV_LABEL = { critical:'CRITICAL', high:'HIGH', medium:'MEDIUM', low:'LOW' };
   const ALERT_ICON = {
     team:         `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
@@ -1124,7 +1124,7 @@ async function renderWalletRelMap(d) {
     if (t === 'program' || w.isPumpFun) return '#a855f7';    // purple for PumpFun/programs
     if (t === 'whale') return '#f5a623';
     if (t.includes('insider') || t.includes('team')) return '#ff6b8a';
-    if (t.includes('lp') || t.includes('dex') || t.includes('pool')) return _resolveCssVar('var(--accent-green)');
+    if (t.includes('lp') || t.includes('dex') || t.includes('pool') || t.includes('liquidity')) return _resolveCssVar('var(--accent-green)');
     if (t === 'trader') return '#60a5fa';
     if (w.supplyPct > 1) return '#f5a623';
     return '#4a90d9';
@@ -1250,7 +1250,9 @@ async function renderWalletRelMap(d) {
       ctx.moveTo(nx.x, nx.y);
       ctx.lineTo(ny.x, ny.y);
       const alpha = eType === 'traded' ? 0.35 : eType === 'created' ? 0.25 : 0.15;
-      const edgeColor = eType === 'traded' ? 'var(--accent-green)' : eType === 'created' ? '#e86c3a' : '#ffffff';
+      // Re-resolved every frame (cheap) so this picks up a colorblind-mode
+      // toggle immediately, without needing to restart the whole simulation.
+      const edgeColor = eType === 'traded' ? _resolveCssVar('var(--accent-green)') : eType === 'created' ? '#e86c3a' : '#ffffff';
       ctx.strokeStyle = edgeColor + Math.round(alpha * 255).toString(16).padStart(2,'0');
       ctx.lineWidth = eType === 'traded' ? 1.5 : 1;
       ctx.stroke();
@@ -1266,6 +1268,7 @@ async function renderWalletRelMap(d) {
 
     // Nodes with breathing glow
     nodes.forEach(n => {
+      n.color = nodeColor(n.w); // re-resolved every frame — picks up colorblind toggle live
       const breathe = Math.sin(t * 1.4 + n.phase) * 0.5 + 0.5; // 0..1
       const glowR = n.r + 4 + breathe * 5;
       const pulseAlpha = 0.08 + breathe * 0.12;
@@ -1473,7 +1476,7 @@ function renderActivityList(all) {
 
   $('activityList').innerHTML = filtered.map(a => {
     const iconHtml = ACTIVITY_SVG[a.icon] || ACTIVITY_SVG.transfer;
-    const iconColor = a.negative ? 'var(--accent-red)' : 'var(--accent-green)';
+    const iconColor = _resolveCssVar(a.negative ? 'var(--accent-red)' : 'var(--accent-green)');
     const dotColor  = SEV_DOT[a.severity] || SEV_DOT.low;
     const fullAddr = a.walletFull || '';
     const isValidAddr = /^0x[0-9a-fA-F]{40}$/.test(fullAddr);
@@ -1695,9 +1698,9 @@ function renderWalletRows(wallets, symbol) {
   const TYPE_COLOR = { Team:'var(--accent-red)', Insider:'#FF8C42', 'Early Buyer':'#FF8C42', Cluster:'#F5A623', Liquidity:'#4A90E2', Whale:'#8B5CF6', Holder:'var(--accent-green)', 'Top Holder':'var(--accent-green)', Trader:'#4A90E2', Other:'#8b92a8' };
 
   $('walletsTable').innerHTML = filtered.slice(0, 50).map((w, idx) => {
-    const riskColor  = w.riskScore >= 70 ? 'var(--accent-red)' : w.riskScore >= 45 ? '#F5A623' : 'var(--accent-green)';
+    const riskColor  = _resolveCssVar(w.riskScore >= 70 ? 'var(--accent-red)' : w.riskScore >= 45 ? '#F5A623' : 'var(--accent-green)');
     const riskLabel  = w.riskScore >= 70 ? 'HIGH' : w.riskScore >= 45 ? 'MED' : 'LOW';
-    const typeColor  = TYPE_COLOR[w.type] || TYPE_COLOR.Other;
+    const typeColor  = _resolveCssVar(TYPE_COLOR[w.type] || TYPE_COLOR.Other);
     const bars = (w.activity||[]).map(v => {
       const h = Math.max(3, Math.abs(v) * 16);
       return `<div class="mini-bar" style="height:${h}px;background:${v>=0?'var(--accent-green)':'var(--accent-red)'}"></div>`;
@@ -1962,7 +1965,7 @@ function renderHolderStats(d) {
       labels: ['Whales\n>1%','Large\n0.1-1%','Medium\n0.01-0.1%','Retail'],
       datasets: [{
         data: [whaleCnt, largeCnt, medCnt, retailCnt],
-        backgroundColor: ['var(--accent-red)','#FF8C42','#F5A623','var(--accent-green)'],
+        backgroundColor: [_resolveCssVar('var(--accent-red)'),'#FF8C42','#F5A623',_resolveCssVar('var(--accent-green)')],
         borderRadius: 3, borderSkipped: false,
       }],
     },
@@ -6346,6 +6349,41 @@ function _applyColorblindMode(on) {
     btn.style.borderColor = on ? 'var(--accent-blue)' : 'var(--border)';
     btn.style.color = on ? 'var(--accent-blue)' : 'var(--text-secondary)';
     btn.style.boxShadow = on ? '0 0 0 1px var(--accent-blue), 0 0 8px 1px rgba(74,144,226,0.35)' : 'none';
+  }
+  _refreshChartColorsForColorblindMode();
+}
+
+// Canvas/Chart.js/lightweight-charts all bake resolved colors in at render
+// time — they don't react to a CSS variable changing on their own, unlike
+// plain HTML which repaints automatically. So toggling colorblind mode has
+// to explicitly recolor anything already on screen: live-update the
+// candlestick series in place, and rebuild the risk gauge / distribution /
+// holder-tier charts from whatever token is currently loaded. The wallet
+// relationship map's canvas resolves its colors fresh every animation frame
+// (see nodeColor()/edgeColor above) so it needs no extra handling here.
+function _refreshChartColorsForColorblindMode() {
+  const green = _resolveCssVar('var(--accent-green)');
+  const red   = _resolveCssVar('var(--accent-red)');
+
+  if (window._candleSeries) {
+    window._candleSeries.applyOptions({
+      upColor: green, downColor: red,
+      borderUpColor: green, borderDownColor: red,
+      wickUpColor: green, wickDownColor: red,
+    });
+  }
+  if (typeof _tradeSeries !== 'undefined' && _tradeSeries) {
+    _tradeSeries.applyOptions({
+      upColor: green, downColor: red,
+      borderUpColor: green, borderDownColor: red,
+      wickUpColor: green, wickDownColor: red,
+    });
+  }
+
+  if (typeof _currentTokenData !== 'undefined' && _currentTokenData) {
+    if (typeof renderRiskScore === 'function')      renderRiskScore(_currentTokenData);
+    if (typeof renderDistribution === 'function')   renderDistribution(_currentTokenData);
+    if (typeof renderHolderStats === 'function')    renderHolderStats(_currentTokenData);
   }
 }
 function toggleColorblindMode() {
