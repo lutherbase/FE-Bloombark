@@ -1983,13 +1983,26 @@ function renderSocial(d) {
     website:  { svg: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`, label: 'Web' },
   };
 
+  // Each website can carry its own label from the source (e.g. "Website" vs
+  // "Docs") — fall back to a numbered "Web 2", "Web 3"… only when the site
+  // genuinely has no label, so multiple links never render as identical,
+  // indistinguishable "Web" pills.
   const links = [];
-  for (const w of websites) links.push({ type: 'website', url: w });
-  for (const s of socials)  links.push({ type: s.type?.toLowerCase() || 'website', url: s.url });
+  let webCount = 0;
+  for (const w of websites) {
+    const url = typeof w === 'string' ? w : w?.url;
+    const srcLabel = typeof w === 'object' ? w?.label : null;
+    if (!url) continue;
+    webCount++;
+    links.push({ type: 'website', url, label: srcLabel || (webCount > 1 ? `Web ${webCount}` : null) });
+  }
+  for (const s of socials) links.push({ type: s.type?.toLowerCase() || 'website', url: s.url });
 
   // ── Render into token header ──
-  const sentItem  = $('headerSocialItem');
-  const linksItem = $('headerSocialLinks');
+  const sentItem   = $('headerSocialItem');
+  const linksItem  = $('headerSocialLinks');
+  const extrasWrap = $('headerExtrasGroup');
+  if (extrasWrap && (sentItem || (linksItem && links.length))) extrasWrap.style.display = 'flex';
   if (sentItem) {
     $('headerSentimentLabel').textContent = sentLabel;
     $('headerSentimentLabel').style.color = sentColor;
@@ -2006,7 +2019,7 @@ function renderSocial(d) {
         style="display:flex;align-items:center;gap:4px;padding:3px 8px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:5px;color:var(--text-muted);text-decoration:none;font-size:10px;font-weight:600;transition:color .15s,border-color .15s"
         onmouseover="this.style.color='var(--text-primary)';this.style.borderColor='var(--accent)'"
         onmouseout="this.style.color='var(--text-muted)';this.style.borderColor='var(--border-light)'">
-        ${ico.svg}${ico.label}
+        ${ico.svg}${l.label || ico.label}
       </a>`;
     }).join('');
     linksItem.style.display = 'flex';

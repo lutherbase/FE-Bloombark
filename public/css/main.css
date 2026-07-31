@@ -358,7 +358,7 @@ body {
 .token-network svg { fill: var(--accent-purple); transition: fill 0.2s; }
 
 .token-stats {
-  display: flex; gap: 28px; margin-left: auto; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 24px; margin-left: auto; flex-wrap: wrap;
 }
 .stat-item { display: flex; flex-direction: column; gap: 2px; }
 .stat-label { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); font-family: var(--font); text-transform: uppercase; }
