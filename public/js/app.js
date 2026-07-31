@@ -946,9 +946,9 @@ function buildChart(samplePrice) {
   else if (samplePrice < 100)    minMove = 0.01;
 
   const series = chart.addCandlestickSeries({
-    upColor:        'var(--accent-green)', downColor:       'var(--accent-red)',
-    borderUpColor:  'var(--accent-green)', borderDownColor: 'var(--accent-red)',
-    wickUpColor:    'var(--accent-green)', wickDownColor:   'var(--accent-red)',
+    upColor:        _resolveCssVar('var(--accent-green)'), downColor:       _resolveCssVar('var(--accent-red)'),
+    borderUpColor:  _resolveCssVar('var(--accent-green)'), borderDownColor: _resolveCssVar('var(--accent-red)'),
+    wickUpColor:    _resolveCssVar('var(--accent-green)'), wickDownColor:   _resolveCssVar('var(--accent-red)'),
     priceFormat: { type:'custom', formatter: p => fmt.price(p), minMove },
     lastValueVisible: false,
     priceLineVisible: false,
@@ -1124,7 +1124,7 @@ async function renderWalletRelMap(d) {
     if (t === 'program' || w.isPumpFun) return '#a855f7';    // purple for PumpFun/programs
     if (t === 'whale') return '#f5a623';
     if (t.includes('insider') || t.includes('team')) return '#ff6b8a';
-    if (t.includes('lp') || t.includes('dex') || t.includes('pool')) return 'var(--accent-green)';
+    if (t.includes('lp') || t.includes('dex') || t.includes('pool')) return _resolveCssVar('var(--accent-green)');
     if (t === 'trader') return '#60a5fa';
     if (w.supplyPct > 1) return '#f5a623';
     return '#4a90d9';
@@ -1521,7 +1521,7 @@ function renderDistribution(d) {
 
   const labels = ['Top 10 Wallets','Team / Insider','Liquidity','Public','CEX / Market Maker'];
   const values = [top10, team, liq, pub, cex];
-  const colors = ['var(--accent-red)','#FF8C42','#4A90E2','var(--accent-green)','#9B59B6'];
+  const colors = [_resolveCssVar('var(--accent-red)'),'#FF8C42','#4A90E2',_resolveCssVar('var(--accent-green)'),'#9B59B6'];
 
   distChart = new Chart(document.getElementById('distributionChart'), {
     type: 'doughnut',
@@ -6167,9 +6167,9 @@ function _tradeBuildChart(samplePrice) {
   else if (samplePrice < 1)      minMove = 0.0001;
 
   _tradeSeries = chart.addCandlestickSeries({
-    upColor:'var(--accent-green)', downColor:'var(--accent-red)',
-    borderUpColor:'var(--accent-green)', borderDownColor:'var(--accent-red)',
-    wickUpColor:'var(--accent-green)', wickDownColor:'var(--accent-red)',
+    upColor:_resolveCssVar('var(--accent-green)'), downColor:_resolveCssVar('var(--accent-red)'),
+    borderUpColor:_resolveCssVar('var(--accent-green)'), borderDownColor:_resolveCssVar('var(--accent-red)'),
+    wickUpColor:_resolveCssVar('var(--accent-green)'), wickDownColor:_resolveCssVar('var(--accent-red)'),
     priceFormat: { type:'custom', formatter: p => (typeof fmt !== 'undefined' && fmt.price) ? fmt.price(p) : p.toPrecision(4), minMove },
   });
   _tradeChart = chart;
