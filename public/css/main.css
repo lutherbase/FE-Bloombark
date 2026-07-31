@@ -25,11 +25,41 @@
   --risk-high:   #FF6B35;
   --risk-vhigh:  #F0484B;
 
+  /* Alpha-tinted variants of accent-green/accent-red, used throughout for
+     tinted backgrounds/borders (badges, buy/sell buttons, price tags). Kept
+     as separate vars (rather than color-mix) so the colorblind override
+     below can swap them alongside the solid colors. */
+  --green-0f: #27c97f0f; --green-10: #27c97f10; --green-15: #27c97f15;
+  --green-18: #27c97f18; --green-1f: #27c97f1f; --green-20: #27c97f20;
+  --green-22: #27c97f22; --green-30: #27c97f30; --green-33: #27c97f33;
+  --green-40: #27c97f40; --green-44: #27c97f44; --green-55: #27c97f55;
+  --green-60: #27c97f60;
+  --red-12: #ff4d4d12; --red-15: #ff4d4d15; --red-33: #ff4d4d33; --red-44: #ff4d4d44;
+
   --sidebar-w: 220px;
   --topbar-h:  72px;
 
   --font: 'SF Mono', 'Consolas', 'Monaco', monospace;
   --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Colorblind-safe palette — swaps the green/red up-down convention (hardest
+   pair for deuteranopia/protanopia) for the Okabe-Ito blue/orange pair, which
+   stays distinguishable across all common color-vision deficiencies. */
+html[data-colorblind="true"] {
+  --accent-green:  #0072B2;
+  --accent-red:    #E69F00;
+  --risk-low:      #0072B2;
+  --risk-medium:   #F5A623;
+  --risk-high:     #D55E00;
+  --risk-vhigh:    #A62F00;
+
+  --green-0f: #0072B20f; --green-10: #0072B210; --green-15: #0072B215;
+  --green-18: #0072B218; --green-1f: #0072B21f; --green-20: #0072B220;
+  --green-22: #0072B222; --green-30: #0072B230; --green-33: #0072B233;
+  --green-40: #0072B240; --green-44: #0072B244; --green-55: #0072B255;
+  --green-60: #0072B260;
+  --red-12: #E69F0012; --red-15: #E69F0015; --red-33: #E69F0033; --red-44: #E69F0044;
 }
 
 html, body { height: 100%; overflow: hidden; }

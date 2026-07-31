@@ -58,7 +58,7 @@ function showWipModal() {
       <div style="font-size:32px;margin-bottom:16px">🚧</div>
       <div style="font-size:14px;font-weight:800;color:#e2e8f0;margin-bottom:8px">Under Development</div>
       <div style="font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:24px">This feature is currently under development.<br>Stay tuned for updates!</div>
-      <button onclick="document.getElementById('wipModal').remove()" style="background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px 28px;cursor:pointer;letter-spacing:0.5px">Got it</button>
+      <button onclick="document.getElementById('wipModal').remove()" style="background:var(--accent-green);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px 28px;cursor:pointer;letter-spacing:0.5px">Got it</button>
     </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
@@ -79,7 +79,7 @@ function bloombarkConfirm(message, onConfirm, opts = {}) {
       <div style="font-size:13px;font-weight:700;color:#e2e8f0;line-height:1.6;margin-bottom:22px">${message}</div>
       <div style="display:flex;gap:8px">
         <button id="bbConfirmCancel" style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">${opts.cancelLabel || 'Cancel'}</button>
-        <button id="bbConfirmOk" style="flex:1;background:${danger ? '#ff4d4d12' : '#27c97f15'};border:1px solid ${danger ? '#ff4d4d44' : '#27c97f40'};border-radius:10px;color:${danger ? '#ff6b6b' : '#27c97f'};font-size:12px;font-weight:700;padding:10px;cursor:pointer">${opts.confirmLabel || 'Confirm'}</button>
+        <button id="bbConfirmOk" style="flex:1;background:${danger ? 'var(--red-12)' : 'var(--green-15)'};border:1px solid ${danger ? 'var(--red-44)' : 'var(--green-40)'};border-radius:10px;color:${danger ? '#ff6b6b' : 'var(--accent-green)'};font-size:12px;font-weight:700;padding:10px;cursor:pointer">${opts.confirmLabel || 'Confirm'}</button>
       </div>
     </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
@@ -684,7 +684,7 @@ $('loadingOverlay').style.display = 'none';
 
 function showError(msg) {
   const el = document.createElement('div');
-  el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:2000;background:#F0484B;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
+  el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:2000;background:var(--accent-red);color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;max-width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.5)';
   el.textContent = '⚠ ' + msg;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 5000);
@@ -816,10 +816,10 @@ function renderRiskScore(d) {
   ctx.strokeStyle = '#1e2230'; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.stroke();
 
   const grad = ctx.createLinearGradient(cx-r, cy, cx+r, cy);
-  grad.addColorStop(0,   '#27C97F');
+  grad.addColorStop(0,   'var(--accent-green)');
   grad.addColorStop(0.4, '#F5A623');
   grad.addColorStop(0.7, '#FF6B35');
-  grad.addColorStop(1,   '#F0484B');
+  grad.addColorStop(1,   'var(--accent-red)');
 
   ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI + (score/100)*Math.PI);
   ctx.strokeStyle = grad; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.stroke();
@@ -847,7 +847,7 @@ function renderRiskScore(d) {
 /* ─── Alerts ──────────────────────────────────────────────────────────────── */
 const ALERT_EMOJI = { team:'👥', insider:'🕵️', stealth:'🚀', liquidity:'⚠️', distribution:'📊' };
 function renderAlerts(d) {
-  const SEV_COLOR = { critical:'#F0484B', high:'#FF6B35', medium:'#F5A623', low:'#27C97F' };
+  const SEV_COLOR = { critical:'var(--accent-red)', high:'#FF6B35', medium:'#F5A623', low:'var(--accent-green)' };
   const SEV_LABEL = { critical:'CRITICAL', high:'HIGH', medium:'MEDIUM', low:'LOW' };
   const ALERT_ICON = {
     team:         `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
@@ -934,9 +934,9 @@ function buildChart(samplePrice) {
   else if (samplePrice < 100)    minMove = 0.01;
 
   const series = chart.addCandlestickSeries({
-    upColor:        '#27C97F', downColor:       '#F0484B',
-    borderUpColor:  '#27C97F', borderDownColor: '#F0484B',
-    wickUpColor:    '#27C97F', wickDownColor:   '#F0484B',
+    upColor:        'var(--accent-green)', downColor:       'var(--accent-red)',
+    borderUpColor:  'var(--accent-green)', borderDownColor: 'var(--accent-red)',
+    wickUpColor:    'var(--accent-green)', wickDownColor:   'var(--accent-red)',
     priceFormat: { type:'custom', formatter: p => fmt.price(p), minMove },
     lastValueVisible: false,
     priceLineVisible: false,
@@ -1112,7 +1112,7 @@ async function renderWalletRelMap(d) {
     if (t === 'program' || w.isPumpFun) return '#a855f7';    // purple for PumpFun/programs
     if (t === 'whale') return '#f5a623';
     if (t.includes('insider') || t.includes('team')) return '#ff6b8a';
-    if (t.includes('lp') || t.includes('dex') || t.includes('pool')) return '#27c97f';
+    if (t.includes('lp') || t.includes('dex') || t.includes('pool')) return 'var(--accent-green)';
     if (t === 'trader') return '#60a5fa';
     if (w.supplyPct > 1) return '#f5a623';
     return '#4a90d9';
@@ -1238,7 +1238,7 @@ async function renderWalletRelMap(d) {
       ctx.moveTo(nx.x, nx.y);
       ctx.lineTo(ny.x, ny.y);
       const alpha = eType === 'traded' ? 0.35 : eType === 'created' ? 0.25 : 0.15;
-      const edgeColor = eType === 'traded' ? '#27c97f' : eType === 'created' ? '#e86c3a' : '#ffffff';
+      const edgeColor = eType === 'traded' ? 'var(--accent-green)' : eType === 'created' ? '#e86c3a' : '#ffffff';
       ctx.strokeStyle = edgeColor + Math.round(alpha * 255).toString(16).padStart(2,'0');
       ctx.lineWidth = eType === 'traded' ? 1.5 : 1;
       ctx.stroke();
@@ -1323,7 +1323,7 @@ async function renderWalletRelMap(d) {
     <span style="color:#2d3144">·</span>
     <span>${edges.length} connection${edges.length!==1?'s':''}</span>
     <span style="color:#2d3144">·</span>
-    <span style="color:${stats?.dataset?.liveEdges==='1'?'#27c97f':'#6b7280'}">${stats?.dataset?.liveEdges==='1'?'● Live trades':'○ Estimated'}</span>
+    <span style="color:${stats?.dataset?.liveEdges==='1'?'var(--accent-green)':'#6b7280'}">${stats?.dataset?.liveEdges==='1'?'● Live trades':'○ Estimated'}</span>
   `;
 
   // Tooltip on hover
@@ -1342,7 +1342,7 @@ async function renderWalletRelMap(d) {
         ${w.supplyPct > 0 ? `<div style="margin-top:3px">Supply: <b>${w.supplyPct?.toFixed(2)}%</b></div>` : ''}
         ${w.liqUsd ? `<div>Liquidity: <b>$${(w.liqUsd/1e6).toFixed(2)}M</b></div>` : ''}
         ${w.vol24h ? `<div>Vol 24h: <b>$${(w.vol24h/1e6).toFixed(2)}M</b></div>` : ''}
-        ${w.buys || w.sells ? `<div style="color:#27c97f">B:${w.buys||0} <span style="color:#ff6b8a">S:${w.sells||0}</span></div>` : ''}
+        ${w.buys || w.sells ? `<div style="color:var(--accent-green)">B:${w.buys||0} <span style="color:#ff6b8a">S:${w.sells||0}</span></div>` : ''}
       `;
     } else {
       tooltip.style.display = 'none';
@@ -1367,7 +1367,7 @@ function renderHolderConcentration(d) {
   if (badge) badge.textContent = stats.total ? `${Number(stats.total).toLocaleString()} holders` : '';
 
   const top10      = dist.top10 ?? 0;
-  const riskColor  = top10 >= 80 ? '#F0484B' : top10 >= 50 ? '#F5A623' : '#27C97F';
+  const riskColor  = top10 >= 80 ? 'var(--accent-red)' : top10 >= 50 ? '#F5A623' : 'var(--accent-green)';
   const riskLabel  = top10 >= 80 ? 'HIGH CONCENTRATION' : top10 >= 50 ? 'MODERATE' : 'HEALTHY';
   const hasGTDist  = dist.top10 != null && dist.p11_20 != null;
 
@@ -1405,21 +1405,21 @@ function renderHolderConcentration(d) {
         <span style="font-size:10px;font-weight:700;color:${riskColor}">${riskLabel}</span>
       </div>
 
-      ${bar('Top 10 Wallets',    dist.top10,  top10 >= 50 ? '#F0484B' : '#F5A623', 'Source: ' + src)}
+      ${bar('Top 10 Wallets',    dist.top10,  top10 >= 50 ? 'var(--accent-red)' : '#F5A623', 'Source: ' + src)}
       ${bar('Wallets #11–20',    dist.p11_20, '#8B5CF6', '')}
       ${bar('Wallets #21–40',    dist.p21_40, '#4a90d9', '')}
-      ${bar('Remaining Holders', dist.rest,   '#27C97F', 'Public float')}
+      ${bar('Remaining Holders', dist.rest,   'var(--accent-green)', 'Public float')}
       ${!hasGTDist ? `<div style="padding:8px 16px;font-size:10px;color:var(--text-muted)">Wallet #11–40 breakdown not available — GeckoTerminal data missing for this token.</div>` : ''}
 
       ${dist.liquidity != null ? `
       <div style="padding:6px 16px;font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border-light);margin-top:4px">Liquidity</div>
-      ${bar('LP Pool Holdings', dist.liquidity, '#27C97F', 'From DexScreener liquidityBase / totalSupply')}
+      ${bar('LP Pool Holdings', dist.liquidity, 'var(--accent-green)', 'From DexScreener liquidityBase / totalSupply')}
       ` : ''}
 
       <div style="padding:6px 16px;font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border-light);margin-top:4px">Holder Stats</div>
       ${stat('Total Holders',   stats.total ? Number(stats.total).toLocaleString() : '—')}
-      ${stats.whales != null ? stat('Whale Wallets (>1%)', stats.whales, stats.whales > 10 ? '#F0484B' : '#F5A623') : ''}
-      ${stats.concentration != null ? stat('Top 10 Concentration', `${stats.concentration.toFixed(2)}%`, stats.concentration > 60 ? '#F0484B' : '#27C97F') : ''}
+      ${stats.whales != null ? stat('Whale Wallets (>1%)', stats.whales, stats.whales > 10 ? 'var(--accent-red)' : '#F5A623') : ''}
+      ${stats.concentration != null ? stat('Top 10 Concentration', `${stats.concentration.toFixed(2)}%`, stats.concentration > 60 ? 'var(--accent-red)' : 'var(--accent-green)') : ''}
     </div>`;
 }
 
@@ -1432,7 +1432,7 @@ const ACTIVITY_SVG = {
   send:      `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
   transfer:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
 };
-const SEV_DOT = { high:'#F0484B', medium:'#F5A623', low:'#27C97F' };
+const SEV_DOT = { high:'var(--accent-red)', medium:'#F5A623', low:'var(--accent-green)' };
 let _activityFilter = 'All Activity';
 
 function renderActivity(d) {
@@ -1509,7 +1509,7 @@ function renderDistribution(d) {
 
   const labels = ['Top 10 Wallets','Team / Insider','Liquidity','Public','CEX / Market Maker'];
   const values = [top10, team, liq, pub, cex];
-  const colors = ['#F0484B','#FF8C42','#4A90E2','#27C97F','#9B59B6'];
+  const colors = ['var(--accent-red)','#FF8C42','#4A90E2','var(--accent-green)','#9B59B6'];
 
   distChart = new Chart(document.getElementById('distributionChart'), {
     type: 'doughnut',
@@ -1559,7 +1559,7 @@ function renderSecurity(d) {
 
   // Determine overall security level
   const risks = [sec.isHoneypot, sec.cannotBuy, sec.isMintable, sec.isProxy, !sec.isOpenSource].filter(Boolean).length;
-  const overallColor = risks === 0 ? '#27C97F' : risks <= 1 ? '#F5A623' : '#F0484B';
+  const overallColor = risks === 0 ? 'var(--accent-green)' : risks <= 1 ? '#F5A623' : 'var(--accent-red)';
   const overallLabel = risks === 0 ? 'SAFE' : risks <= 1 ? 'CAUTION' : 'RISKY';
   if (badge) { badge.textContent = overallLabel; badge.style.color = overallColor; badge.style.fontWeight = '700'; }
 
@@ -1574,7 +1574,7 @@ function renderSecurity(d) {
 
   const bool = (v, trueLabel = 'YES', falseLabel = 'NO', trueIsBad = true) => {
     const isTrue = !!v;
-    const color  = isTrue === trueIsBad ? '#F0484B' : '#27C97F';
+    const color  = isTrue === trueIsBad ? 'var(--accent-red)' : 'var(--accent-green)';
     return `<span style="color:${color};font-weight:700">${isTrue ? trueLabel : falseLabel}</span>`;
   };
 
@@ -1583,7 +1583,7 @@ function renderSecurity(d) {
 
   const lpRows = (sec.lpHolders || []).map((h, i) => {
     const short = h.address ? h.address.slice(0,6)+'…'+h.address.slice(-4) : '—';
-    const lockColor = h.locked ? '#27C97F' : '#F5A623';
+    const lockColor = h.locked ? 'var(--accent-green)' : '#F5A623';
     const lockLabel = h.locked ? '🔒 Locked' : 'Unlocked';
     return row(
       `LP Holder #${i+1}`,
@@ -1603,13 +1603,13 @@ function renderSecurity(d) {
       ${isSolana  ? row('Freezable',      bool(sec.isFreezable, 'YES ⚠', 'NO')) : ''}
       ${isSolana  ? row('Metadata Mutable', bool(sec.metadataMutable, 'YES ⚠', 'NO')) : ''}
       <div style="padding:6px 16px;font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border-light);margin-top:4px">Tax</div>
-      ${row('Buy Tax',  pct(sec.buyTax),  sec.buyTax  > 5 ? '#F0484B' : '#27C97F')}
-      ${row('Sell Tax', pct(sec.sellTax), sec.sellTax > 5 ? '#F0484B' : '#27C97F')}
-      ${!isSolana && sec.transferTax ? row('Transfer Tax', pct(sec.transferTax), sec.transferTax > 0 ? '#F5A623' : '#27C97F') : ''}
+      ${row('Buy Tax',  pct(sec.buyTax),  sec.buyTax  > 5 ? 'var(--accent-red)' : 'var(--accent-green)')}
+      ${row('Sell Tax', pct(sec.sellTax), sec.sellTax > 5 ? 'var(--accent-red)' : 'var(--accent-green)')}
+      ${!isSolana && sec.transferTax ? row('Transfer Tax', pct(sec.transferTax), sec.transferTax > 0 ? '#F5A623' : 'var(--accent-green)') : ''}
       <div style="padding:6px 16px;font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border-light);margin-top:4px">Liquidity</div>
       ${lpRows || row('LP Holders', 'No data', 'var(--text-muted)')}
       ${!isSolana ? row('LP Holder Count', sec.lpHolderCount || '—', 'var(--text-primary)') : ''}
-      ${!isSolana && sec.isInCex ? row('Listed on CEX', sec.cexList?.join(', ') || 'Yes', '#27C97F') : ''}
+      ${!isSolana && sec.isInCex ? row('Listed on CEX', sec.cexList?.join(', ') || 'Yes', 'var(--accent-green)') : ''}
       <div style="padding:6px 16px;font-size:9px;color:var(--text-muted);font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border-light);margin-top:4px">Creator</div>
       ${sec.creatorAddress ? row('Creator Address',
           `<a href="${explorerBase}${sec.creatorAddress}" target="_blank" style="color:var(--accent-blue);text-decoration:none;font-family:monospace;font-size:10px">${sec.creatorAddress.slice(0,8)}…${sec.creatorAddress.slice(-6)}</a>`,
@@ -1680,15 +1680,15 @@ function renderWalletRows(wallets, symbol) {
     return;
   }
 
-  const TYPE_COLOR = { Team:'#F0484B', Insider:'#FF8C42', 'Early Buyer':'#FF8C42', Cluster:'#F5A623', Liquidity:'#4A90E2', Whale:'#8B5CF6', Holder:'#27C97F', 'Top Holder':'#27C97F', Trader:'#4A90E2', Other:'#8b92a8' };
+  const TYPE_COLOR = { Team:'var(--accent-red)', Insider:'#FF8C42', 'Early Buyer':'#FF8C42', Cluster:'#F5A623', Liquidity:'#4A90E2', Whale:'#8B5CF6', Holder:'var(--accent-green)', 'Top Holder':'var(--accent-green)', Trader:'#4A90E2', Other:'#8b92a8' };
 
   $('walletsTable').innerHTML = filtered.slice(0, 50).map((w, idx) => {
-    const riskColor  = w.riskScore >= 70 ? '#F0484B' : w.riskScore >= 45 ? '#F5A623' : '#27C97F';
+    const riskColor  = w.riskScore >= 70 ? 'var(--accent-red)' : w.riskScore >= 45 ? '#F5A623' : 'var(--accent-green)';
     const riskLabel  = w.riskScore >= 70 ? 'HIGH' : w.riskScore >= 45 ? 'MED' : 'LOW';
     const typeColor  = TYPE_COLOR[w.type] || TYPE_COLOR.Other;
     const bars = (w.activity||[]).map(v => {
       const h = Math.max(3, Math.abs(v) * 16);
-      return `<div class="mini-bar" style="height:${h}px;background:${v>=0?'#27C97F':'#F0484B'}"></div>`;
+      return `<div class="mini-bar" style="height:${h}px;background:${v>=0?'var(--accent-green)':'var(--accent-red)'}"></div>`;
     }).join('');
     const fullAddr   = w.address || '';
     const isSolAddr  = fullAddr.length >= 32 && /^[1-9A-HJ-NP-Za-km-z]+$/.test(fullAddr);
@@ -1707,7 +1707,7 @@ function renderWalletRows(wallets, symbol) {
       allocLine1 = `<span style="color:#4A90E2">Liq: ${fmtUsd(w.liqUsd||0)}</span>`;
       allocLine2 = `Vol: ${fmtUsd(w.vol24h||0)} (${(w.volPct||0).toFixed(0)}%)`;
     } else if (w.buyVol != null) {
-      allocLine1 = `<span style="color:#27C97F">B:${fmtUsd(w.buyVol||0)}</span> <span style="color:#F0484B">S:${fmtUsd(w.sellVol||0)}</span>`;
+      allocLine1 = `<span style="color:var(--accent-green)">B:${fmtUsd(w.buyVol||0)}</span> <span style="color:var(--accent-red)">S:${fmtUsd(w.sellVol||0)}</span>`;
       allocLine2 = `Vol: ${fmtUsd((w.buyVol||0)+(w.sellVol||0))}`;
     } else {
       const estMark = w.isEstimated ? '~' : '';
@@ -1721,8 +1721,8 @@ function renderWalletRows(wallets, symbol) {
     const volTotal   = buyVolNum + sellVolNum;
     const buySellBar = isLiqPool && volTotal > 0
       ? `<div style="display:flex;gap:2px;margin-top:3px;height:3px;border-radius:2px;overflow:hidden;width:60px">
-           <div style="background:#27C97F;flex:${buyVolNum}"></div>
-           <div style="background:#F0484B;flex:${sellVolNum}"></div>
+           <div style="background:var(--accent-green);flex:${buyVolNum}"></div>
+           <div style="background:var(--accent-red);flex:${sellVolNum}"></div>
          </div>`
       : '';
 
@@ -1818,7 +1818,7 @@ async function runPrediction() {
       <div id="predStepIcon" style="font-size:28px;transition:opacity .3s">${steps[0].icon}</div>
       <div id="predStepText" style="font-size:12px;color:var(--text-muted);font-weight:600;letter-spacing:.5px;transition:opacity .3s">${steps[0].text}</div>
       <div style="width:260px;height:4px;background:var(--border-light);border-radius:2px;overflow:hidden">
-        <div id="predProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#27c97f,#4a90e2);border-radius:2px;transition:width .4s ease"></div>
+        <div id="predProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent-green),#4a90e2);border-radius:2px;transition:width .4s ease"></div>
       </div>
       <div id="predPct" style="font-size:10px;color:var(--text-muted)">0%</div>
     </div>`;
@@ -1853,7 +1853,7 @@ async function runPrediction() {
     if (txt) txt.textContent = 'Prediction ready!';
     await new Promise(r => setTimeout(r, 500));
 
-    const sigColor = { bullish:'#27c97f', bearish:'#F0484B', neutral:'#F5A623' };
+    const sigColor = { bullish:'var(--accent-green)', bearish:'var(--accent-red)', neutral:'#F5A623' };
     const sigIcon  = { bullish:'▲', bearish:'▼', neutral:'◆' };
     const sigLabel = { bullish:'BULLISH', bearish:'BEARISH', neutral:'NEUTRAL' };
     const c = sigColor[data.signal] || '#F5A623';
@@ -1881,8 +1881,8 @@ async function runPrediction() {
           <span>🟢 Bull Score: ${data.bullScore}</span><span>Bear Score: ${data.bearScore} 🔴</span>
         </div>
         <div style="display:flex;height:8px;border-radius:4px;overflow:hidden">
-          <div style="flex:${data.bullScore};background:#27c97f"></div>
-          <div style="flex:${data.bearScore};background:#F0484B"></div>
+          <div style="flex:${data.bullScore};background:var(--accent-green)"></div>
+          <div style="flex:${data.bearScore};background:var(--accent-red)"></div>
         </div>
       </div>
       <!-- Summary -->
@@ -1904,7 +1904,7 @@ async function runPrediction() {
       </div>`;
   } catch(e) {
     clearInterval(_stepInterval);
-    content.innerHTML = `<div style="text-align:center;padding:30px;color:#F0484B;font-size:12px">⚠ ${e.message}</div>`;
+    content.innerHTML = `<div style="text-align:center;padding:30px;color:var(--accent-red);font-size:12px">⚠ ${e.message}</div>`;
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '▶ ANALYZE'; }
   }
@@ -1950,7 +1950,7 @@ function renderHolderStats(d) {
       labels: ['Whales\n>1%','Large\n0.1-1%','Medium\n0.01-0.1%','Retail'],
       datasets: [{
         data: [whaleCnt, largeCnt, medCnt, retailCnt],
-        backgroundColor: ['#F0484B','#FF8C42','#F5A623','#27C97F'],
+        backgroundColor: ['var(--accent-red)','#FF8C42','#F5A623','var(--accent-green)'],
         borderRadius: 3, borderSkipped: false,
       }],
     },
@@ -1976,7 +1976,7 @@ function renderSocial(d) {
   const bullPct = total > 0 ? Math.round((buys / total) * 100) : 50;
   const bearPct = 100 - bullPct;
   const sentLabel = bullPct >= 60 ? 'Bullish' : bullPct <= 40 ? 'Bearish' : 'Neutral';
-  const sentColor = bullPct >= 60 ? '#27c97f' : bullPct <= 40 ? '#ef4444' : '#f59e0b';
+  const sentColor = bullPct >= 60 ? 'var(--accent-green)' : bullPct <= 40 ? '#ef4444' : '#f59e0b';
 
   const iconMap = {
     twitter:  { svg: `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`, label: 'X' },
@@ -2200,7 +2200,7 @@ async function loadTrending() {
     const chain = (data.evmChain||'EVM').charAt(0).toUpperCase()+(data.evmChain||'evm').slice(1);
     const chainColor = '#4a90d9';
     el.innerHTML = [
-      { label:'Total Value',  value: fmtUsd(data.totalUsd), color:'#27C97F' },
+      { label:'Total Value',  value: fmtUsd(data.totalUsd), color:'var(--accent-green)' },
       { label:'Network',      value: chain,                  color: chainColor },
       { label:'Tokens',       value: data.tokens?.length || 0, color:'var(--text-primary)' },
       { label:'Transactions', value: data.txs?.length || 0,    color:'var(--text-primary)' },
@@ -2231,12 +2231,12 @@ async function loadTrending() {
             <div style="font-size:11px;font-weight:600;color:var(--text-primary)">${t.symbol}</div>
             <div style="font-size:9px;color:var(--text-muted)">${t.name}</div>
             <div style="height:2px;background:var(--border-light);border-radius:1px;margin-top:3px;width:60px">
-              <div style="height:100%;width:${Math.min(100,pct)}%;background:#27C97F;border-radius:1px"></div>
+              <div style="height:100%;width:${Math.min(100,pct)}%;background:var(--accent-green);border-radius:1px"></div>
             </div>
           </div>
           <span style="text-align:right;font-size:10px;color:var(--text-primary)">${fmtNum(t.balance)}</span>
           <span style="text-align:right;font-size:10px;color:var(--text-muted)">${t.priceUsd>0?'$'+t.priceUsd.toFixed(t.priceUsd<0.001?8:t.priceUsd<1?6:4):'—'}</span>
-          <span style="text-align:right;font-size:11px;font-weight:600;color:${t.valueUsd>0?'#27C97F':'var(--text-muted)'}">${fmtUsd(t.valueUsd)}</span>
+          <span style="text-align:right;font-size:11px;font-weight:600;color:${t.valueUsd>0?'var(--accent-green)':'var(--text-muted)'}">${fmtUsd(t.valueUsd)}</span>
         </div>`;
       }).join('')}`;
   }
@@ -2251,7 +2251,7 @@ async function loadTrending() {
   function _txRow(tx) {
     const txBase = { ethereum:'https://etherscan.io/tx/', base:'https://basescan.org/tx/', arbitrum:'https://arbiscan.io/tx/', robinhood:'https://robinhoodchain.blockscout.com/tx/' };
     const explorer = txBase[_txChain] || txBase.ethereum;
-    const TYPE_COLOR = { Send:'#F0484B', Receive:'#27C97F', Swap:'#F5A623', Transfer:'#4a90d9' };
+    const TYPE_COLOR = { Send:'var(--accent-red)', Receive:'var(--accent-green)', Swap:'#F5A623', Transfer:'#4a90d9' };
     const hash   = tx.signature || tx.hash || '';
     const color  = TYPE_COLOR[tx.type] || '#8b92a8';
     const valStr = tx.value > 0 ? fmtUsd(tx.value * 3000) : (tx.amtOut > 0 ? fmtNum(tx.amtOut) : '—');
@@ -2307,7 +2307,7 @@ async function loadTrending() {
       renderTxHistory(data.txs || [], evmChain, data.nextCursor || null, address);
     } catch (e) {
       show('wtEmpty');
-      if (detectEl()) { detectEl().textContent = '⚠ ' + e.message; detectEl().style.color = '#F0484B'; }
+      if (detectEl()) { detectEl().textContent = '⚠ ' + e.message; detectEl().style.color = 'var(--accent-red)'; }
     }
   }
 
@@ -2633,7 +2633,7 @@ function openWalletModal() {
     const addr = _privyUser._displayAddress || _privyUser.wallet?.address || _privyUser.linked_accounts?.find(a => a.type === 'wallet')?.address || _privyUser.email?.address || _privyUser.linked_accounts?.find(a => a.type === 'email')?.address || '';
     const displayName = _userProfile?.displayName || _chatName || '';
     const avatarSrc = _userProfile?.avatar || blockieDataUrl(addr || displayName || 'anon');
-    const avatarHtml = `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid #27c97f55;margin:0 auto 10px"><img src="${avatarSrc}" style="width:100%;height:100%;object-fit:cover"></div>`;
+    const avatarHtml = `<div style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid var(--green-55);margin:0 auto 10px"><img src="${avatarSrc}" style="width:100%;height:100%;object-fit:cover"></div>`;
     const nameHtml = displayName
       ? `<div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px">${displayName}</div>`
       : '';
@@ -2641,12 +2641,12 @@ function openWalletModal() {
       <div style="text-align:center;padding:10px 0 16px">
         ${avatarHtml}
         ${nameHtml}
-        <div style="display:inline-flex;align-items:center;gap:5px;background:#27c97f15;border:1px solid #27c97f30;border-radius:20px;padding:3px 12px;margin-bottom:10px">
-          <span style="width:6px;height:6px;border-radius:50%;background:#27c97f;display:inline-block;flex-shrink:0"></span>
-          <span style="font-size:10px;color:#27c97f;font-weight:600">CONNECTED</span>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:var(--green-15);border:1px solid var(--green-30);border-radius:20px;padding:3px 12px;margin-bottom:10px">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);display:inline-block;flex-shrink:0"></span>
+          <span style="font-size:10px;color:var(--accent-green);font-weight:600">CONNECTED</span>
         </div>
-        <div style="background:#27c97f10;border:1px solid #27c97f30;border-radius:10px;padding:8px 12px;text-align:center">
-          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#27c97f;margin-right:6px;vertical-align:middle;flex-shrink:0"></span><span style="font-size:10px;font-family:monospace;color:#27c97f;font-weight:600;word-break:break-all;line-height:1.6">${addr}</span>
+        <div style="background:var(--green-10);border:1px solid var(--green-30);border-radius:10px;padding:8px 12px;text-align:center">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent-green);margin-right:6px;vertical-align:middle;flex-shrink:0"></span><span style="font-size:10px;font-family:monospace;color:var(--accent-green);font-weight:600;word-break:break-all;line-height:1.6">${addr}</span>
         </div>
       </div>
       <div style="padding:0 0 10px">
@@ -2654,7 +2654,7 @@ function openWalletModal() {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy Address
         </button>
-        <button onclick="privyLogout()" style="width:100%;background:#ff4d4d12;border:1px solid #ff4d4d44;border-radius:10px;padding:10px;cursor:pointer;color:#ff6b6b;font-size:12px;font-weight:700;letter-spacing:0.5px">DISCONNECT</button>
+        <button onclick="privyLogout()" style="width:100%;background:var(--red-12);border:1px solid var(--red-44);border-radius:10px;padding:10px;cursor:pointer;color:#ff6b6b;font-size:12px;font-weight:700;letter-spacing:0.5px">DISCONNECT</button>
       </div>
       <div style="text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>`;
   } else {
@@ -2880,7 +2880,7 @@ const AVATAR_SVGS = [
   // 15 Ghost
   "<path d='M30 50a20 20 0 0 1 40 0v22l-6-5-7 5-7-5-7 5-6-5z' fill='#fff'/><circle cx='43' cy='48' r='3.5' fill='#111'/><circle cx='57' cy='48' r='3.5' fill='#111'/>",
   // 16 Dragon
-  "<path d='M32 38l4 8 14-4 14 4 4-8 2 14-6 8 4 8-18 6-18-6 4-8-6-8z' fill='#fff'/><path d='M37 29l4 11-9-2zM63 29l-4 11 9-2z' fill='#27c97f'/><circle cx='44' cy='49' r='2.4' fill='#111'/><circle cx='56' cy='49' r='2.4' fill='#111'/><path d='M42 60h16l-3 4h-10z' fill='#111'/>",
+  "<path d='M32 38l4 8 14-4 14 4 4-8 2 14-6 8 4 8-18 6-18-6 4-8-6-8z' fill='#fff'/><path d='M37 29l4 11-9-2zM63 29l-4 11 9-2z' fill='var(--accent-green)'/><circle cx='44' cy='49' r='2.4' fill='#111'/><circle cx='56' cy='49' r='2.4' fill='#111'/><path d='M42 60h16l-3 4h-10z' fill='#111'/>",
   // 17 Eagle
   "<circle cx='50' cy='52' r='20' fill='#fff'/><circle cx='43' cy='48' r='3' fill='#111'/><circle cx='57' cy='48' r='3' fill='#111'/><path d='M44 55h12l-6 9z' fill='#f5a623'/><path d='M50 28c-4 0-6 4-6 8h12c0-4-2-8-6-8z' fill='#fff'/>",
   // 18 Diamond
@@ -2888,7 +2888,7 @@ const AVATAR_SVGS = [
   // 19 Rocket
   "<path d='M50 24c8 6 12 16 12 28l-4 10H42l-4-10c0-12 4-22 12-28z' fill='#fff'/><circle cx='50' cy='44' r='5' fill='#111'/><path d='M42 58l-8 8 8-2zM58 58l8 8-8-2z' fill='#fff'/><path d='M45 68h10l-5 10z' fill='#f5a623'/>",
 ];
-const AVATAR_BG_COLORS = ['#27c97f','#4a90e2','#f5a623','#ff6b8a','#9b59b6','#e86c3a','#00b8d9','#f0484b','#2ecc71','#34495e','#e84393','#1abc9c'];
+const AVATAR_BG_COLORS = ['var(--accent-green)','#4a90e2','#f5a623','#ff6b8a','#9b59b6','#e86c3a','#00b8d9','var(--accent-red)','#2ecc71','#34495e','#e84393','#1abc9c'];
 let _avatarPickIdx   = 0;
 let _avatarPickColor = AVATAR_BG_COLORS[0];
 
@@ -2909,7 +2909,7 @@ function _renderAvatarPickerBody() {
   document.querySelectorAll('#avatarPickerModal .ap-avatar').forEach(b => {
     const i = parseInt(b.dataset.idx);
     b.style.backgroundImage = `url("${buildSvgAvatar(i, _avatarPickColor)}")`;
-    b.style.borderColor = i === _avatarPickIdx ? '#27c97f' : '#2d3748';
+    b.style.borderColor = i === _avatarPickIdx ? 'var(--accent-green)' : '#2d3748';
   });
   document.querySelectorAll('#avatarPickerModal .ap-color').forEach(b => {
     b.style.outline = b.dataset.color === _avatarPickColor ? '2px solid #e2e8f0' : 'none';
@@ -2929,7 +2929,7 @@ window.openAvatarPicker = function() {
         <span style="font-size:13px;font-weight:800;letter-spacing:1px;color:#e2e8f0">CHOOSE AVATAR</span>
         <button onclick="document.getElementById('avatarPickerModal').remove()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:16px;line-height:1">✕</button>
       </div>
-      <div id="avatarPickPreview" style="width:80px;height:80px;border-radius:50%;margin:0 auto 16px;background-size:cover;background-position:center;border:2px solid #27c97f55"></div>
+      <div id="avatarPickPreview" style="width:80px;height:80px;border-radius:50%;margin:0 auto 16px;background-size:cover;background-position:center;border:2px solid var(--green-55)"></div>
       <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#6b7280;margin-bottom:8px">CHARACTER</div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px">
         ${AVATAR_SVGS.map((_, i) => `<button class="ap-avatar" data-idx="${i}" style="aspect-ratio:1;border:2px solid #2d3748;border-radius:10px;background:#0d0f1a;background-size:cover;background-position:center;cursor:pointer"></button>`).join('')}
@@ -2938,7 +2938,7 @@ window.openAvatarPicker = function() {
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
         ${AVATAR_BG_COLORS.map(c => `<button class="ap-color" data-color="${c}" style="width:26px;height:26px;border-radius:50%;border:1px solid #00000030;background:${c};cursor:pointer;outline-offset:2px"></button>`).join('')}
       </div>
-      <button id="avatarPickSave" style="width:100%;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:800;padding:11px;cursor:pointer;letter-spacing:0.5px">Save Avatar</button>
+      <button id="avatarPickSave" style="width:100%;background:var(--accent-green);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:800;padding:11px;cursor:pointer;letter-spacing:0.5px">Save Avatar</button>
     </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
@@ -2996,8 +2996,8 @@ function _updateSidebarProfile(user) {
     }
     if (popupFull) popupFull.textContent = display || '—';
     if (statusText)  statusText.textContent = 'CONNECTED';
-    if (statusDot)   statusDot.style.background = '#27c97f';
-    if (statusBadge) { statusBadge.style.background = '#27c97f15'; statusBadge.style.borderColor = '#27c97f30'; statusText.style.color = '#27c97f'; }
+    if (statusDot)   statusDot.style.background = 'var(--accent-green)';
+    if (statusBadge) { statusBadge.style.background = 'var(--green-15)'; statusBadge.style.borderColor = 'var(--green-30)'; statusText.style.color = 'var(--accent-green)'; }
     if (walletBox)   walletBox.style.display = '';
     _setAvatarEditEnabled(true);
     // Load profile from server
@@ -3070,8 +3070,8 @@ function _setAnalyzerAlertBtnState(enabled, hasAlert = false) {
   btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
   btn.style.opacity = !enabled ? '0.25' : (hasAlert ? '1' : '0.7');
   btn.title = !enabled ? 'Save to watchlist first to set an alert' : (hasAlert ? 'Alert set — click to edit' : 'Set alert');
-  bell.setAttribute('stroke', hasAlert ? '#27c97f' : (enabled ? '#8b92a8' : '#8b92a8'));
-  bell.setAttribute('fill', hasAlert ? '#27c97f' : 'none');
+  bell.setAttribute('stroke', hasAlert ? 'var(--accent-green)' : (enabled ? '#8b92a8' : '#8b92a8'));
+  bell.setAttribute('fill', hasAlert ? 'var(--accent-green)' : 'none');
 }
 
 async function _refreshAnalyzerAlertBtn(address, inWatchlist) {
@@ -3191,7 +3191,7 @@ async function renderWatchlistPage() {
     el.innerHTML = `<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">
       <div style="font-size:28px;margin-bottom:12px">♡</div>
       Connect wallet to see your watchlist
-      <br><button onclick="openWalletModal()" style="margin-top:16px;background:#27c97f;border:none;border-radius:8px;color:#000;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Connect Wallet</button>
+      <br><button onclick="openWalletModal()" style="margin-top:16px;background:var(--accent-green);border:none;border-radius:8px;color:#000;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Connect Wallet</button>
     </div>`;
     return;
   }
@@ -3257,7 +3257,7 @@ async function renderWatchlistPage() {
       rows.map((t, i) => _watchRowHtml(t, i, alertAddrs.has(t.address.toLowerCase()))).join('') +
       `</div></div>`;
   } catch(e) {
-    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading watchlist</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading watchlist</div>`;
   }
 }
 
@@ -3303,9 +3303,9 @@ async function openAlertModal(address, chain, symbol, name) {
         <input id="alertThresholdInput" type="number" min="0.1" step="0.1" placeholder="e.g. 10" value="10"
           style="width:100%;background:#0d0f18;border:1px solid #2d3748;border-radius:8px;color:#e2e8f0;font-size:13px;padding:10px 12px;margin-bottom:18px;box-sizing:border-box">
         <div style="display:flex;gap:8px">
-          <button id="alertRemoveBtn" style="display:none;flex:1;background:#ff4d4d12;border:1px solid #ff4d4d44;border-radius:10px;color:#ff6b6b;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Remove Alert</button>
+          <button id="alertRemoveBtn" style="display:none;flex:1;background:var(--red-12);border:1px solid var(--red-44);border-radius:10px;color:#ff6b6b;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Remove Alert</button>
           <button id="alertCancelBtn" style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Cancel</button>
-          <button id="alertSaveBtn" style="flex:1;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Save Alert</button>
+          <button id="alertSaveBtn" style="flex:1;background:var(--accent-green);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Save Alert</button>
         </div>
       </div>
     </div>`;
@@ -3336,9 +3336,9 @@ async function openAlertModal(address, chain, symbol, name) {
     ['Mcap','Volume'].forEach(k => {
       const btn = overlay.querySelector(`#alertMetric${k}`);
       const active = (k === 'Mcap' && metric === 'mcap') || (k === 'Volume' && metric === 'volume');
-      btn.style.background = active ? '#27c97f15' : '#1e2235';
-      btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
-      btn.style.color = active ? '#27c97f' : '#8b92a8';
+      btn.style.background = active ? 'var(--green-15)' : '#1e2235';
+      btn.style.border = active ? '1px solid var(--green-40)' : '1px solid #2d3748';
+      btn.style.color = active ? 'var(--accent-green)' : '#8b92a8';
     });
   }
 
@@ -3365,9 +3365,9 @@ async function openAlertModal(address, chain, symbol, name) {
     [['Up','up'],['Down','down'],['Both','both']].forEach(([k,v]) => {
       const btn = overlay.querySelector(`#alertDir${k}`);
       const active = direction === v;
-      btn.style.background = active ? '#27c97f15' : '#1e2235';
-      btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
-      btn.style.color = active ? '#27c97f' : '#8b92a8';
+      btn.style.background = active ? 'var(--green-15)' : '#1e2235';
+      btn.style.border = active ? '1px solid var(--green-40)' : '1px solid #2d3748';
+      btn.style.color = active ? 'var(--accent-green)' : '#8b92a8';
     });
   }
 
@@ -3495,9 +3495,9 @@ function switchAlertsTab(tab) {
   _alertsTab = tab;
   document.querySelectorAll('.alerts-tab-btn').forEach(btn => {
     const active = btn.dataset.tab === tab;
-    btn.style.background = active ? '#27c97f15' : '#1e2235';
-    btn.style.border = active ? '1px solid #27c97f40' : '1px solid #2d3748';
-    btn.style.color = active ? '#27c97f' : '#8b92a8';
+    btn.style.background = active ? 'var(--green-15)' : '#1e2235';
+    btn.style.border = active ? '1px solid var(--green-40)' : '1px solid #2d3748';
+    btn.style.color = active ? 'var(--accent-green)' : '#8b92a8';
   });
   $('alertsTabNotifications').style.display = tab === 'notifications' ? 'block' : 'none';
   $('alertsTabBlast').style.display = tab === 'blast' ? 'block' : 'none';
@@ -3532,11 +3532,11 @@ function _alertRowHtml(n) {
     const up = n.direction === 'up';
     const label = n.metric === 'mcap' ? 'Market Cap' : 'Volume';
     return `
-      <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? '#27c97f40' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? 'var(--green-40)' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
            onclick="openInAnalyzer('${n.address}')">
         <div style="display:flex;align-items:center;gap:12px">
           ${checkbox}
-          <div style="width:36px;height:36px;border-radius:50%;background:${up ? '#27c97f15' : '#ff4d4d15'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+          <div style="width:36px;height:36px;border-radius:50%;background:${up ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
             ${up ? '📈' : '📉'}
           </div>
           <div>
@@ -3544,7 +3544,7 @@ function _alertRowHtml(n) {
             <div style="font-size:11px;color:#6b7280;margin-top:2px">${(n.chain||'').toUpperCase()} · ${when}</div>
           </div>
         </div>
-        <div style="color:${up ? '#27c97f' : '#ff6b8a'};font-size:13px;font-weight:700">${up ? '+' : ''}${n.change_pct.toFixed(1)}%</div>
+        <div style="color:${up ? 'var(--accent-green)' : '#ff6b8a'};font-size:13px;font-weight:700">${up ? '+' : ''}${n.change_pct.toFixed(1)}%</div>
       </div>`;
   }
 
@@ -3552,7 +3552,7 @@ function _alertRowHtml(n) {
   // full Description is revealed in a popup on click.
   const meta = ALERT_CATEGORY_META[n.category] || { icon: '🔔', label: 'Notice' };
   return `
-    <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? '#27c97f40' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
+    <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? 'var(--green-40)' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
          onclick="openAlertDetailPopup(${n.id})">
       <div style="display:flex;align-items:center;gap:12px;min-width:0">
         ${checkbox}
@@ -3712,15 +3712,15 @@ async function loadSniperPools(showLoadingState) {
       const enriched = p.enriched_at != null;
       const addr = p.token_address;
       return `<div onclick="sniperGoToTrade('${addr}')"
-        style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${isFresh ? '#27c97f40' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
+        style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${isFresh ? 'var(--green-40)' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
         onmouseover="this.style.background='#161822'" onmouseout="this.style.background='#12141e'">
         <div style="display:flex;align-items:center;gap:12px;min-width:0">
-          <div style="width:36px;height:36px;border-radius:50%;background:#27c97f15;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#27c97f;flex-shrink:0">${(p.symbol||'?').charAt(0)}</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--green-15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--accent-green);flex-shrink:0">${(p.symbol||'?').charAt(0)}</div>
           <div style="min-width:0">
             <div style="display:flex;align-items:center;gap:6px">
               <span style="font-size:13px;font-weight:700;color:#e2e8f0">${p.symbol || '?'}</span>
               <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:#1e2235;color:#6b7280;border:1px solid #2d3144">${sourceLabel}</span>
-              ${isFresh ? `<span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;background:#27c97f20;color:#27c97f">NEW</span>` : ''}
+              ${isFresh ? `<span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;background:var(--green-20);color:var(--accent-green)">NEW</span>` : ''}
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px">${p.name || ''} · ${addr.slice(0,6)}…${addr.slice(-4)} · ${ageStr}</div>
           </div>
@@ -3734,7 +3734,7 @@ async function loadSniperPools(showLoadingState) {
       </div>`;
     }).join('');
   } catch (e) {
-    el.innerHTML = '<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading new pools</div>';
+    el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading new pools</div>';
   }
 }
 
@@ -3745,7 +3745,7 @@ async function renderAlertsPage() {
     el.innerHTML = `<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">
       <div style="font-size:28px;margin-bottom:12px">🔔</div>
       Connect wallet to see your alerts
-      <br><button onclick="openWalletModal()" style="margin-top:16px;background:#27c97f;border:none;border-radius:8px;color:#000;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Connect Wallet</button>
+      <br><button onclick="openWalletModal()" style="margin-top:16px;background:var(--accent-green);border:none;border-radius:8px;color:#000;padding:8px 20px;cursor:pointer;font-size:13px;font-weight:600">Connect Wallet</button>
     </div>`;
     return;
   }
@@ -3788,7 +3788,7 @@ async function renderAlertsPage() {
       fetch(`${API_BASE}/alerts/notifications/mark-read`, { method: 'POST', credentials: 'include', headers }).catch(() => {});
     }
   } catch(e) {
-    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:#ff4d4d;font-size:13px">Error loading alerts</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading alerts</div>`;
   }
 }
 
@@ -3818,7 +3818,7 @@ async function loadNarrative() {
       });
     });
   } catch(e) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:#F0484B;font-size:13px">⚠ ${e.message}</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--accent-red);font-size:13px">⚠ ${e.message}</div>`;
   }
 }
 
@@ -3838,7 +3838,7 @@ function renderNarrativeGrid() {
   grid.innerHTML = sorted.map(n => {
     const chg    = n.change24h || 0;
     const signal = chg > 2 ? 'bullish' : chg < -2 ? 'bearish' : 'neutral';
-    const color  = signal === 'bullish' ? '#27c97f' : signal === 'bearish' ? '#F0484B' : '#6b7280';
+    const color  = signal === 'bullish' ? 'var(--accent-green)' : signal === 'bearish' ? 'var(--accent-red)' : '#6b7280';
     const coinImgs = (n.topCoins || []).map(url =>
       `<img src="${url}" style="width:20px;height:20px;border-radius:50%;border:2px solid var(--bg-card);margin-left:-6px;object-fit:cover" onerror="this.style.display='none'">`
     ).join('');
@@ -3896,7 +3896,7 @@ async function loadLandingCA() {
   const isLive = /^0x[0-9a-fA-F]{40}$/.test(_cachedCA || '');
   if (isLive) {
     el.textContent = _cachedCA;
-    el.style.color = '#27c97f';
+    el.style.color = 'var(--accent-green)';
     el.title = '';
     if (copyBtn) copyBtn.style.display = 'inline-block';
   } else {
@@ -4148,7 +4148,7 @@ function _updateMuteBanner() {
     if (!banner) {
       banner = document.createElement('div');
       banner.id = 'chatMuteBanner';
-      banner.style.cssText = 'padding:8px 18px;background:#ff4d4d15;border-top:1px solid #ff4d4d33;color:#ff6b6b;font-size:11px;font-weight:600;text-align:center;flex-shrink:0';
+      banner.style.cssText = 'padding:8px 18px;background:var(--red-15);border-top:1px solid var(--red-33);color:#ff6b6b;font-size:11px;font-weight:600;text-align:center;flex-shrink:0';
       bar?.parentElement?.insertBefore(banner, bar);
     }
     const mins = Math.max(1, Math.ceil((_chatMutedUntil - Date.now()) / 60000));
@@ -4405,7 +4405,7 @@ function _updateReadOnlyBanner(show) {
     if (!banner) {
       banner = document.createElement('div');
       banner.id = 'chatReadOnlyBanner';
-      banner.style.cssText = 'padding:8px 18px;background:#27c97f0f;border-top:1px solid #27c97f30;color:#27c97f;font-size:11px;font-weight:600;text-align:center;flex-shrink:0';
+      banner.style.cssText = 'padding:8px 18px;background:var(--green-0f);border-top:1px solid var(--green-30);color:var(--accent-green);font-size:11px;font-weight:600;text-align:center;flex-shrink:0';
       banner.textContent = '📖 Read-only — automated buy alerts, no chatting here';
       bar?.parentElement?.insertBefore(banner, bar);
     }
@@ -4439,13 +4439,13 @@ function renderChatLockScreen(room) {
       <div style="font-size:52px;line-height:1">🔒</div>
       <div style="font-size:17px;font-weight:800;color:var(--text-primary)">Holders Only</div>
       <div style="font-size:13px;color:var(--text-muted);line-height:1.6;max-width:360px">
-        This channel is locked. You need to hold at least <b style="color:#27c97f">${min} ${symbol}</b>${minUsd ? ` OR <b style="color:#27c97f">$${minUsd} USD</b> ${symbol}` : ''}${network ? ` on <b style="color:#27c97f">${network}</b>` : ''} to unlock it.<br>${bal}
+        This channel is locked. You need to hold at least <b style="color:var(--accent-green)">${min} ${symbol}</b>${minUsd ? ` OR <b style="color:var(--accent-green)">$${minUsd} USD</b> ${symbol}` : ''}${network ? ` on <b style="color:var(--accent-green)">${network}</b>` : ''} to unlock it.<br>${bal}
       </div>
       ${tokenLine}
       <div style="display:flex;gap:10px;margin-top:6px">
         ${connected
-          ? `<button onclick="checkChatGates()" style="background:#27c97f15;border:1px solid #27c97f40;color:#27c97f;font-size:12px;font-weight:700;padding:9px 20px;border-radius:8px;cursor:pointer">↻ Re-check balance</button>`
-          : `<button onclick="openWalletModal()" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`}
+          ? `<button onclick="checkChatGates()" style="background:var(--green-15);border:1px solid var(--green-40);color:var(--accent-green);font-size:12px;font-weight:700;padding:9px 20px;border-radius:8px;cursor:pointer">↻ Re-check balance</button>`
+          : `<button onclick="openWalletModal()" style="background:var(--accent-green);border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`}
       </div>
     </div>`;
 }
@@ -4463,16 +4463,16 @@ function _renderPaidLockScreen(room, g) {
   // instead of paying again — and auto-attempt it below.
   const hasPending = connected && !!localStorage.getItem(_pendingPayKey(window._privyWallet, room));
   const primaryBtn = !connected
-    ? `<button onclick="openWalletModal()" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`
+    ? `<button onclick="openWalletModal()" style="background:var(--accent-green);border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Connect Wallet</button>`
     : hasPending
-      ? `<button id="chatPayBtn" onclick="chatRetryVerify('${room}')" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Verify Payment</button>`
-      : `<button id="chatPayBtn" onclick="chatPayUnlock('${room}')" style="background:#27c97f;border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Pay ${g.amountEth} ${g.symbol} to Unlock</button>`;
+      ? `<button id="chatPayBtn" onclick="chatRetryVerify('${room}')" style="background:var(--accent-green);border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Verify Payment</button>`
+      : `<button id="chatPayBtn" onclick="chatPayUnlock('${room}')" style="background:var(--accent-green);border:none;color:#000;font-size:12px;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer">Pay ${g.amountEth} ${g.symbol} to Unlock</button>`;
   el.innerHTML = `
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;gap:14px">
       <div style="font-size:52px;line-height:1">🔐</div>
       <div style="font-size:17px;font-weight:800;color:var(--text-primary)">Private Channel</div>
       <div style="font-size:13px;color:var(--text-muted);line-height:1.6;max-width:360px">
-        One-time payment of <b style="color:#27c97f">${g.amountEth} ${g.symbol}</b> unlocks this channel permanently for your wallet.
+        One-time payment of <b style="color:var(--accent-green)">${g.amountEth} ${g.symbol}</b> unlocks this channel permanently for your wallet.
       </div>
       <div style="font-size:10px;color:#4b5563;font-family:monospace">${treasury.slice(0,10)}…${treasury.slice(-8)}</div>
       <div id="chatPayStatus" style="display:none;font-size:12px;color:var(--accent-blue)"></div>
@@ -4666,7 +4666,7 @@ function buildMsgHtml(m) {
       ${actions}
       <div style="max-width:72%;display:flex;flex-direction:column;align-items:flex-end">
         <span style="font-size:10px;color:var(--text-muted);margin-bottom:3px">${fmtChatTime(m.ts)}${editedHtml}</span>
-        <div style="background:#27c97f;color:#000;padding:9px 13px;border-radius:16px 16px 4px 16px;font-size:13px;line-height:1.5;word-break:break-word;max-width:100%">
+        <div style="background:var(--accent-green);color:#000;padding:9px 13px;border-radius:16px 16px 4px 16px;font-size:13px;line-height:1.5;word-break:break-word;max-width:100%">
           ${replyQuote}${textHtml}${imgHtml}
         </div>
       </div>
@@ -5258,7 +5258,7 @@ async function tradeLoadToken() {
       const chg = parseFloat(p.priceChange?.h24 ?? 0);
       const chgEl = $('tradeTokenChange');
       chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '% (24h)';
-      chgEl.style.color = chg >= 0 ? '#27c97f' : '#ff4d4d';
+      chgEl.style.color = chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
       const logo = $('tradeTokenLogo');
       if (p.info?.imageUrl) { logo.src = p.info.imageUrl; logo.style.display = ''; } else logo.style.display = 'none';
 
@@ -5296,14 +5296,14 @@ function swapSetSide(side) {
   const native = TRADE_CHAINS[t.chain].native;
 
   $('swapTabBuy').style.cssText  = 'flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:0.5px;transition:background .15s;border:none;' +
-    (side==='buy'  ? 'background:#27c97f;color:#000' : 'background:transparent;color:var(--text-muted)');
+    (side==='buy'  ? 'background:var(--accent-green);color:#000' : 'background:transparent;color:var(--text-muted)');
   $('swapTabSell').style.cssText = 'flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;letter-spacing:0.5px;transition:background .15s;border:none;' +
-    (side==='sell' ? 'background:#ff4d4d;color:#fff' : 'background:transparent;color:var(--text-muted)');
+    (side==='sell' ? 'background:var(--accent-red);color:#fff' : 'background:transparent;color:var(--text-muted)');
 
   $('swapFromLabel').textContent = side === 'buy' ? native : t.symbol;
   $('swapToLabel').textContent   = side === 'buy' ? t.symbol : native;
   $('swapExecBtn').textContent   = (side === 'buy' ? 'BUY ' : 'SELL ') + t.symbol;
-  $('swapExecBtn').style.background = side === 'buy' ? '#27c97f' : '#ff4d4d';
+  $('swapExecBtn').style.background = side === 'buy' ? 'var(--accent-green)' : 'var(--accent-red)';
   $('swapExecBtn').style.color      = side === 'buy' ? '#000' : '#fff';
   $('swapAmountIn').value = '';
   _clearQuote();
@@ -5317,10 +5317,10 @@ function swapSetSide(side) {
 function swapSetMode(mode) {
   _tradeMode = mode;
   const marketBtn = $('modeMarketBtn'), limitBtn = $('modeLimitBtn');
-  marketBtn.style.color = mode === 'market' ? '#27c97f' : 'var(--text-muted)';
-  marketBtn.style.borderBottomColor = mode === 'market' ? '#27c97f' : 'transparent';
-  limitBtn.style.color = mode === 'limit' ? '#27c97f' : 'var(--text-muted)';
-  limitBtn.style.borderBottomColor = mode === 'limit' ? '#27c97f' : 'transparent';
+  marketBtn.style.color = mode === 'market' ? 'var(--accent-green)' : 'var(--text-muted)';
+  marketBtn.style.borderBottomColor = mode === 'market' ? 'var(--accent-green)' : 'transparent';
+  limitBtn.style.color = mode === 'limit' ? 'var(--accent-green)' : 'var(--text-muted)';
+  limitBtn.style.borderBottomColor = mode === 'limit' ? 'var(--accent-green)' : 'transparent';
   $('limitPriceGroup').style.display = mode === 'limit' ? '' : 'none';
   $('swapPresets').style.display = mode === 'market' ? 'flex' : 'none';
 
@@ -5360,9 +5360,9 @@ function limitSetExpiry(days) {
   for (const [val, id] of Object.entries(ids)) {
     const b = $(id); if (!b) continue;
     const on = parseInt(val) === days;
-    b.style.background  = on ? '#27c97f20' : 'var(--bg-secondary)';
-    b.style.borderColor = on ? '#27c97f60' : 'var(--border-light)';
-    b.style.color       = on ? '#27c97f' : 'var(--text-muted)';
+    b.style.background  = on ? 'var(--green-20)' : 'var(--bg-secondary)';
+    b.style.borderColor = on ? 'var(--green-60)' : 'var(--border-light)';
+    b.style.color       = on ? 'var(--accent-green)' : 'var(--text-muted)';
   }
 }
 
@@ -5372,11 +5372,11 @@ function _updateExecBtnLabel() {
   if (!btn || !t) return;
   if (_tradeMode === 'limit') {
     btn.textContent = 'Place Limit Order';
-    btn.style.background = '#27c97f';
+    btn.style.background = 'var(--accent-green)';
     btn.style.color = '#000';
   } else {
     btn.textContent = (_tradeSide === 'buy' ? 'BUY ' : 'SELL ') + t.symbol;
-    btn.style.background = _tradeSide === 'buy' ? '#27c97f' : '#ff4d4d';
+    btn.style.background = _tradeSide === 'buy' ? 'var(--accent-green)' : 'var(--accent-red)';
     btn.style.color = _tradeSide === 'buy' ? '#000' : '#fff';
   }
 }
@@ -5421,9 +5421,9 @@ function swapSetSlippage(v) {
   for (const [val, id] of Object.entries(ids)) {
     const b = $(id); if (!b) continue;
     const on = parseFloat(val) === v;
-    b.style.background  = on ? '#27c97f20' : 'var(--bg-secondary)';
-    b.style.borderColor = on ? '#27c97f60' : 'var(--border-light)';
-    b.style.color       = on ? '#27c97f' : 'var(--text-muted)';
+    b.style.background  = on ? 'var(--green-20)' : 'var(--bg-secondary)';
+    b.style.borderColor = on ? 'var(--green-60)' : 'var(--border-light)';
+    b.style.color       = on ? 'var(--accent-green)' : 'var(--text-muted)';
   }
   if ($('swapAmountIn')?.value) swapScheduleQuote();
 }
@@ -5539,7 +5539,7 @@ async function _fetchQuote() {
     out.style.color = 'var(--text-primary)';
     $('swapMinOut').textContent = _fmtAmt(minOut) + ' ' + outSym;
     $('swapImpact').textContent = impact.toFixed(2) + '%';
-    $('swapImpact').style.color = impact > 5 ? '#ff4d4d' : impact > 2 ? '#f59e0b' : '#27c97f';
+    $('swapImpact').style.color = impact > 5 ? 'var(--accent-red)' : impact > 2 ? '#f59e0b' : 'var(--accent-green)';
     $('swapRate').textContent   = '1 ' + inSym + ' = ' + _fmtAmt(outAmt / amt) + ' ' + outSym;
     $('swapGas').textContent    = gasUsd ? '$' + gasUsd.toFixed(2) : '—';
     $('swapRoute').textContent  = dexes || 'KyberSwap';
@@ -5645,9 +5645,9 @@ async function swapExecute() {
     const link = TRADE_CHAINS[t.chain].explorer + txHash;
     if (txSt) {
       txSt.innerHTML = ok
-        ? `✅ Swap confirmed! <a href="${link}" target="_blank" rel="noopener" style="color:#27c97f">View on explorer ↗</a>`
+        ? `✅ Swap confirmed! <a href="${link}" target="_blank" rel="noopener" style="color:var(--accent-green)">View on explorer ↗</a>`
         : `⚠ Tx reverted. <a href="${link}" target="_blank" rel="noopener" style="color:#f59e0b">View on explorer ↗</a>`;
-      txSt.style.color = ok ? '#27c97f' : '#f59e0b';
+      txSt.style.color = ok ? 'var(--accent-green)' : '#f59e0b';
       txSt.style.display = 'block';
     }
     showToast(ok ? 'Swap executed! 🎉' : 'Transaction reverted');
@@ -5658,7 +5658,7 @@ async function swapExecute() {
   } catch (e) {
     const msg = e.code === 4001 ? 'Rejected in MetaMask' : (e.message || 'Swap failed');
     showToast(msg);
-    if (txSt) { txSt.textContent = '⚠ ' + msg; txSt.style.color = '#ff4d4d'; txSt.style.display = 'block'; }
+    if (txSt) { txSt.textContent = '⚠ ' + msg; txSt.style.color = 'var(--accent-red)'; txSt.style.display = 'block'; }
     resetBtn();
   }
 }
@@ -5769,7 +5769,7 @@ async function limitOrderExecute() {
   } catch (e) {
     const msg = e.code === 4001 ? 'Rejected in MetaMask' : (e.message || 'Failed to place limit order');
     showToast(msg);
-    if (txSt) { txSt.textContent = '⚠ ' + msg; txSt.style.color = '#ff4d4d'; txSt.style.display = 'block'; }
+    if (txSt) { txSt.textContent = '⚠ ' + msg; txSt.style.color = 'var(--accent-red)'; txSt.style.display = 'block'; }
     resetBtn();
   }
 }
@@ -5830,7 +5830,7 @@ function openAddTokenModal() {
         style="width:100%;background:#0d0f18;border:1px solid #2d3748;border-radius:8px;color:#e2e8f0;font-size:12px;font-family:monospace;padding:10px 12px;margin-bottom:18px;box-sizing:border-box">
       <div style="display:flex;gap:8px">
         <button id="addTokenCancelBtn" style="flex:1;background:#1e2235;border:1px solid #2d3748;border-radius:10px;color:#8b92a8;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Cancel</button>
-        <button id="addTokenSaveBtn" style="flex:1;background:#27c97f;border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Save</button>
+        <button id="addTokenSaveBtn" style="flex:1;background:var(--accent-green);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:700;padding:10px;cursor:pointer">Save</button>
       </div>
     </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
@@ -5891,8 +5891,8 @@ async function tradeLoadHoldings(force = false) {
 
     list.innerHTML = hs.map(h => {
       const iconHtml = h.icon
-        ? `<img src="${h.icon}" style="width:30px;height:30px;border-radius:50%;flex-shrink:0" onerror="this.outerHTML='<div style=\\'width:30px;height:30px;border-radius:50%;background:#27c97f1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#27c97f;flex-shrink:0\\'>${(h.symbol||'?')[0]}</div>'">`
-        : `<div style="width:30px;height:30px;border-radius:50%;background:#27c97f1f;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#27c97f;flex-shrink:0">${(h.symbol||'?')[0]}</div>`;
+        ? `<img src="${h.icon}" style="width:30px;height:30px;border-radius:50%;flex-shrink:0" onerror="this.outerHTML='<div style=\\'width:30px;height:30px;border-radius:50%;background:var(--green-1f);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent-green);flex-shrink:0\\'>${(h.symbol||'?')[0]}</div>'">`
+        : `<div style="width:30px;height:30px;border-radius:50%;background:var(--green-1f);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--accent-green);flex-shrink:0">${(h.symbol||'?')[0]}</div>`;
       const clickable = !h.native;
       return `<div ${clickable ? `onclick="tradeSelectHolding('${h.address}')" ` : ''}style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border-light);${clickable ? 'cursor:pointer' : ''}"
         ${clickable ? `onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background=''" title="Click to trade ${h.symbol}"` : ''}>
@@ -5906,7 +5906,7 @@ async function tradeLoadHoldings(force = false) {
         </div>
         <div style="margin-left:auto;text-align:right;flex-shrink:0">
           <div style="font-size:11px;font-weight:700;color:var(--text-primary);font-family:monospace">${_fmtAmt(h.balance)}</div>
-          <div style="font-size:9px;color:${h.usd != null ? '#27c97f' : 'var(--text-muted)'}">${h.usd != null ? '$' + h.usd.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</div>
+          <div style="font-size:9px;color:${h.usd != null ? 'var(--accent-green)' : 'var(--text-muted)'}">${h.usd != null ? '$' + h.usd.toLocaleString('en-US',{maximumFractionDigits:2}) : '—'}</div>
         </div>
       </div>`;
     }).join('');
@@ -5943,7 +5943,7 @@ async function loadMyOrders(force = false) {
     list.innerHTML = orders.map((o, i) => {
       const makerIsWeth = o.makerAsset?.toLowerCase() === ROBINHOOD_WETH.toLowerCase();
       const side = makerIsWeth ? 'BUY' : 'SELL';
-      const sideColor = makerIsWeth ? '#27c97f' : '#ff4d4d';
+      const sideColor = makerIsWeth ? 'var(--accent-green)' : 'var(--accent-red)';
       const makingAmt = _fromRaw(BigInt(o.makingAmount), makerIsWeth ? 18 : (_tradeToken?.decimals || 18));
       const takingAmt = _fromRaw(BigInt(o.takingAmount), makerIsWeth ? (_tradeToken?.decimals || 18) : 18);
       const price = makerIsWeth ? makingAmt / takingAmt : takingAmt / makingAmt;
@@ -6071,9 +6071,9 @@ function _tradeBuildChart(samplePrice) {
   else if (samplePrice < 1)      minMove = 0.0001;
 
   _tradeSeries = chart.addCandlestickSeries({
-    upColor:'#27C97F', downColor:'#F0484B',
-    borderUpColor:'#27C97F', borderDownColor:'#F0484B',
-    wickUpColor:'#27C97F', wickDownColor:'#F0484B',
+    upColor:'var(--accent-green)', downColor:'var(--accent-red)',
+    borderUpColor:'var(--accent-green)', borderDownColor:'var(--accent-red)',
+    wickUpColor:'var(--accent-green)', wickDownColor:'var(--accent-red)',
     priceFormat: { type:'custom', formatter: p => (typeof fmt !== 'undefined' && fmt.price) ? fmt.price(p) : p.toPrecision(4), minMove },
   });
   _tradeChart = chart;
@@ -6141,7 +6141,7 @@ function _applyTradePrice(p) {
     const prev = t.price || 0;
     el.textContent = fmt.price(p);
     if (prev > 0 && p !== prev) {
-      el.style.color = p > prev ? '#27c97f' : '#ff4d4d';
+      el.style.color = p > prev ? 'var(--accent-green)' : 'var(--accent-red)';
       el.style.transition = 'color 0.2s';
     }
   }
@@ -6169,9 +6169,9 @@ function tradeSetInterval(intv) {
   _tradeInterval = intv;
   document.querySelectorAll('.trade-chart-int').forEach(b => {
     const on = b.dataset.int === intv;
-    b.style.background   = on ? '#27c97f20' : 'var(--bg-secondary)';
-    b.style.borderColor  = on ? '#27c97f60' : 'var(--border-light)';
-    b.style.color        = on ? '#27c97f' : 'var(--text-muted)';
+    b.style.background   = on ? 'var(--green-20)' : 'var(--bg-secondary)';
+    b.style.borderColor  = on ? 'var(--green-60)' : 'var(--border-light)';
+    b.style.color        = on ? 'var(--accent-green)' : 'var(--text-muted)';
     b.style.fontWeight   = on ? '700' : '600';
   });
   // Rebuild candles from the cached transaction history with the new bucket size
@@ -6217,12 +6217,12 @@ async function tradeLoadTxs(showLoading = true) {
     const fmtTxPrice = p => !p ? '—' : fmt.price(p);
     list.innerHTML = trades.map(tr => `
       <div style="display:grid;grid-template-columns:56px 1fr 1fr 1fr 62px 34px;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border-light);font-size:11px;align-items:center">
-        <span style="font-weight:800;color:${tr.isBuy ? '#27c97f' : '#ff4d4d'}">${tr.isBuy ? '▲ BUY' : '▼ SELL'}</span>
-        <span style="text-align:right;font-family:monospace;font-weight:700;color:${tr.isBuy ? '#27c97f' : '#ff4d4d'};font-size:10px" title="Execution price">${fmtTxPrice(tr.priceUsd)}</span>
+        <span style="font-weight:800;color:${tr.isBuy ? 'var(--accent-green)' : 'var(--accent-red)'}">${tr.isBuy ? '▲ BUY' : '▼ SELL'}</span>
+        <span style="text-align:right;font-family:monospace;font-weight:700;color:${tr.isBuy ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px" title="Execution price">${fmtTxPrice(tr.priceUsd)}</span>
         <span style="text-align:right;font-family:monospace;font-weight:700;color:var(--text-primary)">$${tr.volUsd >= 1000 ? (tr.volUsd/1000).toFixed(1)+'K' : tr.volUsd.toFixed(2)}</span>
         <span style="font-family:monospace;color:var(--text-muted);font-size:10px">${tr.wallet}</span>
         <span style="text-align:right;color:var(--text-muted);font-size:10px">${tr.time}</span>
-        <span style="text-align:right">${tr.txHash && explorer ? `<a href="${explorer}${tr.txHash}" target="_blank" rel="noopener" style="color:#27c97f;font-size:10px;text-decoration:none">↗</a>` : '—'}</span>
+        <span style="text-align:right">${tr.txHash && explorer ? `<a href="${explorer}${tr.txHash}" target="_blank" rel="noopener" style="color:var(--accent-green);font-size:10px;text-decoration:none">↗</a>` : '—'}</span>
       </div>`).join('');
     const upd = $('tradeTxUpdated');
     if (upd) upd.textContent = 'Updated ' + new Date().toLocaleTimeString();
@@ -6234,3 +6234,20 @@ async function tradeLoadTxs(showLoading = true) {
     if (showLoading) list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Failed to load transactions</div>';
   }
 }
+
+/* ─── Colorblind mode ──────────────────────────────────────────────────────
+   Swaps the green/red up-down convention for a blue/orange pair that stays
+   distinguishable across deuteranopia/protanopia/tritanopia. Preference is
+   stored in localStorage so it persists across sessions. */
+function _applyColorblindMode(on) {
+  document.documentElement.setAttribute('data-colorblind', on ? 'true' : 'false');
+  const label = $('colorblindToggleLabel');
+  if (label) label.textContent = `Colorblind mode: ${on ? 'On' : 'Off'}`;
+}
+function toggleColorblindMode() {
+  const on = document.documentElement.getAttribute('data-colorblind') !== 'true';
+  localStorage.setItem('colorblindMode', on ? '1' : '0');
+  _applyColorblindMode(on);
+  playClickSound();
+}
+_applyColorblindMode(localStorage.getItem('colorblindMode') === '1');
