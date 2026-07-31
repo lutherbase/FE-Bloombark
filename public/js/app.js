@@ -4000,11 +4000,16 @@ function renderCompareGrid() {
   const grid = $('compareGrid');
   if (!grid) return;
   if (!_compareTokens.length) {
+    grid.style.gridTemplateColumns = '1fr';
     grid.innerHTML = `<div style="text-align:center;padding:40px 0;color:#6b7280;font-size:13px;grid-column:1/-1">
       No tokens added yet. Click <strong>+ Add token</strong> to pick from your watchlist.
     </div>`;
     return;
   }
+  // Explicit column count (rather than auto-fit/minmax) so cards always
+  // stretch to fill the full row width, however many are being compared —
+  // auto-fit was leaving a stretch of empty space on the right with < 4 cards.
+  grid.style.gridTemplateColumns = `repeat(${_compareTokens.length}, minmax(0, 1fr))`;
 
   const fmtUsd = v => v == null ? '—' : v >= 1e6 ? `$${(v/1e6).toFixed(2)}M` : v >= 1e3 ? `$${(v/1e3).toFixed(1)}K` : `$${Number(v).toFixed(2)}`;
   const fmtPct = v => v == null ? '—' : `${v >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`;
@@ -4085,7 +4090,7 @@ function renderCompareGrid() {
       </div>` : ''}
       <table style="width:100%;font-size:12px;border-collapse:collapse">
         <tr><td style="color:#6b7280;padding:3px 0">Price</td><td style="text-align:right;color:#e2e8f0">${d.price > 0 ? fmt.price(d.price) : '—'}</td></tr>
-        <tr><td style="color:#6b7280;padding:3px 0">24h</td><td style="text-align:right;color:${chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${fmtPct(chg)}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">Momentum (24h)</td><td style="text-align:right;color:${chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${fmtPct(chg)}</td></tr>
         <tr><td style="color:#6b7280;padding:3px 0">Mcap</td><td style="text-align:right;color:#e2e8f0">${fmtUsd(d.marketCap)}</td></tr>
         <tr><td style="color:#6b7280;padding:3px 0">Liquidity</td><td style="text-align:right;color:#e2e8f0">${fmtUsd(d.liquidity)}</td></tr>
         <tr><td style="color:#6b7280;padding:3px 0">Volume 24h</td><td style="text-align:right;color:#e2e8f0">${fmtUsd(d.volume24h)}</td></tr>
