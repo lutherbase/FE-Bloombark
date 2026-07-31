@@ -3844,12 +3844,68 @@ async function loadTrackRecord(showLoadingState) {
    numbers match exactly what AI Analyzer shows for the same token. */
 let _compareTokens = []; // [{address, chain, symbol, name, imageUrl, data}]
 
+let _pickerItems = [];             // full watchlist items available to pick from
+let _pickerSelected = new Set();   // addresses (lowercase) checked in the modal
+
+function _updatePickerConfirmBtn() {
+  const btn = $('comparePickerConfirmBtn');
+  if (!btn) return;
+  const n = _pickerSelected.size;
+  btn.textContent = `Add selected (${n})`;
+  btn.disabled = n === 0;
+  btn.style.opacity = n === 0 ? '0.4' : '1';
+}
+
+function _renderPickerList() {
+  const list = $('comparePickerList');
+  if (!list) return;
+  list.innerHTML = _pickerItems.map(it => {
+    const addr = it.address.toLowerCase();
+    const checked = _pickerSelected.has(addr);
+    return `
+      <div onclick="togglePickerSelect('${addr}')"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${checked ? 'var(--green-15)' : '#12141e'};border:1px solid ${checked ? 'var(--green-40)' : '#1e2235'};border-radius:10px;cursor:pointer"
+        onmouseover="this.style.background='${checked ? 'var(--green-15)' : '#161822'}'" onmouseout="this.style.background='${checked ? 'var(--green-15)' : '#12141e'}'">
+        <input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation();togglePickerSelect('${addr}')" style="pointer-events:none;width:16px;height:16px;flex-shrink:0">
+        ${it.image_url
+          ? `<img src="${it.image_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(it.symbol||'?').charAt(0)}</div>`}
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0">${it.symbol || '?'}</div>
+          <div style="font-size:10px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name || ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+  _updatePickerConfirmBtn();
+}
+
+const COMPARE_MAX_TOKENS = 5;
+
+function togglePickerSelect(addr) {
+  playClickSound();
+  if (_pickerSelected.has(addr)) {
+    _pickerSelected.delete(addr);
+  } else {
+    const remainingSlots = COMPARE_MAX_TOKENS - _compareTokens.length;
+    if (_pickerSelected.size >= remainingSlots) {
+      showToast(`You can compare up to ${COMPARE_MAX_TOKENS} tokens at once`);
+      return;
+    }
+    _pickerSelected.add(addr);
+  }
+  _renderPickerList();
+}
+
 async function openComparePickerModal() {
   playClickSound();
   const modal = $('comparePickerModal');
   const list  = $('comparePickerList');
+  const confirmBtn = $('comparePickerConfirmBtn');
   if (!modal || !list) return;
   modal.style.display = 'flex';
+  if (confirmBtn) confirmBtn.style.display = 'none';
+  _pickerSelected = new Set();
+  _pickerItems = [];
   list.innerHTML = '<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">Loading watchlist…</div>';
 
   if (!_privyUser && !localStorage.getItem('bb_jwt')) {
@@ -3857,6 +3913,11 @@ async function openComparePickerModal() {
       Connect wallet to see your watchlist
       <br><button onclick="closeComparePickerModal();openWalletModal()" style="margin-top:12px;background:var(--accent-green);border:none;border-radius:8px;color:#000;padding:7px 16px;cursor:pointer;font-size:12px;font-weight:600">Connect Wallet</button>
     </div>`;
+    return;
+  }
+
+  if (_compareTokens.length >= COMPARE_MAX_TOKENS) {
+    list.innerHTML = `<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">You're comparing the max of ${COMPARE_MAX_TOKENS} tokens already. Remove one to add another.</div>`;
     return;
   }
 
@@ -3876,21 +3937,19 @@ async function openComparePickerModal() {
       return;
     }
 
-    list.innerHTML = available.map(it => `
-      <div onclick="addTokenToCompare('${it.address}','${it.chain}','${(it.symbol||'?').replace(/'/g,"\\'")}','${(it.name||'').replace(/'/g,"\\'")}','${it.image_url||''}')"
-        style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#12141e;border:1px solid #1e2235;border-radius:10px;cursor:pointer"
-        onmouseover="this.style.background='#161822'" onmouseout="this.style.background='#12141e'">
-        ${it.image_url
-          ? `<img src="${it.image_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
-          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(it.symbol||'?').charAt(0)}</div>`}
-        <div style="min-width:0">
-          <div style="font-size:13px;font-weight:700;color:#e2e8f0">${it.symbol || '?'}</div>
-          <div style="font-size:10px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name || ''}</div>
-        </div>
-      </div>`).join('');
+    _pickerItems = available;
+    if (confirmBtn) confirmBtn.style.display = 'block';
+    _renderPickerList();
   } catch (e) {
     list.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--accent-red);font-size:12px">Failed to load watchlist</div>';
   }
+}
+
+function confirmComparePickerSelection() {
+  playClickSound();
+  const toAdd = _pickerItems.filter(it => _pickerSelected.has(it.address.toLowerCase()));
+  closeComparePickerModal();
+  toAdd.forEach(it => addTokenToCompare(it.address, it.chain, it.symbol || '?', it.name || '', it.image_url || ''));
 }
 
 function closeComparePickerModal() {
@@ -3902,6 +3961,10 @@ function closeComparePickerModal() {
 async function addTokenToCompare(address, chain, symbol, name, imageUrl) {
   closeComparePickerModal();
   if (_compareTokens.some(t => t.address.toLowerCase() === address.toLowerCase())) return;
+  if (_compareTokens.length >= COMPARE_MAX_TOKENS) {
+    showToast(`You can compare up to ${COMPARE_MAX_TOKENS} tokens at once`);
+    return;
+  }
   const entry = { address, chain, symbol, name, imageUrl, data: null, loading: true };
   _compareTokens.push(entry);
   renderCompareGrid();
@@ -3926,6 +3989,13 @@ function removeTokenFromCompare(address) {
   renderCompareGrid();
 }
 
+function clearCompareTokens() {
+  playClickSound();
+  if (!_compareTokens.length) return;
+  _compareTokens = [];
+  renderCompareGrid();
+}
+
 function renderCompareGrid() {
   const grid = $('compareGrid');
   if (!grid) return;
@@ -3939,7 +4009,49 @@ function renderCompareGrid() {
   const fmtUsd = v => v == null ? '—' : v >= 1e6 ? `$${(v/1e6).toFixed(2)}M` : v >= 1e3 ? `$${(v/1e3).toFixed(1)}K` : `$${Number(v).toFixed(2)}`;
   const fmtPct = v => v == null ? '—' : `${v >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`;
 
-  grid.innerHTML = _compareTokens.map(t => {
+  // ── "Which one's better" model ────────────────────────────────────────────
+  // Min-max normalizes each metric (0-100) across the tokens that loaded
+  // successfully, then averages across whichever metrics a token actually
+  // has data for. Risk score is inverted (lower risk = better). Purely
+  // relative to the tokens being compared right now, not an absolute rating.
+  const loaded = _compareTokens.filter(t => !t.loading && t.data);
+  const scores = {};
+  if (loaded.length >= 2) {
+    const metrics = [
+      { key: 'liquidity',       get: d => d.liquidity,               invert: false },
+      { key: 'volume24h',       get: d => d.volume24h,               invert: false },
+      { key: 'priceChange24h',  get: d => d.priceChange24h,          invert: false },
+      { key: 'holders',         get: d => d.holderStats?.total,      invert: false },
+      { key: 'riskScore',       get: d => d.riskScore,               invert: true  },
+    ];
+    const ranges = metrics.map(m => {
+      const vals = loaded.map(t => m.get(t.data)).filter(v => v != null && !isNaN(v));
+      return { ...m, min: vals.length ? Math.min(...vals) : 0, max: vals.length ? Math.max(...vals) : 0 };
+    });
+    loaded.forEach(t => {
+      const parts = [];
+      ranges.forEach(r => {
+        const v = r.get(t.data);
+        if (v == null || isNaN(v)) return;
+        let n = r.max === r.min ? 50 : ((v - r.min) / (r.max - r.min)) * 100;
+        if (r.invert) n = 100 - n;
+        parts.push(n);
+      });
+      scores[t.address.toLowerCase()] = parts.length ? Math.round(parts.reduce((a,b)=>a+b,0) / parts.length) : null;
+    });
+  }
+  const bestAddr = Object.keys(scores).length
+    ? Object.entries(scores).reduce((a, b) => (b[1] > a[1] ? b : a))[0]
+    : null;
+  const bestToken = bestAddr ? loaded.find(t => t.address.toLowerCase() === bestAddr) : null;
+
+  const verdictHtml = bestToken
+    ? `<div style="grid-column:1/-1;background:var(--green-15);border:1px solid var(--green-40);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--accent-green);display:flex;align-items:center;gap:8px">
+        🏆 <strong>${bestToken.symbol}</strong> ranks best overall right now — score ${scores[bestAddr]}/100 across liquidity, volume, momentum, holders and risk.
+      </div>`
+    : '';
+
+  grid.innerHTML = verdictHtml + _compareTokens.map(t => {
     if (t.loading) {
       return `<div style="background:var(--surface-1,#12141e);border:1px solid #1e2235;border-radius:12px;padding:1rem;text-align:center;color:#6b7280;font-size:12px;min-height:160px;display:flex;align-items:center;justify-content:center">Loading ${t.symbol}…</div>`;
     }
@@ -3954,16 +4066,23 @@ function renderCompareGrid() {
     }
     const d = t.data;
     const chg = d.priceChange24h || 0;
-    return `<div style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:1rem">
+    const score = scores[t.address.toLowerCase()];
+    const isBest = bestAddr && t.address.toLowerCase() === bestAddr;
+    return `<div style="background:#12141e;border:1px solid ${isBest ? 'var(--green-40)' : '#1e2235'};border-radius:12px;padding:1rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:8px">
           ${t.imageUrl
             ? `<img src="${t.imageUrl}" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
             : `<div style="width:24px;height:24px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">${(t.symbol||'?').charAt(0)}</div>`}
           <span style="font-size:13px;font-weight:700;color:#e2e8f0">${t.symbol}</span>
+          ${isBest ? `<span style="font-size:9px;font-weight:800;letter-spacing:.5px;background:var(--green-20);color:var(--accent-green);padding:2px 6px;border-radius:10px">🏆 BEST</span>` : ''}
         </div>
         <button onclick="removeTokenFromCompare('${t.address}')" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px">✕</button>
       </div>
+      ${score != null ? `<div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:3px"><span>Overall score</span><span>${score}/100</span></div>
+        <div style="height:5px;background:#1e2235;border-radius:3px;overflow:hidden"><div style="height:100%;width:${score}%;background:${isBest ? 'var(--accent-green)' : '#4a90d9'};border-radius:3px"></div></div>
+      </div>` : ''}
       <table style="width:100%;font-size:12px;border-collapse:collapse">
         <tr><td style="color:#6b7280;padding:3px 0">Price</td><td style="text-align:right;color:#e2e8f0">${d.price > 0 ? fmt.price(d.price) : '—'}</td></tr>
         <tr><td style="color:#6b7280;padding:3px 0">24h</td><td style="text-align:right;color:${chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${fmtPct(chg)}</td></tr>
