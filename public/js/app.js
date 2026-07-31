@@ -1,3 +1,11 @@
+// Canvas APIs (gradients, fillStyle, etc.) can't parse CSS custom properties
+// directly — resolves e.g. 'var(--accent-green)' to its actual computed color.
+function _resolveCssVar(value) {
+  if (typeof value !== 'string' || !value.startsWith('var(')) return value;
+  const name = value.slice(4, -1).trim();
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || value;
+}
+
 /* ─── Blockies avatar (deterministic identicon from a seed, e.g. wallet address) ─
    Classic "blockies" algorithm (the same style MetaMask used) — pure vanilla
    JS + <canvas>, no dependency/bundler needed. Same seed always renders the
@@ -820,10 +828,10 @@ function renderRiskScore(d) {
   ctx.strokeStyle = '#1e2230'; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.stroke();
 
   const grad = ctx.createLinearGradient(cx-r, cy, cx+r, cy);
-  grad.addColorStop(0,   'var(--accent-green)');
+  grad.addColorStop(0,   _resolveCssVar('var(--accent-green)'));
   grad.addColorStop(0.4, '#F5A623');
   grad.addColorStop(0.7, '#FF6B35');
-  grad.addColorStop(1,   'var(--accent-red)');
+  grad.addColorStop(1,   _resolveCssVar('var(--accent-red)'));
 
   ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, Math.PI + (score/100)*Math.PI);
   ctx.strokeStyle = grad; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.stroke();
