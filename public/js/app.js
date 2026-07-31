@@ -370,6 +370,7 @@ const PAGE_ROUTES = {
   'narrative':      '/narrative',
   'community':      '/community',
   'sniper':         '/sniper',
+  'track-record':   '/track-record',
   'alerts':         '/alerts',
   'watchlist':      '/watchlist',
 };
@@ -404,6 +405,8 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'community':    ['BLOOMBARK COMMUNITY', 'Chat, shill, and connect with other traders'],
     'ai-trading':   ['AI TRADING AGENT','Automated trading signals powered by AI models'],
     'auto-research':['AUTO RESEARCH',   'Automated token research and report generation'],
+    'sniper':       ['SNIPER ASSISTANCE', 'Newly-created pools on Robinhood chain, detected on-chain in real time'],
+    'track-record': ['AI TRACK RECORD', 'Every directional AI Prediction, checked ~24h later against the real price move'],
     'alerts':       ['ALERTS',          'Your configured alerts and notifications'],
     'watchlist':    ['WATCHLIST',       'Your saved tokens and watchlist'],
     'portfolio':    ['PORTFOLIO',       'Your portfolio performance and holdings'],
@@ -452,6 +455,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
   if (page === 'watchlist') renderWatchlistPage();
   if (page === 'alerts') renderAlertsPage();
   if (page === 'sniper') initSniperPage();
+  if (page === 'track-record') loadTrackRecord(true);
   if (page === 'landing') loadLandingCA();
   if (page === 'narrative') loadNarrative();
   if (page === 'community') initCommunity();
@@ -3738,6 +3742,90 @@ async function loadSniperPools(showLoadingState) {
   }
 }
 
+/* ─── AI Track Record ─────────────────────────────────────────────────────
+   Public, no-wallet-needed transparency page: every directional AI
+   Prediction call gets checked ~24h later against the real price move
+   (see backend's _resolvePredictionHistory), shown here win or lose. */
+async function loadTrackRecord(showLoadingState) {
+  const el = $('trackRecordContent');
+  if (!el) return;
+  if (showLoadingState) el.innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading…</div>';
+  try {
+    const res = await fetch(`${API_BASE}/predict/track-record`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+
+    const winRateEl = $('trWinRate');
+    if (winRateEl) winRateEl.textContent = data.winRatePct != null ? `${data.winRatePct}%` : '—';
+    const resolvedEl = $('trResolvedCount');
+    if (resolvedEl) resolvedEl.textContent = data.totalResolved;
+    const pendingEl = $('trPendingCount');
+    if (pendingEl) pendingEl.textContent = data.pendingCount;
+
+    const tokens = data.tokens || [];
+    const tokensSection = $('trTokensSection');
+    const tokensList = $('trTokensList');
+    if (tokensSection && tokensList) {
+      if (tokens.length) {
+        tokensSection.style.display = '';
+        tokensList.innerHTML = tokens.map(t => {
+          const addr = t.address;
+          const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+          const avatar = t.imageUrl
+            ? `<img src="${t.imageUrl}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(t.symbol||'?').charAt(0)}'}))">`
+            : `<div style="width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(t.symbol||'?').charAt(0)}</div>`;
+          return `<div title="${addr}" style="display:flex;align-items:center;gap:6px;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:5px 12px 5px 5px">
+            ${avatar}
+            <span style="font-size:12px;font-weight:700;color:#e2e8f0">${t.symbol || '?'}</span>
+            <span style="font-size:10px;color:#6b7280;font-family:monospace">${short}</span>
+          </div>`;
+        }).join('');
+      } else {
+        tokensSection.style.display = 'none';
+      }
+    }
+
+    const items = data.recent || [];
+    if (!items.length) {
+      el.innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">' +
+        '<div style="font-size:28px;margin-bottom:12px">📊</div>No resolved predictions yet.<br>' +
+        '<span style="color:#9ca3af">Every AI Prediction call gets checked ~24h later — check back soon.</span></div>';
+      return;
+    }
+
+    const fmtAge = (ms) => {
+      const d = Math.floor((Date.now() - ms) / 3600000);
+      return d < 24 ? `${d}h ago` : `${Math.floor(d/24)}d ago`;
+    };
+    el.innerHTML = items.map(r => {
+      const isCorrect = r.outcome === 'correct';
+      const isFlat = r.outcome === 'flat';
+      const color = isFlat ? '#9ca3af' : isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
+      const label = isFlat ? 'FLAT' : isCorrect ? 'CORRECT' : 'MISSED';
+      const bullish = r.signal === 'BULLISH';
+      const changeStr = (r.changePct >= 0 ? '+' : '') + Number(r.changePct).toFixed(1) + '%';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0">
+          <div style="width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${bullish ? '🐂' : '🐻'}</div>
+          <div style="min-width:0">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:13px;font-weight:700;color:#e2e8f0">${r.symbol || '?'}</span>
+              <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:#1e2235;color:#6b7280;border:1px solid #2d3144">${r.signal} · ${r.confidence}%</span>
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px">${fmtAge(r.predictedAt)} · $${Number(r.priceAt).toFixed(6)} → $${Number(r.priceAfter).toFixed(6)}</div>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:12px;font-weight:700;color:${color}">${label}</div>
+          <div style="font-size:11px;color:#6b7280">${changeStr}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading track record</div>';
+  }
+}
+
 async function renderAlertsPage() {
   const el = document.getElementById('alertsContent');
   if (!el) return;
@@ -6259,3 +6347,82 @@ function toggleColorblindMode() {
   playClickSound();
 }
 _applyColorblindMode(localStorage.getItem('colorblindMode') === '1');
+
+/* ─── Push notifications (Web Push) ────────────────────────────────────────
+   Lets alert notifications reach the user even when the tab is closed or
+   backgrounded, via a service worker + browser push subscription tied to
+   the connected wallet. */
+function _urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+async function _getPushSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+  const reg = await navigator.serviceWorker.register('/sw.js').catch(() => null);
+  if (!reg) return null;
+  return reg.pushManager.getSubscription();
+}
+
+function _updatePushToggleBtn(subscribed) {
+  const btn = $('pushToggleBtn');
+  if (!btn) return;
+  btn.textContent = subscribed ? '🔔 Push Enabled' : '🔕 Enable Push';
+  btn.style.color = subscribed ? 'var(--accent-green)' : '#9ca3af';
+  btn.style.borderColor = subscribed ? 'var(--green-40)' : '#2d3144';
+}
+
+async function refreshPushToggleBtn() {
+  const sub = await _getPushSubscription().catch(() => null);
+  _updatePushToggleBtn(!!sub);
+}
+
+async function togglePushNotifications() {
+  playClickSound();
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    showToast('Push notifications aren\'t supported in this browser');
+    return;
+  }
+  const existing = await _getPushSubscription().catch(() => null);
+  if (existing) {
+    try {
+      await fetch(`${API_BASE}/push/unsubscribe`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+        body: JSON.stringify({ endpoint: existing.endpoint }),
+      });
+      await existing.unsubscribe();
+      _updatePushToggleBtn(false);
+      showToast('Push notifications disabled');
+    } catch (e) { showToast('Failed to disable push notifications'); }
+    return;
+  }
+
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { showToast('Notification permission denied'); return; }
+
+    const keyRes = await fetch(`${API_BASE}/push/vapid-public-key`);
+    const keyData = await keyRes.json();
+    if (!keyData.success) { showToast('Push notifications aren\'t configured on the server yet'); return; }
+
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: _urlBase64ToUint8Array(keyData.publicKey),
+    });
+
+    await fetch(`${API_BASE}/push/subscribe`, {
+      method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ..._authHeaders() },
+      body: JSON.stringify({ subscription: sub }),
+    });
+    _updatePushToggleBtn(true);
+    showToast('Push notifications enabled — alerts will reach you even with the tab closed');
+  } catch (e) {
+    console.error('[push] subscribe failed:', e);
+    showToast('Failed to enable push notifications');
+  }
+}
+
+if (document.getElementById('pushToggleBtn')) refreshPushToggleBtn();

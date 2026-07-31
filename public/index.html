@@ -38,6 +38,10 @@
           <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           AI Analyzer
         </a>
+        <a href="#" class="nav-item" data-page="track-record">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+          Track Record
+        </a>
         <a href="#" class="nav-item" data-page="trade">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
           Trade
@@ -971,13 +975,49 @@
           </div>
         </div>
 
+        <div class="page ai-analyzer-page" id="page-track-record">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-size:13px;color:#9ca3af">No cherry-picking. Every call the AI makes is on the record — wins, losses, and everything in between.</div>
+            </div>
+            <button id="trackRecordRefreshBtn" onclick="loadTrackRecord(true)" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+            <div style="background:var(--bg-card);border:1px solid #1e2235;border-radius:10px;padding:14px 16px">
+              <div style="font-size:11px;color:#6b7280;margin-bottom:4px">WIN RATE</div>
+              <div id="trWinRate" style="font-size:22px;font-weight:700;color:var(--accent-green)">—</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid #1e2235;border-radius:10px;padding:14px 16px">
+              <div style="font-size:11px;color:#6b7280;margin-bottom:4px">RESOLVED CALLS</div>
+              <div id="trResolvedCount" style="font-size:22px;font-weight:700;color:#e2e8f0">—</div>
+            </div>
+            <div style="background:var(--bg-card);border:1px solid #1e2235;border-radius:10px;padding:14px 16px">
+              <div style="font-size:11px;color:#6b7280;margin-bottom:4px">AWAITING RESULT</div>
+              <div id="trPendingCount" style="font-size:22px;font-weight:700;color:#e2e8f0">—</div>
+            </div>
+          </div>
+
+          <div id="trTokensSection" style="display:none;margin-bottom:20px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:10px">TOKENS COVERED</div>
+            <div id="trTokensList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          </div>
+
+          <div id="trackRecordContent" style="display:flex;flex-direction:column;gap:8px">
+            <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading…</div>
+          </div>
+        </div>
+
         <div class="page ai-analyzer-page" id="page-alerts">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div>
               <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">ALERTS</div>
               <div style="font-size:13px;color:#9ca3af">Token moves, Bloombark updates & channel notices</div>
             </div>
-            <button id="alertsRefreshBtn" onclick="renderAlertsPage()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+            <div style="display:flex;gap:8px">
+              <button id="pushToggleBtn" onclick="togglePushNotifications()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">🔕 Enable Push</button>
+              <button id="alertsRefreshBtn" onclick="renderAlertsPage()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+            </div>
           </div>
 
           <div id="alertsTabBar" style="display:flex;gap:8px;margin-bottom:14px;border-bottom:1px solid #1e2235;padding-bottom:10px">
@@ -1248,6 +1288,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=183"></script>
+  <script src="js/app.js?v=187"></script>
 </body>
 </html>
