@@ -4998,6 +4998,11 @@ const TRADE_CHAINS = {
               rpc: 'https://rpc.mainnet.chain.robinhood.com', name: 'Robinhood Chain' },
 };
 const NATIVE_ADDR = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+// Robinhood chain's WETH — Limit Order's escrow contract needs an ERC20 it
+// can transferFrom, so a limit BUY (paying native ETH) auto-wraps into this
+// first rather than using the native placeholder address above.
+const ROBINHOOD_WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73';
+const LIMIT_ORDER_CONTRACT = '0xcab2FA2eeab7065B45CBcF6E3936dDE2506b4f6C'; // Kyber DSLO Protocol, Robinhood chain
 // DexScreener chainId → our chain key (mainnet slugs only — DexScreener/Kyber/
 // GeckoTerminal don't index testnet liquidity, so price/trade data is unaffected
 // by NETWORK_ENV; only wallet network-switching (TRADE_CHAINS below) is)
@@ -5038,12 +5043,15 @@ let _tradeToken    = null;  // { address, symbol, name, chain, price, decimals }
 let _tradeSide     = 'buy';
 let _tradeSlippage = 1;
 let _tradeQuote    = null;  // last routeSummary
+let _tradeMode     = 'market'; // 'market' | 'limit'
+let _limitExpiryDays = 7;
 let _tradeTimer    = null;
 let _tradeBalance  = null;  // balance of the "pay" asset (float)
 
 function initTradePage() {
   _tradeWalletStatus();
   tradeLoadHoldings();
+  loadMyOrders();
 }
 
 // ── RPC helpers (via backend proxy to public nodes) ──────────────────────────
@@ -5136,6 +5144,7 @@ async function tradeLoadToken() {
         name:     p.baseToken.name,
         chain,
         price:    parseFloat(p.priceUsd || 0),
+        priceNative: parseFloat(p.priceNative || 0), // token price in native (ETH/WETH) units — what the limit-order maker/taker amounts are actually denominated in
         decimals,
       };
       _tradePairAddr  = p.pairAddress || null;
@@ -5158,6 +5167,8 @@ async function tradeLoadToken() {
       $('tradeEmptyState').style.display = 'none';
       $('swapPanel').style.display = '';
       swapSetSide('buy');
+      $('limitPriceInput').value = '';
+      swapSetMode(_tradeMode);
       _tradeWalletStatus();
 
       // Chart + transactions (live) — chart is built from the transaction history
@@ -5200,6 +5211,110 @@ function swapSetSide(side) {
   _clearQuote();
   _updateSwapExecBtn();
   _loadPayBalance();
+  if (_tradeMode === 'limit') _updateExecBtnLabel();
+}
+
+// Market vs Limit tab — Limit uses KyberSwap's gasless Limit Order API
+// (Robinhood-chain only, confirmed supported) instead of an immediate swap.
+function swapSetMode(mode) {
+  _tradeMode = mode;
+  const marketBtn = $('modeMarketBtn'), limitBtn = $('modeLimitBtn');
+  marketBtn.style.color = mode === 'market' ? '#27c97f' : 'var(--text-muted)';
+  marketBtn.style.borderBottomColor = mode === 'market' ? '#27c97f' : 'transparent';
+  limitBtn.style.color = mode === 'limit' ? '#27c97f' : 'var(--text-muted)';
+  limitBtn.style.borderBottomColor = mode === 'limit' ? '#27c97f' : 'transparent';
+  $('limitPriceGroup').style.display = mode === 'limit' ? '' : 'none';
+  $('swapPresets').style.display = mode === 'market' ? 'flex' : 'none';
+
+  if (mode === 'limit') {
+    if (_tradeToken?.priceNative && !$('limitPriceInput').value) {
+      $('limitPriceInput').value = _tradeToken.priceNative;
+    }
+    _updateLimitMarketHint();
+    _updateExecBtnLabel();
+    $('swapQuoteStatus').textContent = 'Set a price and amount to place a limit order';
+    $('swapAmountOut').textContent = '—';
+    ['swapImpact','swapMinOut','swapRate','swapGas','swapRoute'].forEach(id => { const el = $(id); if (el) el.textContent = '—'; });
+  } else {
+    _updateExecBtnLabel();
+    if ($('swapAmountIn').value) swapScheduleQuote();
+  }
+}
+
+function _updateLimitMarketHint() {
+  const hint = $('limitMarketPriceHint');
+  if (hint && _tradeToken?.priceNative) hint.textContent = `Market: ${_fmtAmt(_tradeToken.priceNative)} (use)`;
+}
+
+function limitUseMarketPrice() {
+  if (!_tradeToken?.priceNative) return;
+  $('limitPriceInput').value = _tradeToken.priceNative;
+  limitScheduleUpdate();
+}
+
+// KyberSwap's API requires an expiredAt timestamp — there's no true "never"
+// option — so "No Expiry" (days=0) is simulated with a 1-year expiry, long
+// enough to not practically matter; the order can still be cancelled
+// manually anytime before then.
+function limitSetExpiry(days) {
+  _limitExpiryDays = days === 0 ? 365 : days;
+  const ids = { 1:'expBtn1', 7:'expBtn7', 30:'expBtn30', 0:'expBtnNone' };
+  for (const [val, id] of Object.entries(ids)) {
+    const b = $(id); if (!b) continue;
+    const on = parseInt(val) === days;
+    b.style.background  = on ? '#27c97f20' : 'var(--bg-secondary)';
+    b.style.borderColor = on ? '#27c97f60' : 'var(--border-light)';
+    b.style.color       = on ? '#27c97f' : 'var(--text-muted)';
+  }
+}
+
+function _updateExecBtnLabel() {
+  const btn = $('swapExecBtn');
+  const t = _tradeToken;
+  if (!btn || !t) return;
+  if (_tradeMode === 'limit') {
+    btn.textContent = 'Place Limit Order';
+    btn.style.background = '#27c97f';
+    btn.style.color = '#000';
+  } else {
+    btn.textContent = (_tradeSide === 'buy' ? 'BUY ' : 'SELL ') + t.symbol;
+    btn.style.background = _tradeSide === 'buy' ? '#27c97f' : '#ff4d4d';
+    btn.style.color = _tradeSide === 'buy' ? '#000' : '#fff';
+  }
+}
+
+let _limitUpdateTimer = null;
+function limitScheduleUpdate() {
+  clearTimeout(_limitUpdateTimer);
+  _limitUpdateTimer = setTimeout(_updateLimitReceiveEstimate, 200);
+}
+
+// Limit orders are denominated directly in native(WETH)-per-token — no live
+// quote needed, just amountIn × or ÷ the price the user set.
+function _updateLimitReceiveEstimate() {
+  const t = _tradeToken;
+  const amt = parseFloat($('swapAmountIn')?.value);
+  const price = parseFloat($('limitPriceInput')?.value);
+  const out = $('swapAmountOut');
+  if (!t || !(amt > 0) || !(price > 0)) { out.textContent = '—'; return; }
+  const native = TRADE_CHAINS[t.chain].native;
+  if (_tradeSide === 'buy') {
+    // Paying `amt` native to receive tokens at `price` native/token
+    const tokensOut = amt / price;
+    out.textContent = _fmtAmt(tokensOut) + ' ' + t.symbol;
+    $('swapRate').textContent = `1 ${t.symbol} = ${_fmtAmt(price)} ${native}`;
+  } else {
+    // Selling `amt` tokens to receive native at `price` native/token
+    const nativeOut = amt * price;
+    out.textContent = _fmtAmt(nativeOut) + ' ' + native;
+    $('swapRate').textContent = `1 ${t.symbol} = ${_fmtAmt(price)} ${native}`;
+  }
+}
+
+// Routes the single Execute button to the right flow for the active mode.
+function swapExecuteRouter() {
+  if (_tradeMode === 'limit') limitOrderExecute();
+  else swapExecute();
 }
 
 function swapSetSlippage(v) {
@@ -5256,7 +5371,11 @@ function _updateSwapExecBtn() {
   if (insufficient) {
     btn.textContent = 'Insufficient Balance';
   } else if (_tradeToken) {
-    btn.textContent = (_tradeSide === 'buy' ? 'BUY ' : 'SELL ') + _tradeToken.symbol;
+    // Market vs Limit label is _updateExecBtnLabel()'s job — this only
+    // handles the balance-driven disable/relabel, so it must not stomp on
+    // "Place Limit Order" while in limit mode.
+    if (_tradeMode === 'limit') _updateExecBtnLabel();
+    else btn.textContent = (_tradeSide === 'buy' ? 'BUY ' : 'SELL ') + _tradeToken.symbol;
   }
 }
 
@@ -5446,6 +5565,117 @@ async function swapExecute() {
   }
 }
 
+// Place a gasless limit order via KyberSwap's Limit Order API (Robinhood
+// chain only). Unlike swapExecute(), the order itself needs no transaction —
+// just a signature — but paying with native ETH still needs a one-time wrap
+// to WETH first (the escrow contract can only pull ERC20s), and the escrow
+// contract needs one-time ERC20 approval like any other allowance-based flow.
+async function limitOrderExecute() {
+  const t = _tradeToken, w = window._privyWallet;
+  if (!t) return showToast('Load a token first');
+  if (t.chain !== 'robinhood') return showToast('Limit orders are only available on Robinhood chain');
+  if (!w) return showToast('Connect wallet first (top-right button)');
+  if (!window.ethereum) return showToast('MetaMask not found');
+
+  const amt = parseFloat($('swapAmountIn')?.value);
+  const price = parseFloat($('limitPriceInput')?.value);
+  if (!(amt > 0)) return showToast('Enter an amount');
+  if (!(price > 0)) return showToast('Enter a limit price');
+  if (_tradeBalance != null && amt > _tradeBalance) return showToast('Insufficient balance');
+
+  const btn = $('swapExecBtn');
+  const txSt = $('swapTxStatus');
+  const resetBtn = () => { btn.disabled = false; _updateExecBtnLabel(); };
+  btn.disabled = true;
+  if (txSt) txSt.style.display = 'none';
+
+  try {
+    await _ensureChain(t.chain);
+
+    const isBuy = _tradeSide === 'buy';
+    const makerAsset = isBuy ? ROBINHOOD_WETH : t.address;
+    const takerAsset = isBuy ? t.address : ROBINHOOD_WETH;
+    const makerDecimals = isBuy ? 18 : t.decimals;
+    const makingAmount = _toRaw(String(amt), makerDecimals);
+    const takingAmountFloat = isBuy ? amt / price : amt * price;
+    const takingDecimals = isBuy ? t.decimals : 18;
+    const takingAmount = _toRaw(takingAmountFloat.toFixed(takingDecimals), takingDecimals);
+
+    // Paying with native ETH → wrap the shortfall into WETH first.
+    if (isBuy) {
+      const wethBal = await _erc20Balance(t.chain, ROBINHOOD_WETH, w);
+      if (wethBal < makingAmount) {
+        const shortfall = makingAmount - wethBal;
+        const nativeBal = await _nativeBalance(t.chain, w);
+        if (nativeBal < shortfall) throw new Error('Insufficient ETH to wrap');
+        btn.textContent = 'Wrap ETH in MetaMask…';
+        const wrapTx = await window.ethereum.request({
+          method: 'eth_sendTransaction',
+          params: [{ from: w, to: ROBINHOOD_WETH, data: '0xd0e30db0', value: '0x' + shortfall.toString(16) }],
+        });
+        btn.textContent = 'Confirming wrap…';
+        await _waitForTx(t.chain, wrapTx);
+      }
+    }
+
+    // One-time approval for the Limit Order escrow contract.
+    const allowance = await _erc20Allowance(t.chain, makerAsset, w, LIMIT_ORDER_CONTRACT);
+    if (allowance < makingAmount) {
+      btn.textContent = 'Approve in MetaMask…';
+      const maxUint = 'f'.repeat(64);
+      const approveData = '0x095ea7b3' + LIMIT_ORDER_CONTRACT.toLowerCase().replace('0x','').padStart(64,'0') + maxUint;
+      const approveTx = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: w, to: makerAsset, data: approveData }],
+      });
+      btn.textContent = 'Waiting for approval…';
+      await _waitForTx(t.chain, approveTx);
+    }
+
+    // Get the EIP-712 message, sign it (no transaction — just a signature).
+    btn.textContent = 'Preparing order…';
+    const expiredAt = Math.floor(Date.now() / 1000) + _limitExpiryDays * 86400;
+    const signRes = await fetch(`${API_BASE}/trade/limit-order/sign-message`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ makerAsset, takerAsset, maker: w, makingAmount: makingAmount.toString(), takingAmount: takingAmount.toString(), expiredAt }),
+    });
+    const signData = await signRes.json();
+    if (!signRes.ok || signData.code !== 0) throw new Error(signData.message || signData.error || 'Failed to prepare order');
+    const { types, domain, primaryType, message } = signData.data;
+
+    btn.textContent = 'Sign in MetaMask…';
+    const signature = await window.ethereum.request({
+      method: 'eth_signTypedData_v4',
+      params: [w, JSON.stringify({ types, domain, primaryType, message })],
+    });
+
+    // Submit the signed order.
+    btn.textContent = 'Placing order…';
+    const orderRes = await fetch(`${API_BASE}/trade/limit-order`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        makerAsset, takerAsset, maker: w,
+        makingAmount: message.makingAmount, takingAmount: message.takingAmount,
+        expiredAt, salt: message.salt, signature,
+      }),
+    });
+    const orderData = await orderRes.json();
+    if (!orderRes.ok || orderData.code !== 0) throw new Error(orderData.message || orderData.error || 'Failed to place order');
+
+    showToast(`Limit order placed — will fill at ${_fmtAmt(price)} ${TRADE_CHAINS[t.chain].native}/${t.symbol}`);
+    $('swapAmountIn').value = '';
+    $('swapAmountOut').textContent = '—';
+    _loadPayBalance();
+    loadMyOrders(true);
+    resetBtn();
+  } catch (e) {
+    const msg = e.code === 4001 ? 'Rejected in MetaMask' : (e.message || 'Failed to place limit order');
+    showToast(msg);
+    if (txSt) { txSt.textContent = '⚠ ' + msg; txSt.style.color = '#ff4d4d'; txSt.style.display = 'block'; }
+    resetBtn();
+  }
+}
+
 async function _waitForTx(chain, hash) {
   for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 3000));
@@ -5584,6 +5814,84 @@ async function tradeLoadHoldings(force = false) {
     }).join('');
   } catch (e) {
     list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Failed to load holdings</div>';
+  }
+}
+
+let _myOrdersLoaded = false;
+let _myOrdersData = [];
+
+async function loadMyOrders(force = false) {
+  const w = window._privyWallet;
+  const card = $('myOrdersCard');
+  const list = $('myOrdersList');
+  if (!card || !list) return;
+  if (!w) { card.style.display = 'none'; _myOrdersLoaded = false; return; }
+  if (_myOrdersLoaded && !force) return;
+
+  card.style.display = '';
+  list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Loading orders…</div>';
+  try {
+    const r = await fetch(`${API_BASE}/trade/limit-orders/${w}?status=open`);
+    const j = await r.json();
+    _myOrdersLoaded = true;
+    const orders = j.data?.orders || [];
+    _myOrdersData = orders;
+
+    if (!orders.length) {
+      list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">No open limit orders</div>';
+      return;
+    }
+
+    list.innerHTML = orders.map((o, i) => {
+      const makerIsWeth = o.makerAsset?.toLowerCase() === ROBINHOOD_WETH.toLowerCase();
+      const side = makerIsWeth ? 'BUY' : 'SELL';
+      const sideColor = makerIsWeth ? '#27c97f' : '#ff4d4d';
+      const makingAmt = _fromRaw(BigInt(o.makingAmount), makerIsWeth ? 18 : (_tradeToken?.decimals || 18));
+      const takingAmt = _fromRaw(BigInt(o.takingAmount), makerIsWeth ? (_tradeToken?.decimals || 18) : 18);
+      const price = makerIsWeth ? makingAmt / takingAmt : takingAmt / makingAmt;
+      const native = TRADE_CHAINS[_tradeToken?.chain || 'robinhood'].native;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border-light);font-size:11px">
+        <div>
+          <span style="font-weight:800;color:${sideColor}">${side}</span>
+          <span style="color:var(--text-muted);margin-left:6px">${_fmtAmt(makingAmt)} ${makerIsWeth ? native : (_tradeToken?.symbol || '')} @ ${_fmtAmt(price)} ${native}</span>
+        </div>
+        <button onclick="cancelLimitOrder(${o.id})" style="background:none;border:1px solid var(--border-light);border-radius:6px;padding:3px 8px;cursor:pointer;color:#ff6b6b;font-size:10px;font-weight:700">Cancel</button>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Failed to load orders</div>';
+  }
+}
+
+async function cancelLimitOrder(orderId) {
+  const w = window._privyWallet;
+  if (!w || !window.ethereum) return showToast('Connect wallet first');
+  try {
+    const signRes = await fetch(`${API_BASE}/trade/limit-order/cancel-sign`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maker: w, orderIds: [orderId] }),
+    });
+    const signData = await signRes.json();
+    if (!signRes.ok || signData.code !== 0) throw new Error(signData.message || signData.error || 'Failed to prepare cancellation');
+    const { types, domain, primaryType, message } = signData.data;
+
+    const signature = await window.ethereum.request({
+      method: 'eth_signTypedData_v4',
+      params: [w, JSON.stringify({ types, domain, primaryType, message })],
+    });
+
+    const cancelRes = await fetch(`${API_BASE}/trade/limit-order/cancel`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maker: w, orderIds: [orderId], signature }),
+    });
+    const cancelData = await cancelRes.json();
+    if (!cancelRes.ok || cancelData.code !== 0) throw new Error(cancelData.message || cancelData.error || 'Failed to cancel order');
+
+    showToast('Order cancelled');
+    loadMyOrders(true);
+  } catch (e) {
+    const msg = e.code === 4001 ? 'Rejected in MetaMask' : (e.message || 'Failed to cancel order');
+    showToast(msg);
   }
 }
 
