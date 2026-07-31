@@ -416,7 +416,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'sniper':       ['SNIPER ASSISTANCE', 'Newly-created pools on Robinhood chain, detected on-chain in real time'],
     'track-record': ['AI TRACK RECORD', 'Every directional AI Prediction, checked ~24h later against the real price move'],
     'alerts':       ['ALERTS',          'Your configured alerts and notifications'],
-    'watchlist':    ['WATCHLIST',       'Your saved tokens and watchlist'],
+    'watchlist':    ['WATCHLIST',       'Your saved tokens, plus side-by-side comparison'],
     'portfolio':    ['PORTFOLIO',       'Your portfolio performance and holdings'],
     'leaderboard':  ['LEADERBOARD',     'Top traders and wallets by performance'],
     'settings':     ['SETTINGS',        'Configure your Bloombark Terminal preferences'],
@@ -3835,6 +3835,146 @@ async function loadTrackRecord(showLoadingState) {
   } catch (e) {
     el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading track record</div>';
   }
+}
+
+/* ─── Token Comparison (Track Record page) ────────────────────────────────
+   Compare several watchlist tokens side by side. Deliberately watchlist-only
+   (not free-text CA entry) — keeps the picker fast and scoped to tokens the
+   user already cares about, and reuses /api/analyze for full stats so the
+   numbers match exactly what AI Analyzer shows for the same token. */
+let _compareTokens = []; // [{address, chain, symbol, name, imageUrl, data}]
+
+async function openComparePickerModal() {
+  playClickSound();
+  const modal = $('comparePickerModal');
+  const list  = $('comparePickerList');
+  if (!modal || !list) return;
+  modal.style.display = 'flex';
+  list.innerHTML = '<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">Loading watchlist…</div>';
+
+  if (!_privyUser && !localStorage.getItem('bb_jwt')) {
+    list.innerHTML = `<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">
+      Connect wallet to see your watchlist
+      <br><button onclick="closeComparePickerModal();openWalletModal()" style="margin-top:12px;background:var(--accent-green);border:none;border-radius:8px;color:#000;padding:7px 16px;cursor:pointer;font-size:12px;font-weight:600">Connect Wallet</button>
+    </div>`;
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/watchlist`, { credentials: 'include', headers: _authHeaders() });
+    const data = await res.json();
+    const items = data.items || [];
+    const already = new Set(_compareTokens.map(t => t.address.toLowerCase()));
+    const available = items.filter(it => !already.has(it.address.toLowerCase()));
+
+    if (!items.length) {
+      list.innerHTML = '<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">No tokens in watchlist yet. Scan a token and click the ♡ to save it.</div>';
+      return;
+    }
+    if (!available.length) {
+      list.innerHTML = '<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">Every watchlist token is already in the comparison.</div>';
+      return;
+    }
+
+    list.innerHTML = available.map(it => `
+      <div onclick="addTokenToCompare('${it.address}','${it.chain}','${(it.symbol||'?').replace(/'/g,"\\'")}','${(it.name||'').replace(/'/g,"\\'")}','${it.image_url||''}')"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#12141e;border:1px solid #1e2235;border-radius:10px;cursor:pointer"
+        onmouseover="this.style.background='#161822'" onmouseout="this.style.background='#12141e'">
+        ${it.image_url
+          ? `<img src="${it.image_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(it.symbol||'?').charAt(0)}</div>`}
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#e2e8f0">${it.symbol || '?'}</div>
+          <div style="font-size:10px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name || ''}</div>
+        </div>
+      </div>`).join('');
+  } catch (e) {
+    list.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--accent-red);font-size:12px">Failed to load watchlist</div>';
+  }
+}
+
+function closeComparePickerModal() {
+  playClickSound();
+  const modal = $('comparePickerModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function addTokenToCompare(address, chain, symbol, name, imageUrl) {
+  closeComparePickerModal();
+  if (_compareTokens.some(t => t.address.toLowerCase() === address.toLowerCase())) return;
+  const entry = { address, chain, symbol, name, imageUrl, data: null, loading: true };
+  _compareTokens.push(entry);
+  renderCompareGrid();
+  try {
+    const res = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contractAddress: address, chain: chain || 'auto' }),
+    });
+    const json = await res.json();
+    entry.data = json.success ? json.data : null;
+  } catch (e) {
+    entry.data = null;
+  } finally {
+    entry.loading = false;
+    renderCompareGrid();
+  }
+}
+
+function removeTokenFromCompare(address) {
+  playClickSound();
+  _compareTokens = _compareTokens.filter(t => t.address.toLowerCase() !== address.toLowerCase());
+  renderCompareGrid();
+}
+
+function renderCompareGrid() {
+  const grid = $('compareGrid');
+  if (!grid) return;
+  if (!_compareTokens.length) {
+    grid.innerHTML = `<div style="text-align:center;padding:40px 0;color:#6b7280;font-size:13px;grid-column:1/-1">
+      No tokens added yet. Click <strong>+ Add token</strong> to pick from your watchlist.
+    </div>`;
+    return;
+  }
+
+  const fmtUsd = v => v == null ? '—' : v >= 1e6 ? `$${(v/1e6).toFixed(2)}M` : v >= 1e3 ? `$${(v/1e3).toFixed(1)}K` : `$${Number(v).toFixed(2)}`;
+  const fmtPct = v => v == null ? '—' : `${v >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`;
+
+  grid.innerHTML = _compareTokens.map(t => {
+    if (t.loading) {
+      return `<div style="background:var(--surface-1,#12141e);border:1px solid #1e2235;border-radius:12px;padding:1rem;text-align:center;color:#6b7280;font-size:12px;min-height:160px;display:flex;align-items:center;justify-content:center">Loading ${t.symbol}…</div>`;
+    }
+    if (!t.data) {
+      return `<div style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;font-weight:700;color:#e2e8f0">${t.symbol}</span>
+          <button onclick="removeTokenFromCompare('${t.address}')" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px">✕</button>
+        </div>
+        <div style="font-size:11px;color:var(--accent-red);margin-top:8px">Failed to load stats</div>
+      </div>`;
+    }
+    const d = t.data;
+    const chg = d.priceChange24h || 0;
+    return `<div style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${t.imageUrl
+            ? `<img src="${t.imageUrl}" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
+            : `<div style="width:24px;height:24px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">${(t.symbol||'?').charAt(0)}</div>`}
+          <span style="font-size:13px;font-weight:700;color:#e2e8f0">${t.symbol}</span>
+        </div>
+        <button onclick="removeTokenFromCompare('${t.address}')" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:14px">✕</button>
+      </div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <tr><td style="color:#6b7280;padding:3px 0">Price</td><td style="text-align:right;color:#e2e8f0">${d.price > 0 ? fmt.price(d.price) : '—'}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">24h</td><td style="text-align:right;color:${chg >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}">${fmtPct(chg)}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">Mcap</td><td style="text-align:right;color:#e2e8f0">${fmtUsd(d.marketCap)}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">Liquidity</td><td style="text-align:right;color:#e2e8f0">${fmtUsd(d.liquidity)}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">Volume 24h</td><td style="text-align:right;color:#e2e8f0">${fmtUsd(d.volume24h)}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">Holders</td><td style="text-align:right;color:#e2e8f0">${d.holderStats?.total ? Number(d.holderStats.total).toLocaleString() : '—'}</td></tr>
+        <tr><td style="color:#6b7280;padding:3px 0">Risk score</td><td style="text-align:right;color:#e2e8f0">${d.riskScore != null ? d.riskScore + '/100' : '—'}</td></tr>
+      </table>
+    </div>`;
+  }).join('');
 }
 
 async function renderAlertsPage() {

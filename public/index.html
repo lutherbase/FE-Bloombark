@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23E86C3A'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23F5A623'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%2327C97F'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%234a90d9'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/main.css?v=14" />
+  <link rel="stylesheet" href="/css/main.css?v=14" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -40,7 +40,7 @@
         </a>
         <a href="#" class="nav-item" data-page="track-record">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-          Track Record
+          AI Track Record
         </a>
         <a href="#" class="nav-item" data-page="trade">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
@@ -185,6 +185,18 @@
               </div>
             </button>
             <div style="text-align:center;font-size:10px;color:#8b92a8;padding:8px 0">EVM wallets · MetaMask</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="comparePickerModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+        <div style="background:#1a1d27;border:1px solid #2d3144;border-radius:16px;padding:24px;width:380px;max-width:90vw;max-height:70vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.5)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:#e2e8f0">ADD FROM WATCHLIST</span>
+            <button onclick="closeComparePickerModal()" style="background:none;border:none;color:#8b92a8;cursor:pointer;font-size:18px;line-height:1">✕</button>
+          </div>
+          <div id="comparePickerList" style="overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+            <div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">Loading watchlist…</div>
           </div>
         </div>
       </div>
@@ -978,6 +990,7 @@
         <div class="page ai-analyzer-page" id="page-track-record">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">AI TRACK RECORD</div>
               <div style="font-size:13px;color:#9ca3af">No cherry-picking. Every call the AI makes is on the record — wins, losses, and everything in between.</div>
             </div>
             <button id="trackRecordRefreshBtn" onclick="loadTrackRecord(true)" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
@@ -1063,6 +1076,21 @@
           <div id="watchlistContent" style="display:flex;flex-direction:column;gap:8px">
             <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Connect wallet to see your watchlist</div>
           </div>
+
+          <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1e2235">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div>
+                <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">TOKEN COMPARISON</div>
+                <div style="font-size:13px;color:#9ca3af">Compare tokens from your watchlist side by side</div>
+              </div>
+              <button onclick="openComparePickerModal()" style="background:var(--green-15);border:1px solid var(--green-40);border-radius:8px;color:var(--accent-green);padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700">+ Add token</button>
+            </div>
+            <div id="compareGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+              <div style="text-align:center;padding:40px 0;color:#6b7280;font-size:13px;grid-column:1/-1">
+                No tokens added yet. Click <strong>+ Add token</strong> to pick from your watchlist.
+              </div>
+            </div>
+          </div>
         </div>
         <div class="page placeholder-page" id="page-portfolio">
           <div class="placeholder-content"><h2>Portfolio</h2><p>Your portfolio performance and holdings.</p></div>
@@ -1104,6 +1132,14 @@
               </div>
               <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#e2e8f0">AI Token Analyzer</div><span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--accent-green);background:var(--green-18);border:1px solid var(--green-40);border-radius:5px;padding:2px 6px;white-space:nowrap">LIVE</span></div>
               <div style="font-size:12px;color:#6b7280;line-height:1.6">Deep-scan any Robinhood token contract. Get risk scores, honeypot detection, tax analysis, and holder breakdowns in seconds.</div>
+            </div>
+
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:var(--green-18);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#e2e8f0">AI Track Record</div><span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--accent-green);background:var(--green-18);border:1px solid var(--green-40);border-radius:5px;padding:2px 6px;white-space:nowrap">LIVE</span></div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">No cherry-picking. Every directional AI Prediction is logged and checked ~24h later against the real price move — wins and losses, fully public.</div>
             </div>
 
             <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
@@ -1288,6 +1324,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="js/app.js?v=195"></script>
+  <script src="/js/app.js?v=198"></script>
 </body>
 </html>
