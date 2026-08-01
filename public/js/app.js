@@ -2536,14 +2536,40 @@ function _initMarketTabBar() {
   });
 }
 
+// Chain Volumes, Chain Transactions, and the one-line summary sentence all
+// need the SAME two endpoints — without this they'd each fire their own
+// fetch, doubling every request to /chain-volumes and /chain-transactions
+// on every Market Overview load for no reason (both are already server-side
+// cached for minutes, so the duplicate calls buy nothing but extra load).
+let _chainOverviewCache = { volumes: null, tx: null, at: 0 };
+let _chainOverviewInFlight = null; // dedupes concurrent callers (all 3 loaders fire in the same tick)
+const CHAIN_OVERVIEW_CLIENT_TTL_MS = 30000;
+
+async function _getChainOverviewData() {
+  if (_chainOverviewCache.volumes && Date.now() - _chainOverviewCache.at < CHAIN_OVERVIEW_CLIENT_TTL_MS) {
+    return _chainOverviewCache;
+  }
+  if (_chainOverviewInFlight) return _chainOverviewInFlight;
+
+  _chainOverviewInFlight = (async () => {
+    const [volumes, tx] = await Promise.all([
+      fetch(`${API_BASE}/chain-volumes`).then(r => r.json()).catch(() => null),
+      fetch(`${API_BASE}/chain-transactions`).then(r => r.json()).catch(() => null),
+    ]);
+    _chainOverviewCache = { volumes, tx, at: Date.now() };
+    _chainOverviewInFlight = null;
+    return _chainOverviewCache;
+  })();
+  return _chainOverviewInFlight;
+}
+
 async function loadChainVolumes() {
   const el = $('chainVolumeGrid');
   if (!el) return;
   const LABELS = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
   try {
-    const res  = await fetch(`${API_BASE}/chain-volumes`);
-    const json = await res.json();
-    if (!json.success) throw new Error(json.error);
+    const { volumes: json } = await _getChainOverviewData();
+    if (!json || !json.success) throw new Error(json?.error || 'Failed');
     const keys = Object.keys(json.data || {});
     if (!keys.length) { el.innerHTML = '<div class="dash-loading">No chain volume data available</div>'; return; }
     el.innerHTML = keys.map(key => {
@@ -2570,9 +2596,8 @@ async function loadChainTransactions() {
   if (!el) return;
   const LABELS = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
   try {
-    const res  = await fetch(`${API_BASE}/chain-transactions`);
-    const json = await res.json();
-    if (!json.success) throw new Error(json.error);
+    const { tx: json } = await _getChainOverviewData();
+    if (!json || !json.success) throw new Error(json?.error || 'Failed');
     const keys = Object.keys(json.data || {});
     if (!keys.length) { el.innerHTML = '<div class="dash-loading">No chain transaction data available</div>'; return; }
     el.innerHTML = keys.map(key => {
@@ -2605,10 +2630,8 @@ async function loadChainSummary() {
   if (!el) return;
   const LABELS = { ethereum: 'Ethereum', base: 'Base', robinhood: 'Robinhood' };
   try {
-    const [volRes, txRes] = await Promise.all([
-      fetch(`${API_BASE}/chain-volumes`).then(r => r.json()),
-      fetch(`${API_BASE}/chain-transactions`).then(r => r.json()),
-    ]);
+    const { volumes: volRes, tx: txRes } = await _getChainOverviewData();
+    if (!txRes) { el.innerHTML = ''; return; }
     const chains = Object.keys(txRes.data || {});
     if (!chains.length) { el.innerHTML = ''; return; }
     el.innerHTML = chains.map(key => {
