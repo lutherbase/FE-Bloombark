@@ -1210,3 +1210,6 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 #swapAmountIn::-webkit-outer-spin-button,
 #swapAmountIn::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 #swapAmountIn { -moz-appearance: textfield; }
+
+/* Trending on Bloombark: rank rows lift slightly on hover */
+.trending-row:hover { border-color: #2d3450 !important; background: #161a26 !important; }

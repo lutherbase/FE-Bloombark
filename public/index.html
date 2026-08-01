@@ -96,6 +96,10 @@
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           Watchlist
         </a>
+        <a href="#" class="nav-item" data-page="trending-bloombark">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Trending on Bloombark
+        </a>
         <a href="#" class="nav-item" data-page="portfolio" style="display:none">
           <svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           Portfolio
@@ -195,9 +199,10 @@
             <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:#e2e8f0">ADD FROM WATCHLIST</span>
             <button onclick="closeComparePickerModal()" style="background:none;border:none;color:#8b92a8;cursor:pointer;font-size:18px;line-height:1">✕</button>
           </div>
-          <div id="comparePickerList" style="overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          <div id="comparePickerList" style="overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
             <div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">Loading watchlist…</div>
           </div>
+          <div style="font-size:11px;color:#6b7280;margin-bottom:10px">Select at least 2 tokens to compare.</div>
           <button id="comparePickerConfirmBtn" onclick="confirmComparePickerSelection()" disabled style="background:var(--accent-green);border:none;border-radius:8px;color:#000;padding:9px 16px;cursor:pointer;font-size:12px;font-weight:700;opacity:0.4">Add selected (0)</button>
         </div>
       </div>
@@ -1022,6 +1027,61 @@
           </div>
         </div>
 
+        <div class="page ai-analyzer-page" id="page-trending-bloombark">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">TRENDING ON BLOOMBARK</div>
+              <div style="font-size:13px;color:#9ca3af">What people are actually doing on Bloombark right now — not price-based, this is scans, chatter, and trades</div>
+            </div>
+            <button id="trendingBloombarkRefreshBtn" onclick="loadTrendingBloombark(true)" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <div style="width:28px;height:28px;border-radius:8px;background:#4a90e218;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:#e2e8f0">Most scanned</div>
+                  <div style="font-size:9px;color:#6b7280">AI Analyzer lookups</div>
+                </div>
+              </div>
+              <div id="trendScannedList" style="display:flex;flex-direction:column;gap:8px">
+                <div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <div style="width:28px;height:28px;border-radius:8px;background:#9b59b618;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9B59B6" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:#e2e8f0">Most discussed</div>
+                  <div style="font-size:9px;color:#6b7280">Community mentions</div>
+                </div>
+              </div>
+              <div id="trendDiscussedList" style="display:flex;flex-direction:column;gap:8px">
+                <div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>
+              </div>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <div style="width:28px;height:28px;border-radius:8px;background:var(--green-18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:12px;font-weight:700;color:#e2e8f0">Most traded</div>
+                  <div style="font-size:9px;color:#6b7280">Executed swaps</div>
+                </div>
+              </div>
+              <div id="trendTradedList" style="display:flex;flex-direction:column;gap:8px">
+                <div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="page ai-analyzer-page" id="page-alerts">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
             <div>
@@ -1251,6 +1311,14 @@
               <div style="font-size:12px;color:#6b7280;line-height:1.6">Set market cap or volume move alerts on any watchlist token, plus browser push notifications so you get notified even with the tab closed.</div>
             </div>
 
+            <div style="background:#0d0f1a;border:1px solid #1e2235;border-radius:14px;padding:24px">
+              <div style="width:40px;height:40px;background:#4a90e218;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:14px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div style="font-size:13px;font-weight:700;color:#e2e8f0">Trending on Bloombark</div><span style="font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--accent-green);background:var(--green-18);border:1px solid var(--green-40);border-radius:5px;padding:2px 6px;white-space:nowrap">LIVE</span></div>
+              <div style="font-size:12px;color:#6b7280;line-height:1.6">See what's actually happening on Bloombark itself — most-scanned tokens, most-discussed in Community, and most-traded, updated every 24 hours.</div>
+            </div>
+
           </div>
 
           <!-- Footer note -->
@@ -1344,6 +1412,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="/js/app.js?v=203"></script>
+  <script src="/js/app.js?v=209"></script>
 </body>
 </html>

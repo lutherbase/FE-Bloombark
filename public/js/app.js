@@ -379,6 +379,7 @@ const PAGE_ROUTES = {
   'community':      '/community',
   'sniper':         '/sniper',
   'track-record':   '/track-record',
+  'trending-bloombark': '/trending',
   'alerts':         '/alerts',
   'watchlist':      '/watchlist',
 };
@@ -415,6 +416,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'auto-research':['AUTO RESEARCH',   'Automated token research and report generation'],
     'sniper':       ['SNIPER ASSISTANCE', 'Newly-created pools on Robinhood chain, detected on-chain in real time'],
     'track-record': ['AI TRACK RECORD', 'Every directional AI Prediction, checked ~24h later against the real price move'],
+    'trending-bloombark': ['TRENDING ON BLOOMBARK', 'Most scanned, discussed, and traded tokens on Bloombark in the last 24 hours'],
     'alerts':       ['ALERTS',          'Your configured alerts and notifications'],
     'watchlist':    ['WATCHLIST',       'Your saved tokens, plus side-by-side comparison'],
     'portfolio':    ['PORTFOLIO',       'Your portfolio performance and holdings'],
@@ -464,6 +466,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
   if (page === 'alerts') renderAlertsPage();
   if (page === 'sniper') initSniperPage();
   if (page === 'track-record') loadTrackRecord(true);
+  if (page === 'trending-bloombark') loadTrendingBloombark(true);
   if (page === 'landing') loadLandingCA();
   if (page === 'narrative') loadNarrative();
   if (page === 'community') initCommunity();
@@ -2936,6 +2939,12 @@ function buildSvgAvatar(idx, bgColor) {
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
 
+// Curated Robinhood-themed mascot avatars — served as static compressed JPEGs
+// (~10KB each) rather than embedding image bytes in the DB. The `avatar`
+// column just stores this short path string, same as it stores a data: URI
+// for the SVG picker above, but far lighter.
+const AVATAR_IMAGES = Array.from({ length: 20 }, (_, i) => `/assets/avatars/avatar-${String(i + 1).padStart(2, '0')}.jpg`);
+
 window.profileAvatarClick = function() {
   if (!window._privyWallet) { showToast('Connect your wallet first'); return; }
   openAvatarPicker();
@@ -2943,14 +2952,11 @@ window.profileAvatarClick = function() {
 
 function _renderAvatarPickerBody() {
   const preview = document.getElementById('avatarPickPreview');
-  if (preview) preview.style.backgroundImage = `url("${buildSvgAvatar(_avatarPickIdx, _avatarPickColor)}")`;
+  const src = AVATAR_IMAGES[_avatarPickIdx] || AVATAR_IMAGES[0];
+  if (preview) preview.style.backgroundImage = `url("${src}")`;
   document.querySelectorAll('#avatarPickerModal .ap-avatar').forEach(b => {
     const i = parseInt(b.dataset.idx);
-    b.style.backgroundImage = `url("${buildSvgAvatar(i, _avatarPickColor)}")`;
     b.style.borderColor = i === _avatarPickIdx ? 'var(--accent-green)' : '#2d3748';
-  });
-  document.querySelectorAll('#avatarPickerModal .ap-color').forEach(b => {
-    b.style.outline = b.dataset.color === _avatarPickColor ? '2px solid #e2e8f0' : 'none';
   });
 }
 
@@ -2969,21 +2975,16 @@ window.openAvatarPicker = function() {
       </div>
       <div id="avatarPickPreview" style="width:80px;height:80px;border-radius:50%;margin:0 auto 16px;background-size:cover;background-position:center;border:2px solid var(--green-55)"></div>
       <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#6b7280;margin-bottom:8px">CHARACTER</div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:16px">
-        ${AVATAR_SVGS.map((_, i) => `<button class="ap-avatar" data-idx="${i}" style="aspect-ratio:1;border:2px solid #2d3748;border-radius:10px;background:#0d0f1a;background-size:cover;background-position:center;cursor:pointer"></button>`).join('')}
-      </div>
-      <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#6b7280;margin-bottom:8px">BACKGROUND</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px">
-        ${AVATAR_BG_COLORS.map(c => `<button class="ap-color" data-color="${c}" style="width:26px;height:26px;border-radius:50%;border:1px solid #00000030;background:${c};cursor:pointer;outline-offset:2px"></button>`).join('')}
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:20px">
+        ${AVATAR_IMAGES.map((src, i) => `<button class="ap-avatar" data-idx="${i}" style="aspect-ratio:1;border:2px solid #2d3748;border-radius:10px;background-image:url('${src}');background-size:cover;background-position:center;cursor:pointer"></button>`).join('')}
       </div>
       <button id="avatarPickSave" style="width:100%;background:var(--accent-green);border:none;border-radius:10px;color:#000;font-size:12px;font-weight:800;padding:11px;cursor:pointer;letter-spacing:0.5px">Save Avatar</button>
     </div>`;
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   document.body.appendChild(overlay);
   overlay.querySelectorAll('.ap-avatar').forEach(b => b.onclick = () => { _avatarPickIdx = parseInt(b.dataset.idx); _renderAvatarPickerBody(); });
-  overlay.querySelectorAll('.ap-color').forEach(b => b.onclick = () => { _avatarPickColor = b.dataset.color; _renderAvatarPickerBody(); });
   overlay.querySelector('#avatarPickSave').onclick = () => {
-    _pendingProfileAvatar = buildSvgAvatar(_avatarPickIdx, _avatarPickColor);
+    _pendingProfileAvatar = AVATAR_IMAGES[_avatarPickIdx] || AVATAR_IMAGES[0];
     _setAvatarEl(document.getElementById('popupAvatar'), _pendingProfileAvatar, null);
     const st = document.getElementById('profileAvatarStatus');
     if (st) st.textContent = 'Saving…';
@@ -3860,6 +3861,66 @@ async function loadTrackRecord(showLoadingState) {
   }
 }
 
+/* ─── Trending on Bloombark ────────────────────────────────────────────────
+   Internal-activity trending (scans/discussion/trades), deliberately
+   separate from Market Overview's price/volume-based Trending tab. */
+const TRENDING_MEDALS = ['🥇', '🥈', '🥉'];
+
+function _trendingListHtml(items, emptyMsg, accent) {
+  if (!items.length) {
+    return `<div style="text-align:center;padding:36px 16px;color:#4b5568;font-size:12px;border:1px dashed #232838;border-radius:12px">${emptyMsg}</div>`;
+  }
+  const maxCount = Math.max(...items.map(t => t.count || 0), 1);
+  return items.map((t, i) => {
+    const label = t.symbol || (t.address ? `${t.address.slice(0,6)}…${t.address.slice(-4)}` : '?');
+    const canNav = !!t.address;
+    const clickAttr = canNav ? `onclick="trendingGoToAnalyzer('${t.address}')"` : '';
+    const rankBadge = TRENDING_MEDALS[i]
+      ? `<span style="font-size:15px;width:20px;text-align:center;flex-shrink:0">${TRENDING_MEDALS[i]}</span>`
+      : `<span style="font-size:10px;color:#4b5568;width:20px;text-align:center;flex-shrink:0">#${i+1}</span>`;
+    const pct = Math.max(8, Math.round((t.count || 0) / maxCount * 100));
+    return `<div ${clickAttr} class="trending-row" style="cursor:${canNav ? 'pointer' : 'default'};background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:10px 12px;transition:border-color .15s,background .15s">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:${items.length ? 6 : 0}px">
+        ${rankBadge}
+        <div style="width:26px;height:26px;border-radius:50%;background:${accent}22;color:${accent};font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${label.charAt(0)}</div>
+        <span style="font-size:13px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${label}</span>
+        <span style="font-size:12px;color:${accent};font-weight:800;flex-shrink:0">${t.count}</span>
+      </div>
+      <div style="height:4px;background:#1e2235;border-radius:2px;overflow:hidden;margin-left:36px">
+        <div style="height:100%;width:${pct}%;background:${accent};border-radius:2px"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function trendingGoToAnalyzer(address) {
+  playClickSound();
+  document.querySelector('.nav-item[data-page="ai-analyzer"]')?.click();
+  const inp = $('contractInput');
+  if (inp) inp.value = address;
+  $('scanBtn')?.click();
+}
+
+async function loadTrendingBloombark(showLoadingState) {
+  const scannedEl = $('trendScannedList'), discussedEl = $('trendDiscussedList'), tradedEl = $('trendTradedList');
+  if (!scannedEl) return;
+  if (showLoadingState) {
+    [scannedEl, discussedEl, tradedEl].forEach(el => { el.innerHTML = '<div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>'; });
+  }
+  try {
+    const res = await fetch(`${API_BASE}/trending-bloombark`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    scannedEl.innerHTML = _trendingListHtml(data.mostScanned || [], 'No scans in the last 24h yet.', '#4A90E2');
+    discussedEl.innerHTML = _trendingListHtml(data.mostDiscussed || [], 'No community mentions in the last 24h yet.', '#9B59B6');
+    tradedEl.innerHTML = _trendingListHtml(data.mostTraded || [], 'No trades in the last 24h yet.', '#27C97F');
+  } catch (e) {
+    [scannedEl, discussedEl, tradedEl].forEach(el => {
+      el.innerHTML = '<div style="text-align:center;padding:30px 0;color:var(--accent-red);font-size:12px">Failed to load</div>';
+    });
+  }
+}
+
 /* ─── Token Comparison (Track Record page) ────────────────────────────────
    Compare several watchlist tokens side by side. Deliberately watchlist-only
    (not free-text CA entry) — keeps the picker fast and scoped to tokens the
@@ -3870,13 +3931,17 @@ let _compareTokens = []; // [{address, chain, symbol, name, imageUrl, data}]
 let _pickerItems = [];             // full watchlist items available to pick from
 let _pickerSelected = new Set();   // addresses (lowercase) checked in the modal
 
+const COMPARE_MIN_TOKENS = 2;
+
 function _updatePickerConfirmBtn() {
   const btn = $('comparePickerConfirmBtn');
   if (!btn) return;
   const n = _pickerSelected.size;
+  const total = _compareTokens.length + n;
   btn.textContent = `Add selected (${n})`;
-  btn.disabled = n === 0;
-  btn.style.opacity = n === 0 ? '0.4' : '1';
+  const enough = total >= COMPARE_MIN_TOKENS;
+  btn.disabled = n === 0 || !enough;
+  btn.style.opacity = (n === 0 || !enough) ? '0.4' : '1';
 }
 
 function _renderPickerList() {
@@ -3890,9 +3955,9 @@ function _renderPickerList() {
         style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:${checked ? 'var(--green-15)' : '#12141e'};border:1px solid ${checked ? 'var(--green-40)' : '#1e2235'};border-radius:10px;cursor:pointer"
         onmouseover="this.style.background='${checked ? 'var(--green-15)' : '#161822'}'" onmouseout="this.style.background='${checked ? 'var(--green-15)' : '#12141e'}'">
         <input type="checkbox" ${checked ? 'checked' : ''} onclick="event.stopPropagation();togglePickerSelect('${addr}')" style="pointer-events:none;width:16px;height:16px;flex-shrink:0">
-        ${it.image_url
-          ? `<img src="${it.image_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
-          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(it.symbol||'?').charAt(0)}</div>`}
+        ${(() => { const logo = dashLogoUrl({ imageUrl: it.image_url, networkId: it.chain, address: it.address }); return logo
+          ? `<img src="${logo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:28px;height:28px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(it.symbol||'?').charAt(0)}'}))">`
+          : `<div style="width:28px;height:28px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(it.symbol||'?').charAt(0)}</div>`; })()}
         <div style="min-width:0">
           <div style="font-size:13px;font-weight:700;color:#e2e8f0">${it.symbol || '?'}</div>
           <div style="font-size:10px;color:#6b7280;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.name || ''}</div>
@@ -3970,6 +4035,10 @@ async function openComparePickerModal() {
 
 function confirmComparePickerSelection() {
   playClickSound();
+  if (_compareTokens.length + _pickerSelected.size < COMPARE_MIN_TOKENS) {
+    showToast(`Select at least ${COMPARE_MIN_TOKENS} tokens to compare`);
+    return;
+  }
   const toAdd = _pickerItems.filter(it => _pickerSelected.has(it.address.toLowerCase()));
   closeComparePickerModal();
   toAdd.forEach(it => addTokenToCompare(it.address, it.chain, it.symbol || '?', it.name || '', it.image_url || ''));
@@ -4099,9 +4168,9 @@ function renderCompareGrid() {
     return `<div style="background:#12141e;border:1px solid ${isBest ? 'var(--green-40)' : '#1e2235'};border-radius:12px;padding:1rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:8px">
-          ${t.imageUrl
-            ? `<img src="${t.imageUrl}" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.style.display='none'">`
-            : `<div style="width:24px;height:24px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">${(t.symbol||'?').charAt(0)}</div>`}
+          ${(() => { const logo = dashLogoUrl({ imageUrl: t.imageUrl, networkId: t.chain, address: t.address }); return logo
+            ? `<img src="${logo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:24px;height:24px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center',textContent:'${(t.symbol||'?').charAt(0)}'}))">`
+            : `<div style="width:24px;height:24px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center">${(t.symbol||'?').charAt(0)}</div>`; })()}
           <span style="font-size:13px;font-weight:700;color:#e2e8f0">${t.symbol}</span>
           ${isBest ? `<span style="font-size:9px;font-weight:800;letter-spacing:.5px;background:var(--green-20);color:var(--accent-green);padding:2px 6px;border-radius:10px">🏆 BEST</span>` : ''}
         </div>
@@ -6037,6 +6106,13 @@ async function swapExecute() {
       txSt.style.display = 'block';
     }
     showToast(ok ? 'Swap executed! 🎉' : 'Transaction reverted');
+    if (ok) {
+      // Fire-and-forget — feeds "Trending on Bloombark" (Most Traded).
+      fetch(`${API_BASE}/trade/log-activity`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: t.address, chain: t.chain, symbol: t.symbol, name: t.name }),
+      }).catch(() => {});
+    }
     $('swapAmountIn').value = '';
     _clearQuote();
     _loadPayBalance();
