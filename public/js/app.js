@@ -3860,49 +3860,110 @@ async function loadTrackRecord(showLoadingState) {
       }
     }
 
-    const items = data.recent || [];
-    if (!items.length) {
-      el.innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">' +
-        '<div style="font-size:28px;margin-bottom:12px">📊</div>No resolved predictions yet.<br>' +
-        '<span style="color:#9ca3af">Every AI Prediction call gets checked ~24h later — check back soon.</span></div>';
-      return;
+    const pending = data.pending || [];
+    const pendingSection = $('trPendingSection');
+    const pendingList = $('trPendingList');
+    if (pendingSection && pendingList) {
+      if (pending.length) {
+        pendingSection.style.display = '';
+        pendingList.innerHTML = pending.map(p => {
+          const addr = p.address;
+          const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+          const bullish = p.signal === 'BULLISH';
+          const logo = dashLogoUrl({ imageUrl: p.imageUrl, networkId: p.chain, address: p.address });
+          const avatar = logo
+            ? `<img src="${logo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(p.symbol||'?').charAt(0)}'}))">`
+            : `<div style="width:22px;height:22px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(p.symbol||'?').charAt(0)}</div>`;
+          return `<div title="${addr}" style="display:flex;align-items:center;gap:6px;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:5px 12px 5px 5px">
+            ${avatar}
+            <span style="font-size:12px;font-weight:700;color:#e2e8f0">${p.symbol || '?'}</span>
+            <span style="font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;background:${bullish ? 'var(--green-18)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'}">${p.signal || '?'}</span>
+            <span style="font-size:10px;color:#6b7280;font-family:monospace">${short}</span>
+          </div>`;
+        }).join('');
+      } else {
+        pendingSection.style.display = 'none';
+      }
     }
 
-    const fmtAge = (ms) => {
-      const d = Math.floor((Date.now() - ms) / 3600000);
-      return d < 24 ? `${d}h ago` : `${Math.floor(d/24)}d ago`;
-    };
-    el.innerHTML = items.map(r => {
-      const isCorrect = r.outcome === 'correct';
-      const isFlat = r.outcome === 'flat';
-      const color = isFlat ? '#9ca3af' : isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
-      const label = isFlat ? 'FLAT' : isCorrect ? 'CORRECT' : 'MISSED';
-      const bullish = r.signal === 'BULLISH';
-      const changeStr = (r.changePct >= 0 ? '+' : '') + Number(r.changePct).toFixed(1) + '%';
-      const rowLogo = dashLogoUrl({ imageUrl: r.imageUrl, networkId: r.chain, address: r.address });
-      const rowAvatar = rowLogo
-        ? `<img src="${rowLogo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0',textContent:'${bullish ? '🐂' : '🐻'}'}))">`
-        : `<div style="width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${bullish ? '🐂' : '🐻'}</div>`;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px">
-        <div style="display:flex;align-items:center;gap:12px;min-width:0">
-          ${rowAvatar}
-          <div style="min-width:0">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:13px;font-weight:700;color:#e2e8f0">${r.symbol || '?'}</span>
-              <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:${bullish ? 'var(--green-18)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};border:1px solid ${bullish ? 'var(--green-40)' : 'var(--red-44)'}">${r.signal} · ${r.confidence}%</span>
-            </div>
-            <div style="font-size:11px;color:#6b7280;margin-top:2px">${fmtAge(r.predictedAt)} · $${Number(r.priceAt).toFixed(6)} → $${Number(r.priceAfter).toFixed(6)}</div>
-          </div>
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:12px;font-weight:700;color:${color}">${label}</div>
-          <div style="font-size:11px;color:#6b7280">${changeStr}</div>
-        </div>
-      </div>`;
-    }).join('');
+    _trackRecordRows = data.recent || [];
+    _trackRecordPage = 1;
+    _renderTrackRecordList();
   } catch (e) {
     el.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading track record</div>';
   }
+}
+
+const TRACK_RECORD_PAGE_SIZE = 10;
+let _trackRecordRows = [];
+let _trackRecordPage = 1;
+
+function _trackRecordRowHtml(r) {
+  const isCorrect = r.outcome === 'correct';
+  const isFlat = r.outcome === 'flat';
+  const color = isFlat ? '#9ca3af' : isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
+  const label = isFlat ? 'FLAT' : isCorrect ? 'CORRECT' : 'MISSED';
+  const bullish = r.signal === 'BULLISH';
+  const changeStr = (r.changePct >= 0 ? '+' : '') + Number(r.changePct).toFixed(1) + '%';
+  const fmtAge = (ms) => {
+    const d = Math.floor((Date.now() - ms) / 3600000);
+    return d < 24 ? `${d}h ago` : `${Math.floor(d/24)}d ago`;
+  };
+  const rowLogo = dashLogoUrl({ imageUrl: r.imageUrl, networkId: r.chain, address: r.address });
+  const rowAvatar = rowLogo
+    ? `<img src="${rowLogo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0',textContent:'${bullish ? '🐂' : '🐻'}'}))">`
+    : `<div style="width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${bullish ? '🐂' : '🐻'}</div>`;
+  return `<div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px">
+    <div style="display:flex;align-items:center;gap:12px;min-width:0">
+      ${rowAvatar}
+      <div style="min-width:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px;font-weight:700;color:#e2e8f0">${r.symbol || '?'}</span>
+          <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:${bullish ? 'var(--green-18)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};border:1px solid ${bullish ? 'var(--green-40)' : 'var(--red-44)'}">${r.signal} · ${r.confidence}%</span>
+        </div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">${fmtAge(r.predictedAt)} · $${Number(r.priceAt).toFixed(6)} → $${Number(r.priceAfter).toFixed(6)}</div>
+      </div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:12px;font-weight:700;color:${color}">${label}</div>
+      <div style="font-size:11px;color:#6b7280">${changeStr}</div>
+    </div>
+  </div>`;
+}
+
+function _renderTrackRecordList() {
+  const el = $('trackRecordContent');
+  if (!el) return;
+  const rows = _trackRecordRows;
+  if (!rows.length) {
+    el.innerHTML = '<div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">' +
+      '<div style="font-size:28px;margin-bottom:12px">📊</div>No resolved predictions yet.<br>' +
+      '<span style="color:#9ca3af">Every AI Prediction call gets checked ~24h later — check back soon.</span></div>';
+    return;
+  }
+  const totalPages = Math.max(1, Math.ceil(rows.length / TRACK_RECORD_PAGE_SIZE));
+  if (_trackRecordPage > totalPages) _trackRecordPage = totalPages;
+  const start = (_trackRecordPage - 1) * TRACK_RECORD_PAGE_SIZE;
+  const pageRows = rows.slice(start, start + TRACK_RECORD_PAGE_SIZE);
+  el.innerHTML = pageRows.map(_trackRecordRowHtml).join('') + _trackRecordPaginationHtml(totalPages);
+}
+
+function _trackRecordPaginationHtml(totalPages) {
+  if (totalPages <= 1) return '';
+  const p = _trackRecordPage;
+  const btn = (label, page, disabled, active) =>
+    `<button ${disabled ? 'disabled' : `onclick="trackRecordGoToPage(${page})"`}
+      style="min-width:28px;height:28px;padding:0 8px;border-radius:6px;border:1px solid ${active ? 'var(--accent-green)' : '#232838'};background:${active ? 'var(--green-15)' : 'transparent'};color:${disabled ? '#4b5262' : active ? 'var(--accent-green)' : '#9ca3af'};font-size:12px;cursor:${disabled ? 'default' : 'pointer'}">${label}</button>`;
+  let pages = '';
+  for (let i = 1; i <= totalPages; i++) pages += btn(i, i, false, i === p);
+  return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 4px">` +
+    btn('‹ Prev', p - 1, p === 1, false) + pages + btn('Next ›', p + 1, p === totalPages, false) +
+    `</div>`;
+}
+
+function trackRecordGoToPage(page) {
+  _trackRecordPage = page;
+  _renderTrackRecordList();
 }
 
 /* ─── Trending on Bloombark ────────────────────────────────────────────────
