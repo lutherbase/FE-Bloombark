@@ -3806,8 +3806,9 @@ async function loadTrackRecord(showLoadingState) {
         tokensList.innerHTML = tokens.map(t => {
           const addr = t.address;
           const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
-          const avatar = t.imageUrl
-            ? `<img src="${t.imageUrl}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(t.symbol||'?').charAt(0)}'}))">`
+          const logo = dashLogoUrl({ imageUrl: t.imageUrl, networkId: t.chain, address: t.address });
+          const avatar = logo
+            ? `<img src="${logo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(t.symbol||'?').charAt(0)}'}))">`
             : `<div style="width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(t.symbol||'?').charAt(0)}</div>`;
           return `<div title="${addr}" style="display:flex;align-items:center;gap:6px;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:5px 12px 5px 5px">
             ${avatar}
@@ -3839,13 +3840,17 @@ async function loadTrackRecord(showLoadingState) {
       const label = isFlat ? 'FLAT' : isCorrect ? 'CORRECT' : 'MISSED';
       const bullish = r.signal === 'BULLISH';
       const changeStr = (r.changePct >= 0 ? '+' : '') + Number(r.changePct).toFixed(1) + '%';
+      const rowLogo = dashLogoUrl({ imageUrl: r.imageUrl, networkId: r.chain, address: r.address });
+      const rowAvatar = rowLogo
+        ? `<img src="${rowLogo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0',textContent:'${bullish ? '🐂' : '🐻'}'}))">`
+        : `<div style="width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${bullish ? '🐂' : '🐻'}</div>`;
       return `<div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px">
         <div style="display:flex;align-items:center;gap:12px;min-width:0">
-          <div style="width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${bullish ? '🐂' : '🐻'}</div>
+          ${rowAvatar}
           <div style="min-width:0">
             <div style="display:flex;align-items:center;gap:6px">
               <span style="font-size:13px;font-weight:700;color:#e2e8f0">${r.symbol || '?'}</span>
-              <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:#1e2235;color:#6b7280;border:1px solid #2d3144">${r.signal} · ${r.confidence}%</span>
+              <span style="font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;background:${bullish ? 'var(--green-18)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};border:1px solid ${bullish ? 'var(--green-40)' : 'var(--red-44)'}">${r.signal} · ${r.confidence}%</span>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:2px">${fmtAge(r.predictedAt)} · $${Number(r.priceAt).toFixed(6)} → $${Number(r.priceAfter).toFixed(6)}</div>
           </div>
