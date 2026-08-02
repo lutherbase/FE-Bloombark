@@ -418,7 +418,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'track-record': ['AI TRACK RECORD', 'Every directional AI Prediction, checked ~24h later against the real price move'],
     'trending-bloombark': ['TRENDING ON BLOOMBARK', 'Most scanned, discussed, and traded tokens on Bloombark in the last 24 hours'],
     'alerts':       ['ALERTS',          'Your configured alerts and notifications'],
-    'watchlist':    ['WATCHLIST',       'Your saved tokens, plus side-by-side comparison'],
+    'watchlist':    ['WATCHLIST & COMPARISON',       'Your saved tokens, plus side-by-side comparison'],
     'portfolio':    ['PORTFOLIO',       'Your portfolio performance and holdings'],
     'leaderboard':  ['LEADERBOARD',     'Top traders and wallets by performance'],
     'settings':     ['SETTINGS',        'Configure your Bloombark Terminal preferences'],
