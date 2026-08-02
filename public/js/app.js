@@ -3836,29 +3836,6 @@ async function loadTrackRecord(showLoadingState) {
     const pendingEl = $('trPendingCount');
     if (pendingEl) pendingEl.textContent = data.pendingCount;
 
-    const tokens = data.tokens || [];
-    const tokensSection = $('trTokensSection');
-    const tokensList = $('trTokensList');
-    if (tokensSection && tokensList) {
-      if (tokens.length) {
-        tokensSection.style.display = '';
-        tokensList.innerHTML = tokens.map(t => {
-          const addr = t.address;
-          const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
-          const logo = dashLogoUrl({ imageUrl: t.imageUrl, networkId: t.chain, address: t.address });
-          const avatar = logo
-            ? `<img src="${logo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(t.symbol||'?').charAt(0)}'}))">`
-            : `<div style="width:22px;height:22px;border-radius:50%;background:var(--green-15);color:var(--accent-green);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(t.symbol||'?').charAt(0)}</div>`;
-          return `<div title="${addr}" style="display:flex;align-items:center;gap:6px;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:5px 12px 5px 5px">
-            ${avatar}
-            <span style="font-size:12px;font-weight:700;color:#e2e8f0">${t.symbol || '?'}</span>
-            <span style="font-size:10px;color:#6b7280;font-family:monospace">${short}</span>
-          </div>`;
-        }).join('');
-      } else {
-        tokensSection.style.display = 'none';
-      }
-    }
 
     const pending = data.pending || [];
     const pendingSection = $('trPendingSection');
