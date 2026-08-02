@@ -3922,7 +3922,11 @@ function _renderTrackRecordList() {
   if (_trackRecordPage > totalPages) _trackRecordPage = totalPages;
   const start = (_trackRecordPage - 1) * TRACK_RECORD_PAGE_SIZE;
   const pageRows = rows.slice(start, start + TRACK_RECORD_PAGE_SIZE);
-  el.innerHTML = pageRows.map(_trackRecordRowHtml).join('') + _trackRecordPaginationHtml(totalPages);
+  const header = `<div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px">
+    <span style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#6b7280">TOKEN / CALL</span>
+    <span style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#6b7280">RESULT</span>
+  </div>`;
+  el.innerHTML = header + pageRows.map(_trackRecordRowHtml).join('') + _trackRecordPaginationHtml(totalPages);
 }
 
 function _trackRecordPaginationHtml(totalPages) {
