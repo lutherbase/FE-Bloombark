@@ -96,9 +96,13 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.brand-text { display: flex; flex-direction: column; }
-.brand-main { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent-yellow); font-family: var(--font); }
-.brand-sub  { font-size: 9px; letter-spacing: 1px; color: var(--text-muted); font-family: var(--font); }
+.brand-text { display: flex; flex-direction: column; padding-left: 10px; position: relative; }
+.brand-text::before { content: ''; position: absolute; left: 0; top: 1px; bottom: 1px; width: 2px; background: linear-gradient(180deg, #A2E115, #025E39); border-radius: 1px; }
+.brand-main { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; color: #ffffff; font-family: var(--font-ui); line-height: 1.15; }
+.brand-sub  {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.3px; font-family: var(--font-ui); line-height: 1.2;
+  color: var(--accent-green);
+}
 
 .sidebar-nav { flex: 1; padding: 8px 0; }
 
@@ -116,13 +120,13 @@ body {
 }
 
 .nav-item:hover { color: var(--text-primary); background: var(--bg-hover); }
-.nav-item.active { color: var(--accent-yellow); background: rgba(245,166,35,0.08); }
+.nav-item.active { color: var(--accent-green); background: var(--green-15); }
 .nav-item.active::before {
   content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 2px;
-  background: var(--accent-yellow);
+  background: var(--accent-green);
 }
 
 .nav-icon {
@@ -217,8 +221,8 @@ body {
   font-size: 14px; font-weight: 700;
   letter-spacing: 1.5px;
   font-family: var(--font);
-  color: var(--accent-yellow);
   white-space: nowrap;
+  color: var(--accent-green);
 }
 
 .page-subtitle {
@@ -307,7 +311,7 @@ body {
 .search-section { margin-bottom: 14px; }
 .search-label {
   display: block; font-size: 10px; letter-spacing: 1.5px;
-  color: var(--accent-yellow); font-family: var(--font);
+  color: var(--accent-green); font-family: var(--font);
   margin-bottom: 6px; font-weight: 600;
 }
 
@@ -1215,9 +1219,9 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .trending-row:hover { border-color: #2d3450 !important; background: #161a26 !important; }
 
 /* Home page roadmap animations */
-@keyframes rmMoveDot { 0% { left: 2%; } 100% { left: 62%; } }
+@keyframes rmBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 @keyframes rmPulseRing { 0% { box-shadow: 0 0 0 0 rgba(39,201,127,0.5); } 70% { box-shadow: 0 0 0 10px rgba(39,201,127,0); } 100% { box-shadow: 0 0 0 0 rgba(39,201,127,0); } }
 @keyframes rmFadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-.rm-dot { animation: rmMoveDot 3.5s ease-in-out infinite alternate; }
+.rm-blink { animation: rmBlink 1.1s ease-in-out infinite; }
 .rm-pulse { animation: rmPulseRing 1.8s ease-out infinite; }
 .rm-chip { opacity: 0; animation: rmFadeUp .4s ease-out forwards; }

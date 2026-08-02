@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='13' height='13' rx='3' fill='%23E86C3A'/%3E%3Crect x='17' y='2' width='13' height='13' rx='3' fill='%23F5A623'/%3E%3Crect x='2' y='17' width='13' height='13' rx='3' fill='%2327C97F'/%3E%3Crect x='17' y='17' width='13' height='13' rx='3' fill='%234a90d9'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/css/main.css?v=15" />
+  <link rel="icon" type="image/png" href="/assets/brand/favicon.png?v=2">
+  <link rel="stylesheet" href="/css/main.css?v=22" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -16,12 +16,7 @@
     <aside class="sidebar">
       <div class="sidebar-brand">
         <div class="brand-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="2" width="9" height="9" rx="2" fill="#E86C3A"/>
-            <rect x="13" y="2" width="9" height="9" rx="2" fill="#F5A623"/>
-            <rect x="2" y="13" width="9" height="9" rx="2" fill="var(--accent-green)"/>
-            <rect x="13" y="13" width="9" height="9" rx="2" fill="#4a90d9"/>
-          </svg>
+          <img src="/assets/brand/logo.png?v=2" width="24" height="24" alt="" style="border-radius:5px;object-fit:cover">
         </div>
         <div class="brand-text">
           <span class="brand-main">BLOOMBARK</span>
@@ -114,7 +109,8 @@
         <a href="#" class="nav-item" data-page="settings" style="display:none">
           Settings
         </a>
-        <a href="#" class="nav-item" data-page="docs" style="display:none">
+        <a href="#" class="nav-item" data-page="docs">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           Docs
         </a>
       </nav>
@@ -594,7 +590,7 @@
 
               <!-- Token loader -->
               <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:14px">
-                <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent-orange);margin-bottom:8px">PASTE TOKEN ADDRESS TO TRADE · ROBINHOOD ONLY</div>
+                <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent-green);margin-bottom:8px">PASTE TOKEN ADDRESS TO TRADE · ROBINHOOD ONLY</div>
                 <div style="display:flex;gap:8px">
                   <div style="flex:1;display:flex;align-items:center;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;min-width:0" id="tradeTokenInputWrap">
                     <input id="tradeTokenInput" placeholder="0x… Robinhood token contract address"
@@ -1165,8 +1161,122 @@
         <div class="page placeholder-page" id="page-settings">
           <div class="placeholder-content"><h2>Settings</h2><p>Configure your Bloombark Terminal preferences.</p></div>
         </div>
-        <div class="page placeholder-page" id="page-docs">
-          <div class="placeholder-content"><h2>Documentation</h2><p>API docs and usage guides.</p></div>
+        <div class="page ai-analyzer-page" id="page-docs" style="overflow-y:auto">
+          <div style="margin-bottom:20px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">DOCUMENTATION</div>
+            <div style="font-size:13px;color:#9ca3af">How every part of Bloombark Terminal works, in one place</div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #1e2235">
+            <a href="#doc-getting-started" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Getting started</a>
+            <a href="#doc-ai-analyzer" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">AI Analyzer</a>
+            <a href="#doc-ai-prediction" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">AI Prediction</a>
+            <a href="#doc-track-record" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">AI Track Record</a>
+            <a href="#doc-trade" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Trade</a>
+            <a href="#doc-market-overview" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Market Overview</a>
+            <a href="#doc-wallet-tracker" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Wallet Tracker</a>
+            <a href="#doc-narrative" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Narrative</a>
+            <a href="#doc-community" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Community</a>
+            <a href="#doc-watchlist" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Watchlist & Comparison</a>
+            <a href="#doc-alerts" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Alerts</a>
+            <a href="#doc-trending" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Trending on Bloombark</a>
+            <a href="#doc-accessibility" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Accessibility</a>
+            <a href="#doc-faq" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">FAQ</a>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;max-width:760px">
+
+            <div id="doc-getting-started" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Getting started</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Bloombark Terminal is a token intelligence platform for the Robinhood chain — risk analysis, wallet tracking, trading, and community, all in one place. Most read-only features (AI Analyzer, Market Overview, Narrative) work without connecting a wallet.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Connect Wallet</strong> (top right) to unlock Trade, Watchlist, Alerts, and Community — MetaMask is currently the supported wallet.</p>
+            </div>
+
+            <div id="doc-ai-analyzer" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">AI Analyzer</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Paste any Robinhood token contract address to get a full risk breakdown: holder concentration, honeypot and mint-function checks, liquidity health, insider wallet detection, and a live price chart.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">The Bloombark Risk Score (0–100) is calculated from real on-chain data — higher means riskier. Use it as a starting point, not a guarantee.</p>
+            </div>
+
+            <div id="doc-ai-prediction" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">AI Prediction</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">A rule-based scoring engine — not a black-box model — that weighs price momentum, buy/sell pressure, volume trend, liquidity, holder distribution, and security flags into a BULLISH / BEARISH / NEUTRAL call with a confidence score.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Available from the AI Analyzer page after scanning a token. This is not financial advice — it's a second opinion built from the same data you can see yourself in the signal breakdown.</p>
+            </div>
+
+            <div id="doc-track-record" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">AI Track Record</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Every BULLISH or BEARISH AI Prediction call is logged, then checked ~24 hours later against the real price move. No cherry-picking — wins and losses are both shown, with a running win rate.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">NEUTRAL calls aren't logged, since there's no clear right answer to resolve them against.</p>
+            </div>
+
+            <div id="doc-trade" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Trade</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Swap any Robinhood token directly from the terminal, routed via KyberSwap for best pricing. Supports both market orders (instant, at current price) and limit orders (gasless, executes when your target price hits).</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Every swap requires MetaMask confirmation — Bloombark never holds your funds or executes trades on your behalf.</p>
+            </div>
+
+            <div id="doc-market-overview" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Market Overview</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">A live dashboard across supported chains — Pools, Trending, Top Gainers, and New Pools tabs, plus chain-wide volume and transaction stats.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">This is price/volume-based trending sourced from GeckoTerminal — different from Trending on Bloombark, which tracks activity on the terminal itself.</p>
+            </div>
+
+            <div id="doc-wallet-tracker" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Wallet Tracker</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Paste any EVM wallet address to see its full token holdings, portfolio value, and transaction history across chains.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Useful for checking a token's top holders or creator wallet before you trade — see exactly what else they hold.</p>
+            </div>
+
+            <div id="doc-narrative" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Narrative</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Tracks emerging market themes and sector rotations, so you can spot which narratives are gaining traction before they're obvious.</p>
+            </div>
+
+            <div id="doc-community" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Community</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Live chat rooms — General, Trading, Alpha, Free Shill, plus gated Holders and Private rooms. Paste a contract address in chat and the built-in bot replies with an instant AI Prediction card.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">$BBRK Moon is a read-only feed that auto-posts every on-chain buy of the $BBRK token.</p>
+            </div>
+
+            <div id="doc-watchlist" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Watchlist & Comparison</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Save tokens from AI Analyzer with the ♡ icon to track them in one table — price, volume, mcap, liquidity, and age.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Compare Token</strong> to pick 2–5 watchlist tokens and see them ranked side by side on an overall score built from liquidity, volume, momentum, holders, and risk.</p>
+            </div>
+
+            <div id="doc-alerts" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Alerts</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Set market cap or volume move alerts on any watchlist token. Enable browser push notifications to get notified even with the tab closed.</p>
+            </div>
+
+            <div id="doc-trending" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Trending on Bloombark</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Shows what's actually happening on the terminal itself, refreshed every 24 hours: the most-scanned tokens in AI Analyzer, most-discussed in Community (excluding Holders, Private, and $BBRK Moon), and most-traded on Trade.</p>
+            </div>
+
+            <div id="doc-accessibility" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Accessibility</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Toggle <strong style="color:#e2e8f0">Colorblind mode</strong> in the sidebar footer to swap the green/red up-down convention for a blue/orange pair that stays distinguishable across common color-vision deficiencies — applies everywhere, including charts.</p>
+            </div>
+
+            <div id="doc-faq" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 12px">FAQ</h3>
+              <div style="margin-bottom:12px">
+                <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Is Bloombark custodial?</p>
+                <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">No. Bloombark never holds your funds or private keys. Every trade is signed and confirmed in your own MetaMask wallet.</p>
+              </div>
+              <div style="margin-bottom:12px">
+                <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Is the AI Prediction financial advice?</p>
+                <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">No. It's a rule-based signal built from public on-chain data, shown for research purposes — always do your own due diligence.</p>
+              </div>
+              <div>
+                <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Which chain does Bloombark support?</p>
+                <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Robinhood chain is the primary focus for Trade, Alerts, and Sniper-style features. Wallet Tracker and AI Analyzer also support Ethereum, Base, and Arbitrum for read-only lookups.</p>
+              </div>
+            </div>
+
+          </div>
         </div>
         <div class="page active" id="page-landing" style="padding:32px;overflow-y:auto;height:100%">
           <!-- Hero -->
@@ -1330,7 +1440,7 @@
 
             <div style="position:relative;height:6px;background:#1e2235;border-radius:3px;margin:0 0 28px">
               <div style="position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--accent-green);border-radius:3px"></div>
-              <div class="rm-dot" style="position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--accent-green);transform:translate(-50%,-50%)"></div>
+              <div class="rm-blink" style="position:absolute;top:50%;left:62%;width:14px;height:14px;border-radius:50%;background:var(--accent-green);transform:translate(-50%,-50%)"></div>
             </div>
 
             <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:28px">
@@ -1469,6 +1579,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="/js/app.js?v=211"></script>
+  <script src="/js/app.js?v=213"></script>
 </body>
 </html>

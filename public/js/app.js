@@ -3288,16 +3288,55 @@ async function renderWatchlistPage() {
       return base;
     }));
 
-    el.innerHTML = `<div class="dash-vol-wrap"><div class="dash-volume-grid">` +
-      `<div class="dash-vol-header watch-vol-header"><span>#</span><span style="padding-left:33px">TOKEN / PAIR</span><span style="text-align:right">PRICE</span>` +
-      `<span style="text-align:right">24H CHANGE</span><span style="text-align:right">24H VOLUME</span>` +
-      `<span style="text-align:right">MCAP</span><span style="text-align:right">LIQ</span>` +
-      `<span style="text-align:right">AGE</span><span style="text-align:right">BUYS</span><span style="text-align:right">SELLS</span><span></span></div>` +
-      rows.map((t, i) => _watchRowHtml(t, i, alertAddrs.has(t.address.toLowerCase()))).join('') +
-      `</div></div>`;
+    _watchlistRows = rows;
+    _watchlistAlertAddrs = alertAddrs;
+    _watchlistPage = 1;
+    _renderWatchlistTable();
   } catch(e) {
     el.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Error loading watchlist</div>`;
   }
+}
+
+const WATCHLIST_PAGE_SIZE = 10;
+let _watchlistRows = [];
+let _watchlistAlertAddrs = new Set();
+let _watchlistPage = 1;
+
+function _renderWatchlistTable() {
+  const el = document.getElementById('watchlistContent');
+  if (!el) return;
+  const rows = _watchlistRows;
+  const totalPages = Math.max(1, Math.ceil(rows.length / WATCHLIST_PAGE_SIZE));
+  if (_watchlistPage > totalPages) _watchlistPage = totalPages;
+  const start = (_watchlistPage - 1) * WATCHLIST_PAGE_SIZE;
+  const pageRows = rows.slice(start, start + WATCHLIST_PAGE_SIZE);
+
+  el.innerHTML = `<div class="dash-vol-wrap"><div class="dash-volume-grid">` +
+    `<div class="dash-vol-header watch-vol-header"><span>#</span><span style="padding-left:33px">TOKEN / PAIR</span><span style="text-align:right">PRICE</span>` +
+    `<span style="text-align:right">24H CHANGE</span><span style="text-align:right">24H VOLUME</span>` +
+    `<span style="text-align:right">MCAP</span><span style="text-align:right">LIQ</span>` +
+    `<span style="text-align:right">AGE</span><span style="text-align:right">BUYS</span><span style="text-align:right">SELLS</span><span></span></div>` +
+    pageRows.map((t, i) => _watchRowHtml(t, start + i, _watchlistAlertAddrs.has(t.address.toLowerCase()))).join('') +
+    `</div></div>` +
+    _watchlistPaginationHtml(totalPages);
+}
+
+function _watchlistPaginationHtml(totalPages) {
+  if (totalPages <= 1) return '';
+  const p = _watchlistPage;
+  const btn = (label, page, disabled, active) =>
+    `<button ${disabled ? 'disabled' : `onclick="watchlistGoToPage(${page})"`}
+      style="min-width:28px;height:28px;padding:0 8px;border-radius:6px;border:1px solid ${active ? 'var(--accent-green)' : '#232838'};background:${active ? 'var(--green-15)' : 'transparent'};color:${disabled ? '#4b5262' : active ? 'var(--accent-green)' : '#9ca3af'};font-size:12px;cursor:${disabled ? 'default' : 'pointer'}">${label}</button>`;
+  let pages = '';
+  for (let i = 1; i <= totalPages; i++) pages += btn(i, i, false, i === p);
+  return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 4px">` +
+    btn('‹ Prev', p - 1, p === 1, false) + pages + btn('Next ›', p + 1, p === totalPages, false) +
+    `</div>`;
+}
+
+function watchlistGoToPage(page) {
+  _watchlistPage = page;
+  _renderWatchlistTable();
 }
 
 async function removeFromWatchlist(address) {
@@ -3884,10 +3923,11 @@ function _trendingListHtml(items, emptyMsg, accent) {
       ? `<span style="font-size:15px;width:20px;text-align:center;flex-shrink:0">${TRENDING_MEDALS[i]}</span>`
       : `<span style="font-size:10px;color:#4b5568;width:20px;text-align:center;flex-shrink:0">#${i+1}</span>`;
     const pct = Math.max(8, Math.round((t.count || 0) / maxCount * 100));
+    const logo = dashLogoUrl({ imageUrl: t.imageUrl, networkId: t.chain, address: t.address });
     return `<div ${clickAttr} class="trending-row" style="cursor:${canNav ? 'pointer' : 'default'};background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:10px 12px;transition:border-color .15s,background .15s">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:${items.length ? 6 : 0}px">
         ${rankBadge}
-        <div style="width:26px;height:26px;border-radius:50%;background:${accent}22;color:${accent};font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${label.charAt(0)}</div>
+        <div style="position:relative;width:26px;height:26px;border-radius:50%;background:${accent}22;color:${accent};font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${label.charAt(0)}${logo ? `<img src="${logo}" alt="" loading="lazy" style="position:absolute;inset:0;width:26px;height:26px;border-radius:50%;object-fit:cover;opacity:0;transition:opacity .15s" onload="this.style.opacity=1" onerror="this.remove()">` : ''}</div>
         <span style="font-size:13px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${label}</span>
         <span style="font-size:12px;color:${accent};font-weight:800;flex-shrink:0">${t.count}</span>
       </div>
