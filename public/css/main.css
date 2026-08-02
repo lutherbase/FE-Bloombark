@@ -1213,3 +1213,11 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 
 /* Trending on Bloombark: rank rows lift slightly on hover */
 .trending-row:hover { border-color: #2d3450 !important; background: #161a26 !important; }
+
+/* Home page roadmap animations */
+@keyframes rmMoveDot { 0% { left: 2%; } 100% { left: 62%; } }
+@keyframes rmPulseRing { 0% { box-shadow: 0 0 0 0 rgba(39,201,127,0.5); } 70% { box-shadow: 0 0 0 10px rgba(39,201,127,0); } 100% { box-shadow: 0 0 0 0 rgba(39,201,127,0); } }
+@keyframes rmFadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.rm-dot { animation: rmMoveDot 3.5s ease-in-out infinite alternate; }
+.rm-pulse { animation: rmPulseRing 1.8s ease-out infinite; }
+.rm-chip { opacity: 0; animation: rmFadeUp .4s ease-out forwards; }
