@@ -1512,7 +1512,7 @@
 
   <!-- Profile Modal (centered) -->
   <div id="profileModalOverlay" onclick="toggleProfilePopup()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;backdrop-filter:blur(2px)"></div>
-  <div id="profilePopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;background:#161822;border:1px solid #1e2235;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.7);z-index:9999;overflow:hidden">
+  <div id="profilePopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);background:#161822;border:1px solid #1e2235;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.7);z-index:9999;overflow-y:auto">
     <!-- Title bar -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid #1e2235">
       <span style="font-size:11px;font-weight:800;letter-spacing:2px;color:#e2e8f0">WALLET PROFILE</span>
