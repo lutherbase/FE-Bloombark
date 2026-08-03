@@ -2831,6 +2831,18 @@ function _setAvatarEl(el, avatar, seed) {
     : 'P';
 }
 
+function _updateSidebarUsername() {
+  const el = document.getElementById('sidebarUsername');
+  if (!el) return;
+  const name = _userProfile?.displayName || _chatName || '';
+  if (name && window._privyWallet) {
+    el.textContent = name;
+    el.style.display = '';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
 function _applyProfile(profile) {
   _userProfile = profile;
   const seed = window._privyWallet || null;
@@ -2860,6 +2872,7 @@ function _applyProfile(profile) {
     const w = window._privyWallet;
     if (w) { try { localStorage.setItem(_chatNameKey(w), _chatName); } catch (_) {} }
   }
+  _updateSidebarUsername();
 }
 
 async function loadUserProfile(wallet) {
@@ -3047,10 +3060,12 @@ function _updateSidebarProfile(user) {
     if (statusBadge) { statusBadge.style.background = 'var(--green-15)'; statusBadge.style.borderColor = 'var(--green-30)'; statusText.style.color = 'var(--accent-green)'; }
     if (walletBox)   walletBox.style.display = '';
     _setAvatarEditEnabled(true);
+    _updateSidebarUsername();
     // Load profile from server
     loadUserProfile(window._privyWallet);
   } else {
     walletEl.textContent = 'Not connected';
+    _updateSidebarUsername();
     const avatarEl = document.getElementById('sidebarAvatar');
     if (avatarEl) avatarEl.innerHTML = 'P';
     const popupAvatar = document.getElementById('popupAvatar');
