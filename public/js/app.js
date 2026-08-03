@@ -2833,6 +2833,27 @@ function _setAvatarEl(el, avatar, seed) {
 
 function _updateSidebarUsername() {
   const el = document.getElementById('sidebarUsername');
+  const badgeEl = document.getElementById('sidebarBadge');
+  const avatarEl = document.getElementById('sidebarAvatar');
+  if (avatarEl) {
+    // Same ring convention as the chat message avatars: gold for admin, cyan
+    // (diamond) for holder — takes priority over admin if somehow both.
+    // The pulsing glow itself is driven by the CSS animation classes (the
+    // animation keyframes own box-shadow, so only a static outline is set
+    // inline here to keep the ring visible between pulse cycles).
+    const isAdmin = window._privyWallet && _alertsIsAdmin;
+    const isHolder = window._privyWallet && _myIsHolder;
+    avatarEl.classList.remove('avatar-ring-admin', 'avatar-ring-holder');
+    if (isAdmin) {
+      avatarEl.style.boxShadow = '0 0 0 2px #f5a623';
+      avatarEl.classList.add('avatar-ring-admin');
+    } else if (isHolder) {
+      avatarEl.style.boxShadow = '0 0 0 2px #6ec6ff';
+      avatarEl.classList.add('avatar-ring-holder');
+    } else {
+      avatarEl.style.boxShadow = 'none';
+    }
+  }
   if (!el) return;
   const name = _userProfile?.displayName || _chatName || '';
   if (name && window._privyWallet) {
@@ -2840,6 +2861,20 @@ function _updateSidebarUsername() {
     el.style.display = '';
   } else {
     el.style.display = 'none';
+  }
+  if (badgeEl) {
+    // Same badge convention as chat messages: 👑 admin (orange), 💎 holder (blue).
+    if (name && window._privyWallet && _alertsIsAdmin) {
+      badgeEl.innerHTML = '👑 ADMIN';
+      badgeEl.style.color = '#f5a623';
+      badgeEl.style.display = '';
+    } else if (name && window._privyWallet && _myIsHolder) {
+      badgeEl.innerHTML = '💎 HOLDER';
+      badgeEl.style.color = '#6ec6ff';
+      badgeEl.style.display = '';
+    } else {
+      badgeEl.style.display = 'none';
+    }
   }
 }
 
@@ -3063,7 +3098,10 @@ function _updateSidebarProfile(user) {
     _updateSidebarUsername();
     // Load profile from server
     loadUserProfile(window._privyWallet);
+    _checkAlertsAdmin();
   } else {
+    _alertsIsAdmin = null;
+    _myIsHolder = null;
     walletEl.textContent = 'Not connected';
     _updateSidebarUsername();
     const avatarEl = document.getElementById('sidebarAvatar');
@@ -3688,6 +3726,8 @@ function switchAlertsTab(tab) {
   $('alertsTabBlast').style.display = tab === 'blast' ? 'block' : 'none';
 }
 
+let _myIsHolder = null; // same tri-state pattern as _alertsIsAdmin, shares the /auth/me round-trip
+
 async function _checkAlertsAdmin() {
   if (_alertsIsAdmin !== null) return _alertsIsAdmin;
   try {
@@ -3696,7 +3736,9 @@ async function _checkAlertsAdmin() {
     const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include', headers });
     const data = await res.json();
     _alertsIsAdmin = !!data.isAdmin;
-  } catch(e) { _alertsIsAdmin = false; }
+    _myIsHolder = !!data.isDiamondHolder;
+    _updateSidebarUsername();
+  } catch(e) { _alertsIsAdmin = false; _myIsHolder = false; }
   return _alertsIsAdmin;
 }
 
