@@ -3745,7 +3745,7 @@ async function _checkAlertsAdmin() {
 // Category → icon/label used in the collapsed list row.
 const ALERT_CATEGORY_META = {
   token_movement:   { icon: '📊', label: 'Token Movement' },
-  bloombark_update: { icon: '📢', label: 'Bloombark Update' },
+  bloombark_update: { icon: '<img src="/assets/brand/logo.png" style="width:20px;height:20px;border-radius:6px;object-fit:cover">', label: 'Bloombark Update' },
   muted:            { icon: '🔇', label: 'Channel Notice' },
 };
 

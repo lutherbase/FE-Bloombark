@@ -1297,10 +1297,22 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .tr-pending-dot { animation: trPendingPulse 1.8s ease-out infinite; }
 @keyframes trPendingPulse { 0% { box-shadow: 0 0 0 0 rgba(245,166,35,0.5); } 70% { box-shadow: 0 0 0 8px rgba(245,166,35,0); } 100% { box-shadow: 0 0 0 0 rgba(245,166,35,0); } }
 
-/* Sidebar avatar rings — pulsing glow for admin (gold) / $BBRK holder (cyan) */
-.avatar-ring-admin  { animation: avatarPulseAdmin 1.8s ease-out infinite; }
+/* Sidebar avatar rings — flickering "fire" glow for admin (gold), pulsing
+   glow for $BBRK holder (cyan). The admin ring layers a tight bright core
+   with a softer outer bloom and flickers both color and spread irregularly
+   (uneven keyframe spacing) to read as flame rather than a steady pulse. */
+.avatar-ring-admin  { animation: avatarFireFlicker 2.6s ease-in-out infinite; }
 .avatar-ring-holder { animation: avatarPulseHolder 1.8s ease-out infinite; }
-@keyframes avatarPulseAdmin  { 0% { box-shadow: 0 0 0 0 rgba(245,166,35,0.55); } 70% { box-shadow: 0 0 0 6px rgba(245,166,35,0); } 100% { box-shadow: 0 0 0 0 rgba(245,166,35,0); } }
+@keyframes avatarFireFlicker {
+  0%   { box-shadow: 0 0 0 2px #f5a623, 0 0 6px 2px rgba(255,140,0,0.65), 0 0 10px 4px rgba(255,90,0,0.35); }
+  15%  { box-shadow: 0 0 0 2px #ffb238, 0 0 9px 3px rgba(255,178,56,0.75), 0 0 15px 6px rgba(255,60,0,0.4); }
+  30%  { box-shadow: 0 0 0 2px #ff8c00, 0 0 5px 2px rgba(255,140,0,0.5), 0 0 9px 3px rgba(255,90,0,0.3); }
+  45%  { box-shadow: 0 0 0 2px #ffd23f, 0 0 11px 4px rgba(255,210,63,0.8), 0 0 18px 7px rgba(255,120,0,0.45); }
+  60%  { box-shadow: 0 0 0 2px #f5a623, 0 0 6px 2px rgba(255,140,0,0.6), 0 0 11px 4px rgba(255,60,0,0.35); }
+  75%  { box-shadow: 0 0 0 2px #ff9d1f, 0 0 8px 3px rgba(255,157,31,0.7), 0 0 14px 5px rgba(255,90,0,0.4); }
+  90%  { box-shadow: 0 0 0 2px #ffb238, 0 0 5px 2px rgba(255,178,56,0.5), 0 0 9px 3px rgba(255,60,0,0.3); }
+  100% { box-shadow: 0 0 0 2px #f5a623, 0 0 6px 2px rgba(255,140,0,0.65), 0 0 10px 4px rgba(255,90,0,0.35); }
+}
 @keyframes avatarPulseHolder { 0% { box-shadow: 0 0 0 0 rgba(110,198,255,0.55); } 70% { box-shadow: 0 0 0 6px rgba(110,198,255,0); } 100% { box-shadow: 0 0 0 0 rgba(110,198,255,0); } }
 
 /* Docs page: cards lift slightly on hover for a more readable, less static feel */
