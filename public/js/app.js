@@ -1874,43 +1874,54 @@ async function runPrediction() {
     content.innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <!-- Verdict -->
-        <div style="background:${c}10;border:1px solid ${c}30;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px">
-          <div style="font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">PREDICTION</div>
-          <div style="font-size:28px;font-weight:800;color:${c}">${sigIcon[data.signal]} ${sigLabel[data.signal]}</div>
+        <div class="trend-panel" style="background:${c}0d;border:1px solid ${c}40;border-top:3px solid ${c};border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:30px;height:30px;border-radius:9px;background:${c}22;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;color:${c}">${sigIcon[data.signal]}</div>
+            <div style="font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">PREDICTION</div>
+          </div>
+          <div style="font-size:26px;font-weight:800;color:${c}">${sigLabel[data.signal]}</div>
           <div style="font-size:11px;color:var(--text-muted)">${data.timeframe}</div>
         </div>
         <!-- Confidence -->
-        <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px">
-          <div style="font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">CONFIDENCE</div>
-          <div style="font-size:28px;font-weight:800;color:var(--text-primary)">${data.confidence}%</div>
+        <div class="trend-panel" style="background:var(--bg-card);border:1px solid var(--border-light);border-top:3px solid #4A90E2;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:30px;height:30px;border-radius:9px;background:#4a90e222;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div style="font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:.5px">CONFIDENCE</div>
+          </div>
+          <div style="font-size:26px;font-weight:800;color:var(--text-primary)">${data.confidence}%</div>
           <div style="height:6px;background:var(--border-light);border-radius:3px;overflow:hidden">
             <div style="height:100%;width:${data.confidence}%;background:${c};border-radius:3px;transition:width .6s ease"></div>
           </div>
         </div>
       </div>
       <!-- Bull/Bear score bar -->
-      <div style="margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:4px">
-          <span>🟢 Bull Score: ${data.bullScore}</span><span>Bear Score: ${data.bearScore} 🔴</span>
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:12px 14px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:6px">
+          <span style="color:var(--accent-green)">🟢 Bull Score: ${data.bullScore}</span><span style="color:var(--accent-red)">Bear Score: ${data.bearScore} 🔴</span>
         </div>
-        <div style="display:flex;height:8px;border-radius:4px;overflow:hidden">
-          <div style="flex:${data.bullScore};background:var(--accent-green)"></div>
-          <div style="flex:${data.bearScore};background:var(--accent-red)"></div>
+        <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--border-light)">
+          <div style="flex:${data.bullScore};background:var(--accent-green);transition:flex .5s ease"></div>
+          <div style="flex:${data.bearScore};background:var(--accent-red);transition:flex .5s ease"></div>
         </div>
       </div>
       <!-- Summary -->
-      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);line-height:1.6">
+      <div style="background:var(--bg-card);border:1px solid var(--border-light);border-left:3px solid ${c};border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);line-height:1.6">
         ${data.summary}
       </div>
       <!-- Signals -->
       <div style="font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:.5px;margin-bottom:8px">SIGNAL BREAKDOWN</div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        ${(data.signals || []).map(s => `
-          <div style="display:grid;grid-template-columns:140px 70px 1fr;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;font-size:11px">
+        ${(data.signals || []).map((s, i) => {
+          const sc = sigColor[s.verdict] || '#F5A623';
+          return `
+          <div class="tr-row" style="animation-delay:${(i * 0.04).toFixed(2)}s;display:grid;grid-template-columns:140px 70px 1fr;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-card);border:1px solid var(--border-light);border-left:3px solid ${sc};border-radius:8px;font-size:11px">
             <span style="font-weight:600;color:var(--text-primary)">${s.label}</span>
-            <span style="color:${sigColor[s.verdict]||'#F5A623'};font-weight:700;font-size:10px">${sigIcon[s.verdict]||'◆'} ${(s.verdict||'').toUpperCase()}</span>
+            <span style="color:${sc};font-weight:700;font-size:10px">${sigIcon[s.verdict]||'◆'} ${(s.verdict||'').toUpperCase()}</span>
             <span style="color:var(--text-muted)">${s.detail}</span>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div>
       <div style="margin-top:12px;font-size:9px;color:var(--text-muted);text-align:center;font-style:italic">
         ⚠ This is not financial advice. Generated ${new Date(data.generatedAt).toLocaleTimeString()} · Rule-based engine
@@ -2577,9 +2588,10 @@ async function loadChainVolumes() {
       const chg = typeof c.change24h === 'number'
         ? `<span style="color:${c.change24h >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:11px;font-weight:700">${c.change24h >= 0 ? '+' : ''}${c.change24h.toFixed(2)}%</span>`
         : '';
+      const dot = CHAIN_COLOR[key] || '#8b92a8';
       return `
-        <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
-          <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px">${label.toUpperCase()}</span>
+        <div class="dash-mini-card" style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${dot};flex-shrink:0"></span>${label.toUpperCase()}</span>
           <span style="font-size:20px;font-weight:800;color:var(--text-primary)">${vol}</span>
           ${chg}
         </div>`;
@@ -2605,9 +2617,10 @@ async function loadChainTransactions() {
       const gasLine = gas
         ? `<span style="font-size:10px;color:var(--accent-green)">⛽ ${gas.average != null ? gas.average.toFixed(gas.average < 1 ? 3 : 2) : '—'} Gwei <span style="color:var(--text-muted)">(avg)</span></span>`
         : '';
+      const dot = CHAIN_COLOR[key] || '#8b92a8';
       return `
-        <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
-          <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px">${label.toUpperCase()}</span>
+        <div class="dash-mini-card" style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${dot};flex-shrink:0"></span>${label.toUpperCase()}</span>
           <span style="font-size:20px;font-weight:800;color:var(--text-primary)">${(c.transactionsToday || 0).toLocaleString('en-US')}</span>
           <span style="font-size:10px;color:var(--text-muted)">${(c.totalTransactions || 0).toLocaleString('en-US')} all-time</span>
           ${gasLine}
@@ -3916,30 +3929,11 @@ async function loadTrackRecord(showLoadingState) {
     if (pendingEl) pendingEl.textContent = data.pendingCount;
 
 
-    const pending = data.pending || [];
+    _trPendingRows = data.pending || [];
     const pendingSection = $('trPendingSection');
-    const pendingList = $('trPendingList');
-    if (pendingSection && pendingList) {
-      if (pending.length) {
-        pendingSection.style.display = '';
-        pendingList.innerHTML = pending.map(p => {
-          const addr = p.address;
-          const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
-          const bullish = p.signal === 'BULLISH';
-          const logo = dashLogoUrl({ imageUrl: p.imageUrl, networkId: p.chain, address: p.address });
-          const avatar = logo
-            ? `<img src="${logo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(p.symbol||'?').charAt(0)}'}))">`
-            : `<div style="width:22px;height:22px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(p.symbol||'?').charAt(0)}</div>`;
-          return `<div title="${addr}" style="display:flex;align-items:center;gap:6px;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:5px 12px 5px 5px">
-            ${avatar}
-            <span style="font-size:12px;font-weight:700;color:#e2e8f0">${p.symbol || '?'}</span>
-            <span style="font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;background:${bullish ? 'var(--green-18)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'}">${p.signal || '?'}</span>
-            <span style="font-size:10px;color:#6b7280;font-family:monospace">${short}</span>
-          </div>`;
-        }).join('');
-      } else {
-        pendingSection.style.display = 'none';
-      }
+    if (pendingSection) {
+      pendingSection.style.display = _trPendingRows.length ? '' : 'none';
+      if (_trPendingRows.length) _renderTrPendingList();
     }
 
     _trackRecordRows = data.recent || [];
@@ -3954,11 +3948,68 @@ const TRACK_RECORD_PAGE_SIZE = 10;
 let _trackRecordRows = [];
 let _trackRecordPage = 1;
 
-function _trackRecordRowHtml(r) {
+const TR_PENDING_COLLAPSED_LIMIT = 8;
+let _trPendingRows = [];
+let _trPendingCollapsed = false;   // whole section hidden (list + toggle button)
+let _trPendingExpanded = false;    // showing all vs just the first N chips
+
+function _trPendingChipHtml(p) {
+  const addr = p.address;
+  const short = `${addr.slice(0,6)}…${addr.slice(-4)}`;
+  const bullish = p.signal === 'BULLISH';
+  const logo = dashLogoUrl({ imageUrl: p.imageUrl, networkId: p.chain, address: p.address });
+  const avatar = logo
+    ? `<img src="${logo}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:22px;height:22px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0',textContent:'${(p.symbol||'?').charAt(0)}'}))">`
+    : `<div style="width:22px;height:22px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'};font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${(p.symbol||'?').charAt(0)}</div>`;
+  return `<div title="${addr}" class="tr-pending-chip" style="display:flex;align-items:center;gap:6px;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:5px 12px 5px 5px">
+    <span class="tr-pending-dot" style="width:6px;height:6px;border-radius:50%;background:#f5a623;flex-shrink:0"></span>
+    ${avatar}
+    <span style="font-size:12px;font-weight:700;color:#e2e8f0">${p.symbol || '?'}</span>
+    <span style="font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;background:${bullish ? 'var(--green-18)' : 'var(--red-15)'};color:${bullish ? 'var(--accent-green)' : 'var(--accent-red)'}">${p.signal || '?'}</span>
+    <span style="font-size:10px;color:#6b7280;font-family:monospace">${short}</span>
+  </div>`;
+}
+
+function _renderTrPendingList() {
+  const list = $('trPendingList');
+  const toggleBtn = $('trPendingToggleBtn');
+  if (!list) return;
+  const rows = _trPendingRows;
+  const overLimit = rows.length > TR_PENDING_COLLAPSED_LIMIT;
+  const shown = (_trPendingExpanded || !overLimit) ? rows : rows.slice(0, TR_PENDING_COLLAPSED_LIMIT);
+  list.innerHTML = shown.map(_trPendingChipHtml).join('');
+  if (toggleBtn) {
+    if (overLimit) {
+      toggleBtn.style.display = '';
+      toggleBtn.textContent = _trPendingExpanded ? '▲ Show less' : `▼ Show ${rows.length - TR_PENDING_COLLAPSED_LIMIT} more`;
+    } else {
+      toggleBtn.style.display = 'none';
+    }
+  }
+}
+
+function toggleTrPendingExpand() {
+  _trPendingExpanded = !_trPendingExpanded;
+  _renderTrPendingList();
+}
+
+function toggleTrPendingCollapse() {
+  _trPendingCollapsed = !_trPendingCollapsed;
+  const list = $('trPendingList');
+  const toggleBtn = $('trPendingToggleBtn');
+  const chevron = $('trPendingChevron');
+  if (list) list.style.display = _trPendingCollapsed ? 'none' : 'flex';
+  if (toggleBtn && !_trPendingCollapsed) _renderTrPendingList();
+  if (toggleBtn && _trPendingCollapsed) toggleBtn.style.display = 'none';
+  if (chevron) chevron.style.transform = _trPendingCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+}
+
+function _trackRecordRowHtml(r, i) {
   const isCorrect = r.outcome === 'correct';
   const isFlat = r.outcome === 'flat';
   const color = isFlat ? '#9ca3af' : isCorrect ? 'var(--accent-green)' : 'var(--accent-red)';
   const label = isFlat ? 'FLAT' : isCorrect ? 'CORRECT' : 'MISSED';
+  const icon = isFlat ? '–' : isCorrect ? '✓' : '✕';
   const bullish = r.signal === 'BULLISH';
   const changeStr = (r.changePct >= 0 ? '+' : '') + Number(r.changePct).toFixed(1) + '%';
   const fmtAge = (ms) => {
@@ -3969,7 +4020,7 @@ function _trackRecordRowHtml(r) {
   const rowAvatar = rowLogo
     ? `<img src="${rowLogo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.replaceWith(Object.assign(document.createElement('div'),{style:'width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0',textContent:'${bullish ? '🐂' : '🐻'}'}))">`
     : `<div style="width:36px;height:36px;border-radius:50%;background:${bullish ? 'var(--green-15)' : 'var(--red-15)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${bullish ? '🐂' : '🐻'}</div>`;
-  return `<div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-radius:10px;padding:12px 16px">
+  return `<div class="tr-row" style="animation-delay:${((i || 0) * 0.05).toFixed(2)}s;display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid #1e2235;border-left:3px solid ${color};border-radius:10px;padding:12px 16px">
     <div style="display:flex;align-items:center;gap:12px;min-width:0">
       ${rowAvatar}
       <div style="min-width:0">
@@ -3980,9 +4031,12 @@ function _trackRecordRowHtml(r) {
         <div style="font-size:11px;color:#6b7280;margin-top:2px">${fmtAge(r.predictedAt)} · $${Number(r.priceAt).toFixed(6)} → $${Number(r.priceAfter).toFixed(6)}</div>
       </div>
     </div>
-    <div style="text-align:right;flex-shrink:0">
-      <div style="font-size:12px;font-weight:700;color:${color}">${label}</div>
-      <div style="font-size:11px;color:#6b7280">${changeStr}</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <div style="text-align:right">
+        <div style="font-size:12px;font-weight:700;color:${color}">${label}</div>
+        <div style="font-size:11px;color:#6b7280">${changeStr}</div>
+      </div>
+      <div style="width:22px;height:22px;border-radius:50%;background:${color}22;color:${color};font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon}</div>
     </div>
   </div>`;
 }
@@ -4045,15 +4099,17 @@ function _trendingListHtml(items, emptyMsg, accent) {
       : `<span style="font-size:10px;color:#4b5568;width:20px;text-align:center;flex-shrink:0">#${i+1}</span>`;
     const pct = Math.max(8, Math.round((t.count || 0) / maxCount * 100));
     const logo = dashLogoUrl({ imageUrl: t.imageUrl, networkId: t.chain, address: t.address });
-    return `<div ${clickAttr} class="trending-row" style="cursor:${canNav ? 'pointer' : 'default'};background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:10px 12px;transition:border-color .15s,background .15s">
+    const isTop = i === 0;
+    const avatarSize = isTop ? 30 : 26;
+    return `<div ${clickAttr} class="trending-row${isTop ? ' trend-rank-1' : ''}" style="animation-delay:${(i * 0.06).toFixed(2)}s;cursor:${canNav ? 'pointer' : 'default'};background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:${isTop ? '12px 12px' : '10px 12px'}">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:${items.length ? 6 : 0}px">
         ${rankBadge}
-        <div style="position:relative;width:26px;height:26px;border-radius:50%;background:${accent}22;color:${accent};font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">${label.charAt(0)}${logo ? `<img src="${logo}" alt="" loading="lazy" style="position:absolute;inset:0;width:26px;height:26px;border-radius:50%;object-fit:cover;opacity:0;transition:opacity .15s" onload="this.style.opacity=1" onerror="this.remove()">` : ''}</div>
-        <span style="font-size:13px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${label}</span>
+        <div style="position:relative;width:${avatarSize}px;height:${avatarSize}px;border-radius:50%;background:${accent}22;color:${accent};font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;${isTop ? `box-shadow:0 0 0 2px ${accent}55` : ''}">${label.charAt(0)}${logo ? `<img src="${logo}" alt="" loading="lazy" style="position:absolute;inset:0;width:${avatarSize}px;height:${avatarSize}px;border-radius:50%;object-fit:cover;opacity:0;transition:opacity .15s" onload="this.style.opacity=1" onerror="this.remove()">` : ''}</div>
+        <span style="font-size:${isTop ? '14px' : '13px'};font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${label}</span>
         <span style="font-size:12px;color:${accent};font-weight:800;flex-shrink:0">${t.count}</span>
       </div>
       <div style="height:4px;background:#1e2235;border-radius:2px;overflow:hidden;margin-left:36px">
-        <div style="height:100%;width:${pct}%;background:${accent};border-radius:2px"></div>
+        <div style="height:100%;width:${pct}%;background:${accent};border-radius:2px;transition:width .5s ease"></div>
       </div>
     </div>`;
   }).join('');

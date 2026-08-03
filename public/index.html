@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
   <link rel="icon" type="image/png" href="/assets/brand/favicon.png?v=2">
-  <link rel="stylesheet" href="/css/main.css?v=22" />
+  <link rel="stylesheet" href="/css/main.css?v=33" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -31,7 +31,7 @@
         </a>
         <a href="#" class="nav-item" data-page="ai-analyzer">
           <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          AI Analyzer
+          AI Token Analyzer
         </a>
         <a href="#" class="nav-item" data-page="track-record">
           <svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
@@ -170,9 +170,12 @@
 
       <!-- Wallet Modal -->
       <div id="walletModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center">
-        <div style="background:#1a1d27;border:1px solid #2d3144;border-radius:16px;padding:28px 24px;width:360px;max-width:90vw;box-shadow:0 24px 64px rgba(0,0,0,0.5)">
+        <div style="background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:24px;width:360px;max-width:90vw;box-shadow:0 24px 64px rgba(0,0,0,0.5)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <span style="font-size:13px;font-weight:700;letter-spacing:1px;color:#e2e8f0">CONNECT WALLET</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="trend-live-dot"></span>
+              <span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">CONNECT WALLET</span>
+            </div>
             <button onclick="closeWalletModal()" style="background:none;border:none;color:#8b92a8;cursor:pointer;font-size:18px;line-height:1">✕</button>
           </div>
           <div id="walletModalBody">
@@ -207,6 +210,18 @@
       <div class="page-content" id="pageContent">
         <!-- AI Analyzer Page (default) -->
         <div class="page ai-analyzer-page" id="page-ai-analyzer">
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">AI TOKEN ANALYZER</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">🔍 Deep-scan any Robinhood token</div>
+                <div style="font-size:13px;color:#9ca3af">Risk score, honeypot detection, tax analysis, and holder breakdown — in seconds.</div>
+              </div>
+            </div>
+          </div>
           <!-- Search Bar -->
           <div class="search-section">
             <label class="search-label">PASTE TOKEN ADDRESS / CONTRACT</label>
@@ -502,7 +517,7 @@
 
             <!-- AI Token Prediction Row -->
             <div class="grid-row" style="grid-template-columns:1fr;display:grid">
-              <div class="card" id="predictionCard" style="min-height:200px">
+              <div class="card prediction-card" id="predictionCard" style="min-height:200px">
                 <div class="card-header">
                   <h3>🤖 AI TOKEN PREDICTION</h3>
                   <span style="font-size:9px;color:var(--text-muted);margin-left:8px;font-style:italic">Not financial advice</span>
@@ -533,9 +548,22 @@
         <!-- Other pages (placeholder) -->
         <div class="page" id="page-dashboard">
           <div class="dashboard-wrap">
+            <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:4px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                    <span class="trend-live-dot"></span>
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">MARKET OVERVIEW</div>
+                  </div>
+                  <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">📊 The full on-chain picture</div>
+                  <div style="font-size:13px;color:#9ca3af">Chain-wide volume and activity, plus live pools, trending, gainers, and new listings — all in one place.</div>
+                </div>
+              </div>
+            </div>
+
             <!-- Chain Volume + Chain Transactions -->
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-              <div class="dash-section">
+              <div class="dash-section trend-panel" style="border-top:3px solid #4A90E2">
                 <div class="dash-section-header">
                   <span class="dash-section-title">📊 CHAIN VOLUME</span>
                   <span class="dash-section-sub">24h DEX volume</span>
@@ -545,7 +573,7 @@
                 </div>
                 <div class="dash-source-note">Data source: DefiLlama</div>
               </div>
-              <div class="dash-section">
+              <div class="dash-section trend-panel" style="border-top:3px solid #9B59B6">
                 <div class="dash-section-header">
                   <span class="dash-section-title">🔗 CHAIN TRANSACTIONS</span>
                   <span class="dash-section-sub">24h network activity</span>
@@ -564,7 +592,7 @@
               <button class="dash-filter-btn" data-tab="gainers">Top Gainers</button>
               <button class="dash-filter-btn" data-tab="new-pools">New Pools</button>
             </div>
-            <div class="dash-section">
+            <div class="dash-section trend-panel" style="border-top:3px solid var(--accent-green)">
               <div class="dash-section-header">
                 <span class="dash-section-title" id="marketTabTitle">💧 POOLS</span>
                 <span class="dash-section-sub" id="marketTabSub">Robinhood Chain</span>
@@ -589,16 +617,17 @@
             <div style="min-width:0">
 
               <!-- Token loader -->
-              <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+              <div style="background:var(--bg-card);border:1px solid var(--border);border-top:3px solid var(--accent-green);border-radius:10px;padding:14px 16px;margin-bottom:14px">
                 <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--accent-green);margin-bottom:8px">PASTE TOKEN ADDRESS TO TRADE · ROBINHOOD ONLY</div>
                 <div style="display:flex;gap:8px">
-                  <div style="flex:1;display:flex;align-items:center;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:10px;min-width:0" id="tradeTokenInputWrap">
+                  <div style="flex:1;display:flex;align-items:center;background:#0d0f18;border:1px solid var(--border-light);border-radius:10px;min-width:0;transition:border-color .15s ease,box-shadow .15s ease" id="tradeTokenInputWrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" style="flex-shrink:0;margin-left:14px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input id="tradeTokenInput" placeholder="0x… Robinhood token contract address"
                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                       style="flex:1;background:transparent;border:none;padding:11px 14px;font-size:12px;color:var(--text-primary);font-family:monospace;outline:none;min-width:0"
                       onkeydown="if(event.key==='Enter') tradeLoadToken()"
-                      onfocus="document.getElementById('tradeTokenInputWrap').style.borderColor='var(--accent-green)'"
-                      onblur="document.getElementById('tradeTokenInputWrap').style.borderColor='var(--border-light)'">
+                      onfocus="document.getElementById('tradeTokenInputWrap').style.borderColor='var(--accent-green)';document.getElementById('tradeTokenInputWrap').style.boxShadow='0 0 0 3px var(--green-15)'"
+                      onblur="document.getElementById('tradeTokenInputWrap').style.borderColor='var(--border-light)';document.getElementById('tradeTokenInputWrap').style.boxShadow='none'">
                     <button class="copy-btn" id="tradeCopyBtn" title="Copy">
                       <svg width="16" height="16" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
@@ -818,6 +847,18 @@
         </div>
 
         <div class="page ai-analyzer-page" id="page-wallet-tracker">
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">WALLET TRACKER</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">💼 Every wallet, fully visible</div>
+                <div style="font-size:13px;color:#9ca3af">Full token holdings, portfolio value, and transaction history for any EVM wallet.</div>
+              </div>
+            </div>
+          </div>
           <div class="search-section">
             <label class="search-label">PASTE WALLET ADDRESS</label>
             <div class="search-bar">
@@ -877,13 +918,18 @@
         <div class="page ai-analyzer-page" id="page-narrative">
           <div style="padding:0 0 20px">
             <!-- Header -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-              <div>
-                <div style="font-size:11px;color:var(--text-muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Narrative Tracker</div>
-                <div style="font-size:20px;font-weight:800;color:var(--text-primary)">Market Narratives</div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Track sector rotation & trending themes · Updated every 5 min</div>
+            <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                    <span class="trend-live-dot"></span>
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">NARRATIVE TRACKER</div>
+                  </div>
+                  <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">📖 Market Narratives</div>
+                  <div style="font-size:13px;color:#9ca3af">Track sector rotation and trending themes — updated every 5 minutes.</div>
+                </div>
+                <button onclick="loadNarrative()" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">↻ Refresh</button>
               </div>
-              <button onclick="loadNarrative()" style="background:var(--bg-card);border:1px solid var(--border-light);color:var(--text-muted);font-size:11px;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:var(--font);font-weight:600">↻ Refresh</button>
             </div>
             <!-- Sort bar -->
             <div style="display:flex;gap:8px;margin-bottom:16px" id="narrativeSortBar">
@@ -990,70 +1036,104 @@
         </div>
 
         <div class="page ai-analyzer-page" id="page-track-record">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">AI TRACK RECORD</div>
-              <div style="font-size:13px;color:#9ca3af">No cherry-picking. Every call the AI makes is on the record — wins, losses, and everything in between.</div>
-            </div>
-            <button id="trackRecordRefreshBtn" onclick="loadTrackRecord(true)" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
-          </div>
-
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-            <div style="background:var(--bg-card);border:1px solid #1e2235;border-radius:10px;padding:14px 16px">
-              <div style="font-size:11px;color:#6b7280;margin-bottom:4px">WIN RATE</div>
-              <div id="trWinRate" style="font-size:22px;font-weight:700;color:var(--accent-green)">—</div>
-            </div>
-            <div style="background:var(--bg-card);border:1px solid #1e2235;border-radius:10px;padding:14px 16px">
-              <div style="font-size:11px;color:#6b7280;margin-bottom:4px">RESOLVED CALLS</div>
-              <div id="trResolvedCount" style="font-size:22px;font-weight:700;color:#e2e8f0">—</div>
-            </div>
-            <div style="background:var(--bg-card);border:1px solid #1e2235;border-radius:10px;padding:14px 16px">
-              <div style="font-size:11px;color:#6b7280;margin-bottom:4px">AWAITING RESULT</div>
-              <div id="trPendingCount" style="font-size:22px;font-weight:700;color:#e2e8f0">—</div>
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151f1a,#12141e);border:1px solid #1e3a2c;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">AI TRACK RECORD</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">🎯 No cherry-picking, ever</div>
+                <div style="font-size:13px;color:#9ca3af">Every directional AI Prediction call is on the record — wins, losses, and everything in between.</div>
+              </div>
+              <button id="trackRecordRefreshBtn" onclick="loadTrackRecord(true)" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">↻ Refresh</button>
             </div>
           </div>
 
-          <div id="trPendingSection" style="display:none;margin-bottom:20px">
-            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:10px">AWAITING RESULT — TOKENS STILL BEING TRACKED</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+            <div class="trend-panel" style="background:#12141e;border:1px solid #1e2235;border-top:3px solid var(--accent-green);border-radius:14px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <div style="width:28px;height:28px;border-radius:8px;background:var(--green-18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#6b7280">WIN RATE</div>
+              </div>
+              <div id="trWinRate" style="font-size:26px;font-weight:800;color:var(--accent-green)">—</div>
+            </div>
+            <div class="trend-panel" style="background:#12141e;border:1px solid #1e2235;border-top:3px solid #4A90E2;border-radius:14px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <div style="width:28px;height:28px;border-radius:8px;background:#4a90e218;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#6b7280">RESOLVED CALLS</div>
+              </div>
+              <div id="trResolvedCount" style="font-size:26px;font-weight:800;color:#e2e8f0">—</div>
+            </div>
+            <div class="trend-panel" style="background:#12141e;border:1px solid #1e2235;border-top:3px solid #f5a623;border-radius:14px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <div style="width:28px;height:28px;border-radius:8px;background:#f5a62318;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                </div>
+                <div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#6b7280">AWAITING RESULT</div>
+              </div>
+              <div id="trPendingCount" style="font-size:26px;font-weight:800;color:#e2e8f0">—</div>
+            </div>
+          </div>
+
+          <div id="trPendingSection" style="display:none;margin-bottom:20px;background:#12141e;border:1px solid #1e2235;border-radius:14px;padding:16px 18px">
+            <div onclick="toggleTrPendingCollapse()" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:10px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#f5a623">⏳ AWAITING RESULT — TOKENS STILL BEING TRACKED</div>
+              <svg id="trPendingChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
             <div id="trPendingList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            <button id="trPendingToggleBtn" onclick="toggleTrPendingExpand()" style="display:none;margin-top:10px;background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:600"></button>
           </div>
 
-          <div id="trackRecordContent" style="display:flex;flex-direction:column;gap:8px">
-            <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading…</div>
+          <div style="background:#12141e;border:1px solid #1e2235;border-radius:14px;padding:16px 18px">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent-green);margin-bottom:12px">📋 TOKEN RESULTS</div>
+            <div id="trackRecordContent" style="display:flex;flex-direction:column;gap:8px">
+              <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading…</div>
+            </div>
           </div>
         </div>
 
         <div class="page ai-analyzer-page" id="page-trending-bloombark">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">TRENDING ON BLOOMBARK</div>
-              <div style="font-size:13px;color:#9ca3af">What people are actually doing on Bloombark right now — not price-based, this is scans, chatter, and trades</div>
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">TRENDING ON BLOOMBARK</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">🔥 What's hot on the terminal right now</div>
+                <div style="font-size:13px;color:#9ca3af">Not price-based — this is real scans, chatter, and trades happening on Bloombark, refreshed every 24h.</div>
+              </div>
+              <button id="trendingBloombarkRefreshBtn" onclick="loadTrendingBloombark(true)" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">↻ Refresh</button>
             </div>
-            <button id="trendingBloombarkRefreshBtn" onclick="loadTrendingBloombark(true)" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
-            <div>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                <div style="width:28px;height:28px;border-radius:8px;background:#4a90e218;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div class="trend-panel" style="background:#12141e;border:1px solid #1e2235;border-top:3px solid #4A90E2;border-radius:14px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <div style="width:30px;height:30px;border-radius:9px;background:#4a90e218;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4A90E2" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </div>
                 <div>
-                  <div style="font-size:12px;font-weight:700;color:#e2e8f0">Most scanned</div>
-                  <div style="font-size:9px;color:#6b7280">AI Analyzer lookups</div>
+                  <div style="font-size:13px;font-weight:800;color:#e2e8f0">Most Scanned</div>
+                  <div style="font-size:9px;color:#6b7280">AI Token Analyzer lookups</div>
                 </div>
               </div>
               <div id="trendScannedList" style="display:flex;flex-direction:column;gap:8px">
                 <div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>
               </div>
             </div>
-            <div>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                <div style="width:28px;height:28px;border-radius:8px;background:#9b59b618;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9B59B6" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div class="trend-panel" style="background:#12141e;border:1px solid #1e2235;border-top:3px solid #9B59B6;border-radius:14px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <div style="width:30px;height:30px;border-radius:9px;background:#9b59b618;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9B59B6" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </div>
                 <div>
-                  <div style="font-size:12px;font-weight:700;color:#e2e8f0">Most discussed</div>
+                  <div style="font-size:13px;font-weight:800;color:#e2e8f0">Most Discussed</div>
                   <div style="font-size:9px;color:#6b7280">Community mentions</div>
                 </div>
               </div>
@@ -1061,13 +1141,13 @@
                 <div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>
               </div>
             </div>
-            <div>
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                <div style="width:28px;height:28px;border-radius:8px;background:var(--green-18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+            <div class="trend-panel" style="background:#12141e;border:1px solid #1e2235;border-top:3px solid var(--accent-green);border-radius:14px;padding:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+                <div style="width:30px;height:30px;border-radius:9px;background:var(--green-18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
                 </div>
                 <div>
-                  <div style="font-size:12px;font-weight:700;color:#e2e8f0">Most traded</div>
+                  <div style="font-size:13px;font-weight:800;color:#e2e8f0">Most Traded</div>
                   <div style="font-size:9px;color:#6b7280">Executed swaps</div>
                 </div>
               </div>
@@ -1162,117 +1242,217 @@
           <div class="placeholder-content"><h2>Settings</h2><p>Configure your Bloombark Terminal preferences.</p></div>
         </div>
         <div class="page ai-analyzer-page" id="page-docs" style="overflow-y:auto">
-          <div style="margin-bottom:20px">
-            <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">DOCUMENTATION</div>
-            <div style="font-size:13px;color:#9ca3af">How every part of Bloombark Terminal works, in one place</div>
+          <div style="margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid #1e2235">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--accent-green);margin-bottom:6px">DOCUMENTATION</div>
+            <div style="font-size:22px;font-weight:800;color:#e2e8f0;margin-bottom:6px">How Bloombark Terminal works</div>
+            <div style="font-size:13px;color:#9ca3af">Every feature, explained in one place — no fluff, no marketing copy.</div>
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #1e2235">
-            <a href="#doc-getting-started" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Getting started</a>
-            <a href="#doc-ai-analyzer" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">AI Analyzer</a>
-            <a href="#doc-ai-prediction" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">AI Prediction</a>
-            <a href="#doc-track-record" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">AI Track Record</a>
-            <a href="#doc-trade" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Trade</a>
-            <a href="#doc-market-overview" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Market Overview</a>
-            <a href="#doc-wallet-tracker" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Wallet Tracker</a>
-            <a href="#doc-narrative" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Narrative</a>
-            <a href="#doc-community" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Community</a>
-            <a href="#doc-watchlist" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Watchlist & Comparison</a>
-            <a href="#doc-alerts" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Alerts</a>
-            <a href="#doc-trending" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Trending on Bloombark</a>
-            <a href="#doc-accessibility" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">Accessibility</a>
-            <a href="#doc-faq" style="font-size:11px;color:#9ca3af;background:#12141e;border:1px solid #1e2235;border-radius:20px;padding:4px 12px;text-decoration:none">FAQ</a>
+          <div class="doc-card" id="doc-getting-started" style="background:linear-gradient(135deg,#12141e,#141a16);border:1px solid var(--green-40);border-radius:12px;padding:22px 24px;scroll-margin-top:20px;max-width:1080px;margin-bottom:20px">
+            <h3 style="font-size:16px;color:var(--accent-green);margin:0 0 8px;font-weight:800">👋 Getting started</h3>
+            <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Bloombark Terminal is a token intelligence platform for the Robinhood chain — risk analysis, wallet tracking, trading, and community, all in one place. Most read-only features (AI Token Analyzer, Market Overview, Narrative) work without connecting a wallet.</p>
+            <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Connect Wallet</strong> (top right) to unlock Trade, Watchlist, Alerts, and Community — MetaMask is currently the supported wallet.</p>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:14px;max-width:760px">
-
-            <div id="doc-getting-started" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Getting started</h3>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Bloombark Terminal is a token intelligence platform for the Robinhood chain — risk analysis, wallet tracking, trading, and community, all in one place. Most read-only features (AI Analyzer, Market Overview, Narrative) work without connecting a wallet.</p>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Connect Wallet</strong> (top right) to unlock Trade, Watchlist, Alerts, and Community — MetaMask is currently the supported wallet.</p>
+          <!-- Roadmap -->
+          <div class="doc-card" id="doc-roadmap" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:24px 26px;scroll-margin-top:20px;max-width:1080px;margin-bottom:20px">
+            <div style="margin-bottom:24px">
+              <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--accent-green);margin-bottom:6px">ROADMAP 2026</div>
+              <div style="font-size:18px;font-weight:800;color:#e2e8f0">Where Bloombark is headed</div>
             </div>
 
-            <div id="doc-ai-analyzer" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">AI Analyzer</h3>
+            <div style="position:relative;height:6px;background:#1e2235;border-radius:3px;margin:0 0 28px">
+              <div style="position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--accent-green);border-radius:3px"></div>
+              <div class="rm-blink" style="position:absolute;top:50%;left:62%;width:14px;height:14px;border-radius:50%;background:var(--accent-green);transform:translate(-50%,-50%)"></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:28px">
+              <div style="text-align:center">
+                <p style="font-size:11px;color:#6b7280;margin:0 0 2px">Q1</p>
+                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Design apps</p>
+              </div>
+              <div style="text-align:center">
+                <p style="font-size:11px;color:#6b7280;margin:0 0 2px">Q2</p>
+                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Development</p>
+              </div>
+              <div style="text-align:center">
+                <div class="rm-pulse" style="width:10px;height:10px;border-radius:50%;background:var(--accent-green);margin:0 auto 4px"></div>
+                <p style="font-size:11px;color:var(--accent-green);margin:0 0 2px;font-weight:700">Q3 — we are here</p>
+                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Feature release</p>
+              </div>
+              <div style="text-align:center">
+                <p style="font-size:11px;color:#6b7280;margin:0 0 2px">Q4</p>
+                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Enhancement</p>
+              </div>
+            </div>
+
+            <p style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;margin:0 0 10px">LIVE NOW · 12 FEATURES</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px">
+              <span class="rm-chip" style="animation-delay:.05s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Token Analyzer</span>
+              <span class="rm-chip" style="animation-delay:.1s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Prediction</span>
+              <span class="rm-chip" style="animation-delay:.15s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Track Record</span>
+              <span class="rm-chip" style="animation-delay:.2s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Wallet Relationship Map</span>
+              <span class="rm-chip" style="animation-delay:.25s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Wallet Tracker</span>
+              <span class="rm-chip" style="animation-delay:.3s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Market Overview</span>
+              <span class="rm-chip" style="animation-delay:.35s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Trade</span>
+              <span class="rm-chip" style="animation-delay:.4s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Narrative</span>
+              <span class="rm-chip" style="animation-delay:.45s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Community</span>
+              <span class="rm-chip" style="animation-delay:.5s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Watchlist and comparison</span>
+              <span class="rm-chip" style="animation-delay:.55s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Alerts</span>
+              <span class="rm-chip" style="animation-delay:.6s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Trending on Bloombark</span>
+            </div>
+
+            <p style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;margin:0 0 10px">COMING Q4 · 4 FEATURES</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <span class="rm-chip" style="animation-delay:.65s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Smart Money Tracking</span>
+              <span class="rm-chip" style="animation-delay:.7s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Insider Scan</span>
+              <span class="rm-chip" style="animation-delay:.75s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Trading Agent</span>
+              <span class="rm-chip" style="animation-delay:.8s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Auto Research</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;max-width:1080px">
+
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#4a90e2;grid-column:1/-1;margin:4px 0 -4px">ANALYSIS</div>
+
+            <div class="doc-card" id="doc-ai-analyzer" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #4a90e2;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#4a90e2;flex-shrink:0"></span>AI Token Analyzer</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Paste any Robinhood token contract address to get a full risk breakdown: holder concentration, honeypot and mint-function checks, liquidity health, insider wallet detection, and a live price chart.</p>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">The Bloombark Risk Score (0–100) is calculated from real on-chain data — higher means riskier. Use it as a starting point, not a guarantee.</p>
             </div>
 
-            <div id="doc-ai-prediction" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">AI Prediction</h3>
+            <div class="doc-card" id="doc-ai-prediction" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #4a90e2;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#4a90e2;flex-shrink:0"></span>AI Prediction</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">A rule-based scoring engine — not a black-box model — that weighs price momentum, buy/sell pressure, volume trend, liquidity, holder distribution, and security flags into a BULLISH / BEARISH / NEUTRAL call with a confidence score.</p>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Available from the AI Analyzer page after scanning a token. This is not financial advice — it's a second opinion built from the same data you can see yourself in the signal breakdown.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Available from the AI Token Analyzer page after scanning a token. This is not financial advice — it's a second opinion built from the same data you can see yourself in the signal breakdown.</p>
             </div>
 
-            <div id="doc-track-record" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">AI Track Record</h3>
+            <div class="doc-card" id="doc-track-record" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #4a90e2;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#4a90e2;flex-shrink:0"></span>AI Track Record</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Every BULLISH or BEARISH AI Prediction call is logged, then checked ~24 hours later against the real price move. No cherry-picking — wins and losses are both shown, with a running win rate.</p>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">NEUTRAL calls aren't logged, since there's no clear right answer to resolve them against.</p>
             </div>
 
-            <div id="doc-trade" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Trade</h3>
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--accent-green);grid-column:1/-1;margin:12px 0 -4px">TRADING</div>
+
+            <div class="doc-card" id="doc-trade" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid var(--accent-green);border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></span>Trade</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Swap any Robinhood token directly from the terminal, routed via KyberSwap for best pricing. Supports both market orders (instant, at current price) and limit orders (gasless, executes when your target price hits).</p>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Every swap requires MetaMask confirmation — Bloombark never holds your funds or executes trades on your behalf.</p>
             </div>
 
-            <div id="doc-market-overview" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Market Overview</h3>
+            <div class="doc-card" id="doc-market-overview" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid var(--accent-green);border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></span>Market Overview</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">A live dashboard across supported chains — Pools, Trending, Top Gainers, and New Pools tabs, plus chain-wide volume and transaction stats.</p>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">This is price/volume-based trending sourced from GeckoTerminal — different from Trending on Bloombark, which tracks activity on the terminal itself.</p>
             </div>
 
-            <div id="doc-wallet-tracker" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Wallet Tracker</h3>
+            <div class="doc-card" id="doc-wallet-tracker" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid var(--accent-green);border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></span>Wallet Tracker</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Paste any EVM wallet address to see its full token holdings, portfolio value, and transaction history across chains.</p>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Useful for checking a token's top holders or creator wallet before you trade — see exactly what else they hold.</p>
             </div>
 
-            <div id="doc-narrative" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Narrative</h3>
+            <div class="doc-card" id="doc-watchlist" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid var(--accent-green);border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></span>Watchlist & Comparison</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Save tokens from AI Token Analyzer with the ♡ icon to track them in one table — price, volume, mcap, liquidity, and age.</p>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Compare Token</strong> to pick 2–5 watchlist tokens and see them ranked side by side on an overall score built from liquidity, volume, momentum, holders, and risk.</p>
+            </div>
+
+            <div class="doc-card" id="doc-alerts" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid var(--accent-green);border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:var(--accent-green);flex-shrink:0"></span>Alerts</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Set Market Cap, Volume, or Price alerts on any watchlist token. Price alerts fire every time the live price touches your target, in either direction; Market Cap/Volume alerts fire on a % move from baseline. Enable browser push notifications to get notified even with the tab closed.</p>
+            </div>
+
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#a855f7;grid-column:1/-1;margin:12px 0 -4px">SOCIAL</div>
+
+            <div class="doc-card" id="doc-narrative" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #a855f7;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#a855f7;flex-shrink:0"></span>Narrative</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Tracks emerging market themes and sector rotations, so you can spot which narratives are gaining traction before they're obvious.</p>
             </div>
 
-            <div id="doc-community" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Community</h3>
+            <div class="doc-card" id="doc-community" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #a855f7;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#a855f7;flex-shrink:0"></span>Community</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Live chat rooms — General, Trading, Alpha, Free Shill, plus gated Holders and Private rooms. Paste a contract address in chat and the built-in bot replies with an instant AI Prediction card.</p>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">$BBRK Moon is a read-only feed that auto-posts every on-chain buy of the $BBRK token.</p>
             </div>
 
-            <div id="doc-watchlist" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Watchlist & Comparison</h3>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Save tokens from AI Analyzer with the ♡ icon to track them in one table — price, volume, mcap, liquidity, and age.</p>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Compare Token</strong> to pick 2–5 watchlist tokens and see them ranked side by side on an overall score built from liquidity, volume, momentum, holders, and risk.</p>
+            <div class="doc-card" id="doc-trending" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #a855f7;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#a855f7;flex-shrink:0"></span>Trending on Bloombark</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Shows what's actually happening on the terminal itself, refreshed every 24 hours: the most-scanned tokens in AI Token Analyzer, most-discussed in Community (excluding Holders, Private, and $BBRK Moon), and most-traded on Trade. Each row shows the token's real logo and links straight into AI Token Analyzer.</p>
             </div>
 
-            <div id="doc-alerts" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Alerts</h3>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Set market cap or volume move alerts on any watchlist token. Enable browser push notifications to get notified even with the tab closed.</p>
-            </div>
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#f5a623;grid-column:1/-1;margin:12px 0 -4px">UTILITY</div>
 
-            <div id="doc-trending" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Trending on Bloombark</h3>
-              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Shows what's actually happening on the terminal itself, refreshed every 24 hours: the most-scanned tokens in AI Analyzer, most-discussed in Community (excluding Holders, Private, and $BBRK Moon), and most-traded on Trade.</p>
-            </div>
-
-            <div id="doc-accessibility" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px">Accessibility</h3>
+            <div class="doc-card" id="doc-accessibility" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #f5a623;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 8px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#f5a623;flex-shrink:0"></span>Accessibility</h3>
               <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Toggle <strong style="color:#e2e8f0">Colorblind mode</strong> in the sidebar footer to swap the green/red up-down convention for a blue/orange pair that stays distinguishable across common color-vision deficiencies — applies everywhere, including charts.</p>
             </div>
 
-            <div id="doc-faq" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:20px 22px;scroll-margin-top:20px">
-              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 12px">FAQ</h3>
-              <div style="margin-bottom:12px">
-                <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Is Bloombark custodial?</p>
-                <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">No. Bloombark never holds your funds or private keys. Every trade is signed and confirmed in your own MetaMask wallet.</p>
+            <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#6b7280;grid-column:1/-1;margin:12px 0 -4px">DATA SOURCES</div>
+
+            <div class="doc-card" id="doc-data-sources" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #6b7280;border-radius:12px;padding:20px 22px;scroll-margin-top:20px;grid-column:1/-1">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 6px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#6b7280;flex-shrink:0"></span>Data Sources</h3>
+              <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 16px">Bloombark doesn't run its own indexer — every number you see is pulled live from these public APIs and on-chain RPCs. No data is fabricated or estimated.</p>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">DexScreener</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">api.dexscreener.com/latest/dex/tokens/{address}</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Price, volume, liquidity, price chart, and market cap/FDV — used across AI Token Analyzer, Watchlist, Comparison, Trade, and Alerts (including Price alert checks).</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Blockscout</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">{chain}.blockscout.com/api/v2/addresses/{address}</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Wallet token balances, native balances, and transaction history — powers Wallet Tracker and Chain Transactions, per-chain (Robinhood, Ethereum, Base, Arbitrum, Polygon).</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">GeckoTerminal</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">api.geckoterminal.com/api/v2/networks/{network}/pools</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Pools, Trending, Top Gainers, and New Pools tabs in Market Overview — price/volume-based trending, separate from Trending on Bloombark's activity data.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">GoPlus Security</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">api.gopluslabs.io/api/v1/token_security/{chainId}</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Honeypot detection, mint-function checks, holder concentration, and other risk flags — feeds the Bloombark Risk Score and Wallet Relationship Map.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">KyberSwap</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">aggregator-api.kyberswap.com · limit-order.kyberswap.com</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Swap routing and quotes for Trade — both market orders (aggregator) and gasless limit orders.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">CoinGecko</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">api.coingecko.com/api/v3/coins/categories</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Sector/category market data — powers Narrative's theme and rotation tracking.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">DefiLlama</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">api.llama.fi/overview/dexs/{chain}</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Chain-wide DEX volume overview — supplements Market Overview's chain stats.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">On-chain RPC</p>
+                  <p style="font-size:10px;color:#6b7280;font-family:monospace;margin:0 0 6px;word-break:break-all">*-rpc.publicnode.com · api.mainnet-beta.solana.com</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Direct JSON-RPC calls (EVM chains + Solana) for on-chain scanning and enrichment jobs that public APIs don't cover.</p>
+                </div>
               </div>
-              <div style="margin-bottom:12px">
-                <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Is the AI Prediction financial advice?</p>
-                <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">No. It's a rule-based signal built from public on-chain data, shown for research purposes — always do your own due diligence.</p>
-              </div>
-              <div>
-                <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Which chain does Bloombark support?</p>
-                <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Robinhood chain is the primary focus for Trade, Alerts, and Sniper-style features. Wallet Tracker and AI Analyzer also support Ethereum, Base, and Arbitrum for read-only lookups.</p>
+            </div>
+
+            <div class="doc-card" id="doc-faq" style="background:#12141e;border:1px solid #1e2235;border-left:3px solid #f5a623;border-radius:12px;padding:20px 22px;scroll-margin-top:20px;grid-column:1/-1">
+              <h3 style="font-size:15px;color:#e2e8f0;margin:0 0 14px;display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#f5a623;flex-shrink:0"></span>FAQ</h3>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Is Bloombark custodial?</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">No. Bloombark never holds your funds or private keys. Every trade is signed and confirmed in your own MetaMask wallet.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Is the AI Prediction financial advice?</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">No. It's a rule-based signal built from public on-chain data, shown for research purposes — always do your own due diligence.</p>
+                </div>
+                <div style="border-left:2px solid #1e2235;padding-left:12px">
+                  <p style="font-size:13px;font-weight:700;color:#e2e8f0;margin:0 0 4px">Which chain does Bloombark support?</p>
+                  <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Robinhood chain is the primary focus for Trade, Alerts, and Sniper-style features. Wallet Tracker and AI Token Analyzer also support Ethereum, Base, and Arbitrum for read-only lookups.</p>
+                </div>
               </div>
             </div>
 
@@ -1431,63 +1611,6 @@
 
           </div>
 
-          <!-- Roadmap -->
-          <div style="max-width:900px;margin:56px auto 0;padding:0 4px">
-            <div style="text-align:center;margin-bottom:28px">
-              <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--accent-green);margin-bottom:6px">ROADMAP 2026</div>
-              <div style="font-size:20px;font-weight:800;color:#e2e8f0">Where Bloombark is headed</div>
-            </div>
-
-            <div style="position:relative;height:6px;background:#1e2235;border-radius:3px;margin:0 0 28px">
-              <div style="position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--accent-green);border-radius:3px"></div>
-              <div class="rm-blink" style="position:absolute;top:50%;left:62%;width:14px;height:14px;border-radius:50%;background:var(--accent-green);transform:translate(-50%,-50%)"></div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:28px">
-              <div style="text-align:center">
-                <p style="font-size:11px;color:#6b7280;margin:0 0 2px">Q1</p>
-                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Design apps</p>
-              </div>
-              <div style="text-align:center">
-                <p style="font-size:11px;color:#6b7280;margin:0 0 2px">Q2</p>
-                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Development</p>
-              </div>
-              <div style="text-align:center">
-                <div class="rm-pulse" style="width:10px;height:10px;border-radius:50%;background:var(--accent-green);margin:0 auto 4px"></div>
-                <p style="font-size:11px;color:var(--accent-green);margin:0 0 2px;font-weight:700">Q3 — we are here</p>
-                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Feature release</p>
-              </div>
-              <div style="text-align:center">
-                <p style="font-size:11px;color:#6b7280;margin:0 0 2px">Q4</p>
-                <p style="font-size:13px;font-weight:700;margin:0;color:#e2e8f0">Enhancement</p>
-              </div>
-            </div>
-
-            <p style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;margin:0 0 10px">LIVE NOW · 12 FEATURES</p>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px">
-              <span class="rm-chip" style="animation-delay:.05s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Token Analyzer</span>
-              <span class="rm-chip" style="animation-delay:.1s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Prediction</span>
-              <span class="rm-chip" style="animation-delay:.15s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Track Record</span>
-              <span class="rm-chip" style="animation-delay:.2s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Wallet Relationship Map</span>
-              <span class="rm-chip" style="animation-delay:.25s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Wallet Tracker</span>
-              <span class="rm-chip" style="animation-delay:.3s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Market Overview</span>
-              <span class="rm-chip" style="animation-delay:.35s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Trade</span>
-              <span class="rm-chip" style="animation-delay:.4s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Narrative</span>
-              <span class="rm-chip" style="animation-delay:.45s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Community</span>
-              <span class="rm-chip" style="animation-delay:.5s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Watchlist and comparison</span>
-              <span class="rm-chip" style="animation-delay:.55s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Alerts</span>
-              <span class="rm-chip" style="animation-delay:.6s;background:var(--green-18);color:var(--accent-green);border:1px solid var(--green-40);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Trending on Bloombark</span>
-            </div>
-
-            <p style="font-size:11px;font-weight:700;letter-spacing:1px;color:#6b7280;margin:0 0 10px">COMING Q4 · 4 FEATURES</p>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">
-              <span class="rm-chip" style="animation-delay:.65s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Smart Money Tracking</span>
-              <span class="rm-chip" style="animation-delay:.7s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Insider Scan</span>
-              <span class="rm-chip" style="animation-delay:.75s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">AI Trading Agent</span>
-              <span class="rm-chip" style="animation-delay:.8s;background:#f5a62318;color:#f5a623;border:1px solid #f5a62340;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600">Auto Research</span>
-            </div>
-          </div>
-
           <!-- Footer note -->
           <div style="text-align:center;padding:48px 24px 32px;color:#374151;font-size:11px">
             © 2026 Bloombark Terminal · Built for on-chain traders
@@ -1514,8 +1637,11 @@
   <div id="profileModalOverlay" onclick="toggleProfilePopup()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9998;backdrop-filter:blur(2px)"></div>
   <div id="profilePopup" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:440px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);background:#161822;border:1px solid #1e2235;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,0.7);z-index:9999;overflow-y:auto">
     <!-- Title bar -->
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 14px;border-bottom:1px solid #1e2235">
-      <span style="font-size:11px;font-weight:800;letter-spacing:2px;color:#e2e8f0">WALLET PROFILE</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:linear-gradient(135deg,#151a2c,#12141e);border-bottom:1px solid #232a45;border-radius:16px 16px 0 0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="trend-live-dot"></span>
+        <span style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">WALLET PROFILE</span>
+      </div>
       <button onclick="toggleProfilePopup()" style="background:none;border:none;cursor:pointer;color:#6b7280;padding:2px;line-height:1">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -1579,6 +1705,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="/js/app.js?v=219"></script>
+  <script src="/js/app.js?v=224"></script>
 </body>
 </html>
