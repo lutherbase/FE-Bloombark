@@ -3593,6 +3593,40 @@ function _updateAlertsBadge(unread) {
   _titleAlertsUnread = unread;
   _updateTabTitle();
 }
+// Popup preview for newly-fired alerts — separate from the generic
+// bottom-center showToast() since this needs a title/subtitle layout, an
+// icon, click-to-open-Alerts, and independently-stacked/dismissed cards.
+let _alertsLastSeenId = parseInt(localStorage.getItem('bb_alerts_last_seen_id') ?? '-1', 10);
+function _showAlertPreviewPopup(n) {
+  let stack = document.getElementById('alertPreviewStack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'alertPreviewStack';
+    stack.style.cssText = 'position:fixed;top:70px;right:16px;z-index:10000;display:flex;flex-direction:column;gap:10px;max-width:340px';
+    document.body.appendChild(stack);
+  }
+  const card = document.createElement('div');
+  const label = n.metric === 'mcap' ? 'Market Cap' : n.metric === 'price' ? 'Price' : n.metric === 'volume' ? 'Volume' : 'Alert';
+  card.style.cssText = 'background:#161822;border:1px solid var(--green-40);border-left:3px solid var(--accent-green);border-radius:10px;padding:12px 14px;box-shadow:0 12px 32px rgba(0,0,0,0.5);cursor:pointer;opacity:0;transform:translateX(20px);transition:opacity .25s ease,transform .25s ease';
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-green)" stroke-width="2.5" style="flex-shrink:0"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span style="font-size:10px;font-weight:800;letter-spacing:1px;color:var(--accent-green)">${label.toUpperCase()} ALERT</span>
+    </div>
+    <div style="font-size:12px;color:#e2e8f0;line-height:1.5">${n.message || ''}</div>`;
+  card.onclick = () => {
+    document.querySelector('.nav-item[data-page="alerts"]')?.click();
+    card.remove();
+  };
+  stack.appendChild(card);
+  requestAnimationFrame(() => { card.style.opacity = '1'; card.style.transform = 'translateX(0)'; });
+  setTimeout(() => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(20px)';
+    setTimeout(() => card.remove(), 260);
+  }, 7000);
+}
+
 async function _pollAlertsForSound() {
   const token = localStorage.getItem('bb_jwt');
   if (!token && !_privyUser) return;
@@ -3601,6 +3635,19 @@ async function _pollAlertsForSound() {
     const res = await fetch(`${API_BASE}/alerts/notifications`, { credentials: 'include', headers });
     const data = await res.json();
     _updateAlertsBadge(data.unread || 0);
+
+    const items = data.items || [];
+    if (items.length) {
+      const maxId = Math.max(...items.map(n => n.id));
+      if (_alertsLastSeenId !== -1) {
+        // Preview newest-first, oldest-first on screen (cap at 3 to avoid a
+        // flood if several alerts fired while the tab was closed/idle).
+        const fresh = items.filter(n => n.id > _alertsLastSeenId).sort((a, b) => a.id - b.id);
+        fresh.slice(-3).forEach(_showAlertPreviewPopup);
+      }
+      _alertsLastSeenId = maxId;
+      localStorage.setItem('bb_alerts_last_seen_id', String(maxId));
+    }
   } catch (e) {}
 }
 setTimeout(_pollAlertsForSound, 5000);
