@@ -524,25 +524,20 @@ window.addEventListener('popstate', () => {
   _activatePage(page, { pushUrl: false });
 });
 
-// Initial load: land directly on whatever page the URL specifies (e.g. a
-// hard refresh or shared link to /aianalyzer, or /community/general),
-// replacing history so back from there doesn't loop back to itself. Falls
-// through to the landing-page default below when the URL doesn't match a
-// known route. The actual activation is deferred (setTimeout 0) because
-// page-specific data this early in the script (e.g. CHAT_ROOMS, defined much
-// further down) isn't defined yet during this file's first synchronous pass.
-const _routedInitialPage = _pageFromPath(location.pathname);
+// Initial load: always land on Home, regardless of what path was in the
+// address bar — a hard refresh (or a bookmark/shared link to any other
+// page) resets to Home rather than resuming wherever the user last was.
+// In-app nav (clicking sidebar items) still pushes real URLs via
+// _activatePage/popstate below; this only governs the very first
+// activation on load.
+const _routedInitialPage = 'landing';
 (function _initRouteFromUrl() {
-  if (_routedInitialPage && _routedInitialPage !== 'landing') {
-    const initialPath = location.pathname; // preserve any sub-route (e.g. /community/general)
-    setTimeout(() => _activatePage(_routedInitialPage, { pushUrl: false }), 0);
-    history.replaceState({ page: _routedInitialPage }, '', initialPath);
-  } else if (location.pathname !== PAGE_ROUTES.landing) {
+  if (location.pathname !== PAGE_ROUTES.landing) {
     history.replaceState({ page: 'landing' }, '', PAGE_ROUTES.landing);
   }
 })();
 
-// Initial setup — default to landing page unless the URL routed elsewhere above.
+// Initial setup — always default to landing (Home) page.
 if (!_routedInitialPage || _routedInitialPage === 'landing') {
   $('networkSelector').style.display = 'none';
   $('exportBtn').style.display       = 'none';
