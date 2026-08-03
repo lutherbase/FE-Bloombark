@@ -3369,6 +3369,7 @@ async function openAlertModal(address, chain, symbol, name) {
         <div style="display:flex;gap:8px;margin-bottom:14px">
           <button id="alertMetricMcap" class="alert-metric-btn" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Market Cap</button>
           <button id="alertMetricVolume" class="alert-metric-btn" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Volume (24h)</button>
+          <button id="alertMetricPrice" class="alert-metric-btn" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Price</button>
         </div>
         <div style="font-size:11px;color:#6b7280;margin-bottom:14px">Existing: <span id="alertBaselineDisplay" style="color:#e2e8f0;font-weight:700"></span></div>
         <div style="font-size:11px;color:#8b92a8;margin-bottom:6px">Alert direction</div>
@@ -3377,7 +3378,7 @@ async function openAlertModal(address, chain, symbol, name) {
           <button id="alertDirDown" class="alert-dir-btn" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">▼ Down</button>
           <button id="alertDirBoth" class="alert-dir-btn" style="flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">↕ Both</button>
         </div>
-        <div style="font-size:11px;color:#8b92a8;margin-bottom:6px">Threshold %</div>
+        <div id="alertThresholdLabel" style="font-size:11px;color:#8b92a8;margin-bottom:6px">Threshold %</div>
         <input id="alertThresholdInput" type="number" min="0.1" step="0.1" placeholder="e.g. 10" value="10"
           style="width:100%;background:#0d0f18;border:1px solid #2d3748;border-radius:8px;color:#e2e8f0;font-size:13px;padding:10px 12px;margin-bottom:18px;box-sizing:border-box">
         <div style="display:flex;gap:8px">
@@ -3406,18 +3407,36 @@ async function openAlertModal(address, chain, symbol, name) {
       .sort((a,b) => (b.liquidity?.usd||0) - (a.liquidity?.usd||0));
     if (!pairs.length) throw new Error('Could not fetch current market data for this token');
     const p = pairs[0];
-    liveData = { mcap: parseFloat(p.fdv || p.marketCap || 0), volume: parseFloat(p.volume?.h24 || 0) };
+    liveData = { mcap: parseFloat(p.fdv || p.marketCap || 0), volume: parseFloat(p.volume?.h24 || 0), price: parseFloat(p.priceUsd || 0) };
     return liveData;
   }
 
+  function fmtPriceUsd(v) {
+    const n = Number(v || 0);
+    return '$' + (n < 1 ? n.toLocaleString('en-US', { maximumFractionDigits: 8 }) : n.toLocaleString('en-US', { maximumFractionDigits: 4 }));
+  }
+
   function styleMetricBtns() {
-    ['Mcap','Volume'].forEach(k => {
+    ['Mcap','Volume','Price'].forEach(k => {
       const btn = overlay.querySelector(`#alertMetric${k}`);
-      const active = (k === 'Mcap' && metric === 'mcap') || (k === 'Volume' && metric === 'volume');
+      const active = (k === 'Mcap' && metric === 'mcap') || (k === 'Volume' && metric === 'volume') || (k === 'Price' && metric === 'price');
       btn.style.background = active ? 'var(--green-15)' : '#1e2235';
       btn.style.border = active ? '1px solid var(--green-40)' : '1px solid #2d3748';
       btn.style.color = active ? 'var(--accent-green)' : '#8b92a8';
     });
+    const thresholdLabel = overlay.querySelector('#alertThresholdLabel');
+    const thresholdInput = overlay.querySelector('#alertThresholdInput');
+    if (metric === 'price') {
+      thresholdLabel.textContent = 'Target Price ($)';
+      thresholdInput.step = 'any';
+      thresholdInput.min = '0';
+      thresholdInput.placeholder = 'e.g. 0.0042';
+    } else {
+      thresholdLabel.textContent = 'Threshold %';
+      thresholdInput.step = '0.1';
+      thresholdInput.min = '0.1';
+      thresholdInput.placeholder = 'e.g. 10';
+    }
   }
 
   // Baseline shown here is the FROZEN value captured when the alert was last
@@ -3428,13 +3447,21 @@ async function openAlertModal(address, chain, symbol, name) {
   async function refreshBaselineDisplay() {
     const display = overlay.querySelector('#alertBaselineDisplay');
     if (mine && mine.metric === metric) {
-      display.textContent = fmtUsd(mine.baseline_value) + ' (saved)';
+      display.textContent = (metric === 'price' ? fmtPriceUsd(mine.baseline_value) : fmtUsd(mine.baseline_value)) + ' (saved target)';
       return;
     }
-    display.textContent = `Fetching current ${metric === 'mcap' ? 'market cap' : 'volume'}…`;
+    const metricLabel = metric === 'mcap' ? 'market cap' : metric === 'volume' ? 'volume' : 'price';
+    display.textContent = `Fetching current ${metricLabel}…`;
     try {
       const d = await ensureLiveData();
-      display.textContent = fmtUsd(metric === 'mcap' ? d.mcap : d.volume) + ' (current)';
+      const current = metric === 'mcap' ? d.mcap : metric === 'volume' ? d.volume : d.price;
+      display.textContent = (metric === 'price' ? fmtPriceUsd(current) : fmtUsd(current)) + ' (current)';
+      // For a fresh price alert, prefill the target field with the current
+      // price so the user only has to nudge it up/down instead of typing
+      // a whole price from scratch.
+      if (metric === 'price' && !(mine && mine.metric === 'price')) {
+        overlay.querySelector('#alertThresholdInput').value = current;
+      }
     } catch(e) {
       display.textContent = 'Error fetching current data';
     }
@@ -3451,6 +3478,7 @@ async function openAlertModal(address, chain, symbol, name) {
 
   overlay.querySelector('#alertMetricMcap').onclick = () => { metric = 'mcap'; styleMetricBtns(); refreshBaselineDisplay(); };
   overlay.querySelector('#alertMetricVolume').onclick = () => { metric = 'volume'; styleMetricBtns(); refreshBaselineDisplay(); };
+  overlay.querySelector('#alertMetricPrice').onclick = () => { metric = 'price'; styleMetricBtns(); refreshBaselineDisplay(); };
   overlay.querySelector('#alertDirUp').onclick = () => { direction = 'up'; styleDirBtns(); };
   overlay.querySelector('#alertDirDown').onclick = () => { direction = 'down'; styleDirBtns(); };
   overlay.querySelector('#alertDirBoth').onclick = () => { direction = 'both'; styleDirBtns(); };
@@ -3464,7 +3492,7 @@ async function openAlertModal(address, chain, symbol, name) {
     if (mine) {
       metric = mine.metric;
       direction = mine.direction;
-      overlay.querySelector('#alertThresholdInput').value = mine.threshold_pct;
+      overlay.querySelector('#alertThresholdInput').value = mine.metric === 'price' ? mine.baseline_value : mine.threshold_pct;
       overlay.querySelector('#alertRemoveBtn').style.display = 'block';
     }
 
@@ -3492,23 +3520,32 @@ async function openAlertModal(address, chain, symbol, name) {
   };
 
   overlay.querySelector('#alertSaveBtn').onclick = async () => {
-    const thresholdPct = parseFloat(overlay.querySelector('#alertThresholdInput').value);
-    if (!(thresholdPct > 0)) return showToast('Enter a valid threshold %');
+    const inputVal = parseFloat(overlay.querySelector('#alertThresholdInput').value);
+    if (metric === 'price') {
+      if (!(inputVal > 0)) return showToast('Enter a valid target price');
+    } else {
+      if (!(inputVal > 0)) return showToast('Enter a valid threshold %');
+    }
     const saveBtn = overlay.querySelector('#alertSaveBtn');
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
     try {
-      // If the user never changed the metric away from what was already
-      // saved, keep that frozen baseline untouched. Otherwise use the fresh
-      // value fetched the moment they switched metric (see
-      // refreshBaselineDisplay) — falls back to a fetch here only if that
-      // somehow never happened (e.g. it errored silently).
-      let baselineValue;
-      if (mine && mine.metric === metric) {
-        baselineValue = mine.baseline_value;
+      // For price alerts, the input IS the target price — send it directly
+      // as the baseline (the checker compares live price against it, not a
+      // % move). For mcap/volume, baseline is the frozen/current metric
+      // value and the input is a separate % threshold.
+      let baselineValue, thresholdPct;
+      if (metric === 'price') {
+        baselineValue = inputVal;
+        thresholdPct = 0;
       } else {
-        const d = await ensureLiveData();
-        baselineValue = metric === 'mcap' ? d.mcap : d.volume;
+        thresholdPct = inputVal;
+        if (mine && mine.metric === metric) {
+          baselineValue = mine.baseline_value;
+        } else {
+          const d = await ensureLiveData();
+          baselineValue = metric === 'mcap' ? d.mcap : d.volume;
+        }
       }
       if (!(baselineValue > 0)) throw new Error('No current market data available for this metric');
 
@@ -3608,7 +3645,7 @@ function _alertRowHtml(n) {
 
   if (n.category === 'token_movement') {
     const up = n.direction === 'up';
-    const label = n.metric === 'mcap' ? 'Market Cap' : 'Volume';
+    const label = n.metric === 'mcap' ? 'Market Cap' : n.metric === 'price' ? 'Price' : 'Volume';
     return `
       <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? 'var(--green-40)' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
            onclick="openInAnalyzer('${n.address}')">
