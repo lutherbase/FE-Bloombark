@@ -950,7 +950,7 @@
             <!-- Sidebar: rooms + online users -->
             <div class="community-channels" style="width:200px;flex-shrink:0;background:var(--bg-card);border-right:1px solid var(--border-light);display:flex;flex-direction:column;overflow:hidden">
               <div class="community-channels-head" style="padding:14px 14px 10px;border-bottom:1px solid var(--border-light)">
-                <div style="font-size:10px;font-weight:800;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px">CHANNELS</div>
+                <div style="font-size:10px;font-weight:800;color:var(--accent-green);letter-spacing:1px;margin-bottom:12px">💬 CHANNELS</div>
                 <div id="chatRoomList" style="display:flex;flex-direction:column;gap:2px"></div>
               </div>
               <div class="community-online" style="padding:12px 14px;flex:1;overflow-y:auto">
@@ -964,14 +964,16 @@
             <!-- Main chat area -->
             <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
               <!-- Room header -->
-              <div style="padding:14px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;flex-shrink:0">
-                <span id="chatRoomIcon" style="font-size:18px">💬</span>
-                <div>
-                  <div id="chatRoomName" style="font-size:14px;font-weight:800;color:var(--text-primary)">General</div>
-                  <div id="chatRoomDesc" style="font-size:11px;color:var(--text-muted)">General discussion</div>
+              <div style="padding:14px 18px;border-bottom:1px solid #232a45;background:linear-gradient(135deg,#151a2c,#12141e);display:flex;align-items:center;gap:10px;flex-shrink:0">
+                <div style="width:34px;height:34px;border-radius:10px;background:var(--green-18);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span id="chatRoomIcon" style="font-size:16px">💬</span>
                 </div>
-                <div style="margin-left:auto;font-size:11px;color:var(--text-muted)">
-                  <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent-green);margin-right:4px"></span>
+                <div>
+                  <div id="chatRoomName" style="font-size:14px;font-weight:800;color:#e2e8f0">General</div>
+                  <div id="chatRoomDesc" style="font-size:11px;color:#9ca3af">General discussion</div>
+                </div>
+                <div style="margin-left:auto;font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+                  <span class="trend-live-dot"></span>
                   <span id="chatOnlineHeader">0 online</span>
                 </div>
               </div>
@@ -1159,14 +1161,20 @@
         </div>
 
         <div class="page ai-analyzer-page" id="page-alerts">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">ALERTS</div>
-              <div style="font-size:13px;color:#9ca3af">Token moves, Bloombark updates & channel notices</div>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button id="pushToggleBtn" onclick="togglePushNotifications()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">🔕 Enable Push</button>
-              <button id="alertsRefreshBtn" onclick="renderAlertsPage()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">ALERTS</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">🔔 Never miss a move</div>
+                <div style="font-size:13px;color:#9ca3af">Token moves, Bloombark updates, and channel notices — all in one place.</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button id="pushToggleBtn" onclick="togglePushNotifications()" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">🔕 Enable Push</button>
+                <button id="alertsRefreshBtn" onclick="renderAlertsPage()" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">↻ Refresh</button>
+              </div>
             </div>
           </div>
 
@@ -1203,26 +1211,32 @@
           </div>
         </div>
         <div class="page ai-analyzer-page" id="page-watchlist">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div>
-              <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">WATCHLIST</div>
-              <div style="font-size:13px;color:#9ca3af">Tokens you've saved</div>
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">WATCHLIST</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">♡ Tokens you're tracking</div>
+                <div style="font-size:13px;color:#9ca3af">Every token you've saved, with live price, volume, and liquidity.</div>
+              </div>
+              <button onclick="renderWatchlistPage()" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">↻ Refresh</button>
             </div>
-            <button onclick="renderWatchlistPage()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 12px;cursor:pointer;font-size:12px">↻ Refresh</button>
           </div>
           <div id="watchlistContent" style="display:flex;flex-direction:column;gap:8px">
             <div style="text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Connect wallet to see your watchlist</div>
           </div>
 
-          <div style="margin-top:32px;padding-top:20px;border-top:1px solid #1e2235">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="trend-panel" style="margin-top:24px;background:#12141e;border:1px solid #1e2235;border-top:3px solid #9B59B6;border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
               <div>
-                <div style="font-size:11px;font-weight:600;letter-spacing:.08em;color:#6b7280;margin-bottom:2px">TOKEN COMPARISON</div>
+                <div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#9B59B6;margin-bottom:2px">⚖️ TOKEN COMPARISON</div>
                 <div style="font-size:13px;color:#9ca3af">Compare tokens from your watchlist side by side</div>
               </div>
               <div style="display:flex;gap:8px">
-                <button onclick="clearCompareTokens()" style="background:none;border:1px solid #2d3144;border-radius:8px;color:#9ca3af;padding:6px 14px;cursor:pointer;font-size:12px">Clear</button>
-                <button onclick="openComparePickerModal()" style="background:var(--green-15);border:1px solid var(--green-40);border-radius:8px;color:var(--accent-green);padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700">Compare Token</button>
+                <button onclick="clearCompareTokens()" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:600">Clear</button>
+                <button onclick="openComparePickerModal()" style="background:var(--green-15);border:1px solid var(--green-40);border-radius:8px;color:var(--accent-green);padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700">Compare Token</button>
               </div>
             </div>
             <div id="compareGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
@@ -1248,14 +1262,14 @@
             <div style="font-size:13px;color:#9ca3af">Every feature, explained in one place — no fluff, no marketing copy.</div>
           </div>
 
-          <div class="doc-card" id="doc-getting-started" style="background:linear-gradient(135deg,#12141e,#141a16);border:1px solid var(--green-40);border-radius:12px;padding:22px 24px;scroll-margin-top:20px;max-width:1080px;margin-bottom:20px">
+          <div class="doc-card" id="doc-getting-started" style="background:linear-gradient(135deg,#12141e,#141a16);border:1px solid var(--green-40);border-radius:12px;padding:22px 24px;scroll-margin-top:20px;max-width:1400px;margin-bottom:20px">
             <h3 style="font-size:16px;color:var(--accent-green);margin:0 0 8px;font-weight:800">👋 Getting started</h3>
             <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0 0 10px">Bloombark Terminal is a token intelligence platform for the Robinhood chain — risk analysis, wallet tracking, trading, and community, all in one place. Most read-only features (AI Token Analyzer, Market Overview, Narrative) work without connecting a wallet.</p>
             <p style="font-size:13px;color:#9ca3af;line-height:1.7;margin:0">Click <strong style="color:#e2e8f0">Connect Wallet</strong> (top right) to unlock Trade, Watchlist, Alerts, and Community — MetaMask is currently the supported wallet.</p>
           </div>
 
           <!-- Roadmap -->
-          <div class="doc-card" id="doc-roadmap" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:24px 26px;scroll-margin-top:20px;max-width:1080px;margin-bottom:20px">
+          <div class="doc-card" id="doc-roadmap" style="background:#12141e;border:1px solid #1e2235;border-radius:12px;padding:24px 26px;scroll-margin-top:20px;max-width:1400px;margin-bottom:20px">
             <div style="margin-bottom:24px">
               <div style="font-size:11px;font-weight:700;letter-spacing:3px;color:var(--accent-green);margin-bottom:6px">ROADMAP 2026</div>
               <div style="font-size:18px;font-weight:800;color:#e2e8f0">Where Bloombark is headed</div>
@@ -1311,7 +1325,7 @@
             </div>
           </div>
 
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;max-width:1080px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;max-width:1400px">
 
             <div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#4a90e2;grid-column:1/-1;margin:4px 0 -4px">ANALYSIS</div>
 
@@ -1705,6 +1719,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="/js/app.js?v=224"></script>
+  <script src="/js/app.js?v=225"></script>
 </body>
 </html>

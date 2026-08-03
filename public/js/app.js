@@ -6864,28 +6864,35 @@ function tradeSetInterval(intv) {
 
 async function tradeLoadTxs(showLoading = true) {
   const t = _tradeToken;
+  const pairAtCall = _tradePairAddr;
   const list = $('tradeTxList');
-  if (!t || !_tradePairAddr || !list) return;
+  if (!t || !pairAtCall || !list) return;
   if (showLoading) list.innerHTML = '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Loading transactions…</div>';
   try {
     const net = TRADE_GECKO_NET[t.chain] || t.chain;
     // Fetch up to 300 trades: top 30 shown in the list, all of them feed the chart
     const r = await fetch(`${API_BASE}/recent-trades`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ poolAddress: _tradePairAddr, network: net, chain: t.chain, limit: 300 }),
+      body: JSON.stringify({ poolAddress: pairAtCall, network: net, chain: t.chain, limit: 300 }),
     });
     const j = await r.json();
+    // The user may have switched to a different pool while this request was
+    // in flight — an older response landing after a newer one has already
+    // rendered would otherwise clobber the currently-viewed pool's data.
+    if (_tradePairAddr !== pairAtCall) return;
     const allTrades = j.trades || [];
     if (!allTrades.length) {
-      // Only the very first fetch attempt for this token shows "Loading…" —
-      // once that attempt has actually completed (this line), an empty
-      // result means the pool genuinely has no trade history, so say that
-      // instead of looping on "Loading…" forever. This is tracked with its
-      // own flag rather than piggybacking on _tradeTrades (shared with the
-      // chart above), which is what caused the two to look coupled.
-      list.innerHTML = !_tradeTxFetchAttempted
-        ? '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Loading transactions…</div>'
-        : '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">No recent trades data for this pool</div>';
+      // An empty result can be a genuinely trade-less pool OR a transient
+      // upstream hiccup (GeckoTerminal rate-limit/timeout) on a background
+      // poll. Only blank an already-populated list on an explicit
+      // user-initiated refresh (showLoading) — a silent background poll
+      // that comes back empty just leaves the last-known-good rows up
+      // rather than making the whole table appear to "disappear".
+      if (showLoading || !_tradeTrades.length) {
+        list.innerHTML = !_tradeTxFetchAttempted
+          ? '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">Loading transactions…</div>'
+          : '<div style="padding:20px;text-align:center;font-size:11px;color:var(--text-muted)">No recent trades data for this pool</div>';
+      }
       _tradeTxFetchAttempted = true;
       return;
     }
