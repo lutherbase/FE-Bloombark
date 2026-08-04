@@ -3639,6 +3639,39 @@ let _alertsById = new Map();   // id -> notification, for the detail popup looku
 let _alertsSelected = new Set();
 let _alertsIsAdmin = null;     // cached tri-state: null=unchecked, true/false once known
 
+const ALERTS_PAGE_SIZE = 10;
+let _alertsItems = [];
+let _alertsPage = 1;
+
+function _renderAlertsList() {
+  const el = document.getElementById('alertsContent');
+  if (!el) return;
+  const rows = _alertsItems;
+  const totalPages = Math.max(1, Math.ceil(rows.length / ALERTS_PAGE_SIZE));
+  if (_alertsPage > totalPages) _alertsPage = totalPages;
+  const start = (_alertsPage - 1) * ALERTS_PAGE_SIZE;
+  const pageRows = rows.slice(start, start + ALERTS_PAGE_SIZE);
+  el.innerHTML = pageRows.map(_alertRowHtml).join('') + _alertsPaginationHtml(totalPages);
+}
+
+function _alertsPaginationHtml(totalPages) {
+  if (totalPages <= 1) return '';
+  const p = _alertsPage;
+  const btn = (label, page, disabled, active) =>
+    `<button ${disabled ? 'disabled' : `onclick="alertsGoToPage(${page})"`}
+      style="min-width:28px;height:28px;padding:0 8px;border-radius:6px;border:1px solid ${active ? 'var(--accent-green)' : '#232838'};background:${active ? 'var(--green-15)' : 'transparent'};color:${disabled ? '#4b5262' : active ? 'var(--accent-green)' : '#9ca3af'};font-size:12px;cursor:${disabled ? 'default' : 'pointer'}">${label}</button>`;
+  let pages = '';
+  for (let i = 1; i <= totalPages; i++) pages += btn(i, i, false, i === p);
+  return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 0 4px">` +
+    btn('‹ Prev', p - 1, p === 1, false) + pages + btn('Next ›', p + 1, p === totalPages, false) +
+    `</div>`;
+}
+
+function alertsGoToPage(page) {
+  _alertsPage = page;
+  _renderAlertsList();
+}
+
 // Background poll for new alerts (any page, not just while Alerts is open) —
 // plays the bell sound every time the unread COUNT on the sidebar badge goes
 // up (0→1, 1→2, …), not just once regardless of how many arrived.
@@ -3761,6 +3794,15 @@ function _alertRowHtml(n) {
   if (n.category === 'token_movement') {
     const up = n.direction === 'up';
     const label = n.metric === 'mcap' ? 'Market Cap' : n.metric === 'price' ? 'Price' : 'Volume';
+    // Same formatter split used everywhere else: price gets full decimal
+    // precision (dashFmtPrice), mcap/volume get the K/M/B-abbreviated form
+    // (dashFmtVol) — otherwise a $0.0000042 price would round to "$0".
+    const newValFmt = n.new_value != null
+      ? (n.metric === 'price' ? dashFmtPrice(n.new_value) : dashFmtVol(n.new_value))
+      : null;
+    const baselineFmt = n.baseline_value != null
+      ? (n.metric === 'price' ? dashFmtPrice(n.baseline_value) : dashFmtVol(n.baseline_value))
+      : null;
     return `
       <div style="display:flex;align-items:center;justify-content:space-between;background:#12141e;border:1px solid ${unread ? 'var(--green-40)' : '#1e2235'};border-radius:10px;padding:12px 16px;cursor:pointer"
            onclick="openInAnalyzer('${n.address}')">
@@ -3772,6 +3814,7 @@ function _alertRowHtml(n) {
           <div>
             <div style="font-size:13px;font-weight:600;color:#e2e8f0">${n.symbol || n.name || 'Token'} — ${label} ${up ? 'Up' : 'Down'} ${Math.abs(n.change_pct).toFixed(1)}%</div>
             <div style="font-size:11px;color:#6b7280;margin-top:2px">${(n.chain||'').toUpperCase()} · ${when}</div>
+            ${newValFmt ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px">${label} now: <span style="color:#e2e8f0;font-weight:600">${newValFmt}</span>${baselineFmt ? ` <span style="color:#4b5563">(from ${baselineFmt})</span>` : ''}</div>` : ''}
           </div>
         </div>
         <div style="color:${up ? 'var(--accent-green)' : '#ff6b8a'};font-size:13px;font-weight:700">${up ? '+' : ''}${n.change_pct.toFixed(1)}%</div>
@@ -4518,7 +4561,9 @@ async function renderAlertsPage() {
         <span style="color:#9ca3af">Set an alert on a watchlist token, or wait for a Bloombark update.</span>
       </div>`;
     } else {
-      el.innerHTML = items.map(_alertRowHtml).join('');
+      _alertsItems = items;
+      _alertsPage = 1;
+      _renderAlertsList();
     }
 
     if (data.unread > 0) {
