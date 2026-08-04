@@ -627,7 +627,8 @@ $('scanBtn').addEventListener('click', () => {
   requireWallet(() => scanToken(addr));
 });
 $('contractInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('scanBtn').click(); });
-$('copyBtn').addEventListener('click', () => {
+$('copyBtn').addEventListener('click', (e) => {
+  e.currentTarget.blur(); // avoid :focus-within on .search-bar making its glow border look like it "thickened"
   const val = $('contractInput').value;
   if (val) navigator.clipboard.writeText(val).then(() => {
     $('copyBtn').style.color = 'var(--accent-green)';
@@ -635,7 +636,8 @@ $('copyBtn').addEventListener('click', () => {
     showToast('Contract address copied to clipboard');
   });
 });
-$('tradeCopyBtn')?.addEventListener('click', () => {
+$('tradeCopyBtn')?.addEventListener('click', (e) => {
+  e.currentTarget.blur();
   const val = $('tradeTokenInput').value;
   if (val) navigator.clipboard.writeText(val).then(() => {
     $('tradeCopyBtn').style.color = 'var(--accent-green)';
@@ -2340,7 +2342,8 @@ async function loadTrending() {
     inp()?.addEventListener('input', onInput);
     scanBtn()?.addEventListener('click', doTrack);
     inp()?.addEventListener('keydown', e => e.key === 'Enter' && doTrack());
-    copyBtn()?.addEventListener('click', () => {
+    copyBtn()?.addEventListener('click', (e) => {
+      e.currentTarget.blur();
       const addr = inp()?.value?.trim();
       if (!addr) return;
       navigator.clipboard.writeText(addr).then(() => {
@@ -4180,14 +4183,14 @@ function trendingGoToAnalyzer(address) {
   $('scanBtn')?.click();
 }
 
-async function loadTrendingBloombark(showLoadingState) {
+async function loadTrendingBloombark(showLoadingState, bypassCache) {
   const scannedEl = $('trendScannedList'), discussedEl = $('trendDiscussedList'), tradedEl = $('trendTradedList');
   if (!scannedEl) return;
   if (showLoadingState) {
     [scannedEl, discussedEl, tradedEl].forEach(el => { el.innerHTML = '<div style="text-align:center;padding:30px 0;color:#6b7280;font-size:12px">Loading…</div>'; });
   }
   try {
-    const res = await fetch(`${API_BASE}/trending-bloombark`);
+    const res = await fetch(`${API_BASE}/trending-bloombark${bypassCache ? '?refresh=1' : ''}`);
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
     scannedEl.innerHTML = _trendingListHtml(data.mostScanned || [], 'No scans in the last 24h yet.', '#4A90E2');
@@ -4973,7 +4976,13 @@ function initCommunity() {
   // Only auto-open a room if the URL explicitly names one (e.g. a shared
   // /community/freeshill link or browser back/forward) — otherwise land on
   // the channel list and let the user pick.
-  const roomFromUrl = _communityRoomFromPath(location.pathname);
+  // A plain nav-item click re-pushes the room-less /community URL (see
+  // _activatePage), clobbering whatever /community/<room> switchChatRoom
+  // had pushed — so the URL alone can't tell "user picked no room yet" apart
+  // from "user was in a room and just tabbed away and back". Fall back to
+  // the in-memory _chatRoom (still set from the prior visit this session)
+  // before giving up and showing the channel-list placeholder.
+  const roomFromUrl = _communityRoomFromPath(location.pathname) || _chatRoom;
   if (_chatWs && _chatWs.readyState === WebSocket.OPEN) {
     renderChatRooms();
     if (roomFromUrl) switchChatRoom(roomFromUrl, { pushUrl: false });
@@ -5537,7 +5546,7 @@ window.chatCancelContext = function() {
   const wasEdit = !!_chatEditId;
   _chatReplyTo = null;
   _chatEditId  = null;
-  if (wasEdit && $('chatInput')) $('chatInput').value = '';
+  if (wasEdit && $('chatInput')) { $('chatInput').value = ''; $('chatInput').style.height = 'auto'; }
   _renderChatContextBar();
 };
 
@@ -5596,6 +5605,7 @@ function chatSend() {
     if (!text) { showToast('Message cannot be empty'); return; }
     _chatWs.send(JSON.stringify({ type: 'chat_edit', id: _chatEditId, text }));
     inp.value = '';
+    inp.style.height = 'auto';
     _chatEditId = null;
     _renderChatContextBar();
     closeEmojiPicker();
@@ -5610,6 +5620,7 @@ function chatSend() {
     replyTo: _chatReplyTo?.id || null,
   }));
   inp.value = '';
+  inp.style.height = 'auto';
   _chatReplyTo = null;
   _renderChatContextBar();
   chatClearImg();
