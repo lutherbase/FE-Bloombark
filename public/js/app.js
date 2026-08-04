@@ -5884,7 +5884,8 @@ function _updateTestnetBadge() {
 
 let _tradeToken    = null;  // { address, symbol, name, chain, price, decimals }
 let _tradeSide     = 'buy';
-let _tradeSlippage = 1;
+let _tradeSlippage = 'auto'; // 'auto' or a fixed number (0.5/1/3/5); resolved to a number in _fetchQuote() when 'auto'
+let _tradeAutoSlippageResolved = 1; // last numeric value 'auto' resolved to, from the live quote's price impact
 let _tradeQuote    = null;  // last routeSummary
 let _tradeMode     = 'market'; // 'market' | 'limit'
 let _limitExpiryDays = 7;
@@ -6162,15 +6163,28 @@ function swapExecuteRouter() {
 
 function swapSetSlippage(v) {
   _tradeSlippage = v;
-  const ids = { 0.5:'slipBtn05', 1:'slipBtn1', 3:'slipBtn3', 5:'slipBtn5' };
+  const ids = { auto:'slipBtnAuto', 0.5:'slipBtn05', 1:'slipBtn1', 3:'slipBtn3', 5:'slipBtn5' };
   for (const [val, id] of Object.entries(ids)) {
     const b = $(id); if (!b) continue;
-    const on = parseFloat(val) === v;
+    const on = val === 'auto' ? v === 'auto' : parseFloat(val) === v;
     b.style.background  = on ? 'var(--green-20)' : 'var(--bg-secondary)';
     b.style.borderColor = on ? 'var(--green-60)' : 'var(--border-light)';
     b.style.color       = on ? 'var(--accent-green)' : 'var(--text-muted)';
   }
+  const hint = $('slipAutoHint');
+  if (hint) hint.style.display = v === 'auto' ? '' : 'none';
   if ($('swapAmountIn')?.value) swapScheduleQuote();
+}
+
+// 'Auto' picks a slippage tolerance from the live quote's price impact —
+// tight for a clean trade, wider for a thin/illiquid pool — instead of one
+// fixed % that's either too loose (bad fills) or too tight (fails to land)
+// depending on what's actually being traded.
+function _resolveAutoSlippage(impactPct) {
+  if (impactPct > 5) return 5;
+  if (impactPct > 2) return 3;
+  if (impactPct > 0.5) return 1;
+  return 0.5;
 }
 
 function _tradeWalletStatus() {
@@ -6269,10 +6283,16 @@ async function _fetchQuote() {
     _tradeQuote = { routeSummary: rs, routerAddress: j.data.routerAddress, tokenIn, outDecimals, inAmountRaw: amountIn };
 
     const outAmt = _fromRaw(BigInt(rs.amountOut), outDecimals);
-    const minOut = outAmt * (1 - _tradeSlippage / 100);
     const inUsd  = parseFloat(rs.amountInUsd || 0);
     const outUsd = parseFloat(rs.amountOutUsd || 0);
     const impact = inUsd > 0 ? Math.max(0, (1 - outUsd / inUsd) * 100) : 0;
+    if (_tradeSlippage === 'auto') {
+      _tradeAutoSlippageResolved = _resolveAutoSlippage(impact);
+      const hint = $('slipAutoHint');
+      if (hint) hint.textContent = `≈ ${_tradeAutoSlippageResolved}% based on ${impact.toFixed(2)}% price impact`;
+    }
+    const effectiveSlippage = _tradeSlippage === 'auto' ? _tradeAutoSlippageResolved : _tradeSlippage;
+    const minOut = outAmt * (1 - effectiveSlippage / 100);
     const gasUsd = parseFloat(rs.gasUsd || 0);
     const outSym = isBuy ? t.symbol : TRADE_CHAINS[t.chain].native;
     const inSym  = isBuy ? TRADE_CHAINS[t.chain].native : t.symbol;
@@ -6353,7 +6373,7 @@ async function swapExecute() {
         chain: t.chain,
         routeSummary: q.routeSummary,
         sender: w,
-        slippageBps: Math.round(_tradeSlippage * 100),
+        slippageBps: Math.round((_tradeSlippage === 'auto' ? _tradeAutoSlippageResolved : _tradeSlippage) * 100),
       }),
     });
     const build = await buildRes.json();

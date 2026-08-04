@@ -749,11 +749,13 @@
                     <div>
                       <div style="font-size:9px;color:var(--text-muted);font-weight:700;margin-bottom:7px;letter-spacing:0.5px">SLIPPAGE TOLERANCE</div>
                       <div style="display:flex;gap:4px;flex-wrap:wrap">
+                        <button onclick="swapSetSlippage('auto')" id="slipBtnAuto" title="Adjusts automatically based on this quote's price impact" style="flex:1;background:var(--green-20);border:1px solid var(--green-60);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:700;color:var(--accent-green);cursor:pointer;min-width:38px">Auto</button>
                         <button onclick="swapSetSlippage(0.5)" id="slipBtn05" style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">0.5%</button>
-                        <button onclick="swapSetSlippage(1)"   id="slipBtn1"  style="flex:1;background:var(--green-20);border:1px solid var(--green-60);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:700;color:var(--accent-green);cursor:pointer;min-width:38px">1%</button>
+                        <button onclick="swapSetSlippage(1)"   id="slipBtn1"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">1%</button>
                         <button onclick="swapSetSlippage(3)"   id="slipBtn3"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">3%</button>
                         <button onclick="swapSetSlippage(5)"   id="slipBtn5"  style="flex:1;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:6px;padding:5px 2px;font-size:10px;font-weight:600;color:var(--text-muted);cursor:pointer;min-width:38px">5%</button>
                       </div>
+                      <div id="slipAutoHint" style="display:none;font-size:9px;color:var(--text-muted);margin-top:5px"></div>
                     </div>
                     <div style="height:1px;background:var(--border-light)"></div>
                     <div style="display:flex;flex-direction:column;gap:8px;font-size:10px">
@@ -1731,6 +1733,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="/js/app.js?v=235"></script>
+  <script src="/js/app.js?v=236"></script>
 </body>
 </html>
