@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
   <link rel="icon" type="image/png" href="/assets/brand/favicon.png?v=2">
-  <link rel="stylesheet" href="/css/main.css?v=38" />
+  <link rel="stylesheet" href="/css/main.css?v=39" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -457,15 +457,17 @@
                   </button>
                 </div>
                 <div class="wallets-table">
-                  <div class="wallets-thead wallets-thead-v2">
-                    <span>WALLET ADDRESS</span>
-                    <span>TYPE</span>
-                    <span>ALLOCATION</span>
-                    <span>ACTIVITY (7D)</span>
-                    <span>ENTRY / LAST ACTIVE</span>
-                    <span>RISK</span>
+                  <div class="wallets-scroll">
+                    <div class="wallets-thead wallets-thead-v2">
+                      <span>WALLET ADDRESS</span>
+                      <span>TYPE</span>
+                      <span>ALLOCATION</span>
+                      <span>ACTIVITY (7D)</span>
+                      <span>ENTRY / LAST ACTIVE</span>
+                      <span>RISK</span>
+                    </div>
+                    <div class="wallets-tbody" id="walletsTable"></div>
                   </div>
-                  <div class="wallets-tbody" id="walletsTable"></div>
                 </div>
                 <a href="#" class="view-all-wallets" id="viewAllWallets">View All 23 Potential Wallets →</a>
               </div>

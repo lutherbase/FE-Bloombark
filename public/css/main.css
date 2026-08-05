@@ -673,7 +673,11 @@ body {
 .view-pattern-btn { font-size: 11px; color: var(--accent-blue); text-decoration: none; }
 
 /* ─── Wallets Table ────────────────────────────────────────────────────────── */
-.wallets-table { overflow-x: auto; }
+.wallets-table { overflow: hidden; }
+/* Header + body must share ONE horizontal scroll container so dragging
+   sideways moves both together — they used to be separate siblings each
+   left to their own overflow behavior, which let them drift out of sync. */
+.wallets-scroll { overflow-x: auto; }
 .wallets-thead {
   display: grid;
   grid-template-columns: 1.6fr 0.7fr 1fr 0.7fr 1fr 0.8fr;
