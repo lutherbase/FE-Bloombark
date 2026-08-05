@@ -4255,6 +4255,7 @@ let _compareTokens = []; // [{address, chain, symbol, name, imageUrl, data}]
 
 let _pickerItems = [];             // full watchlist items available to pick from
 let _pickerSelected = new Set();   // addresses (lowercase) checked in the modal
+let _pickerSearchTerm = '';        // current search box value, filters the visible rows only
 
 const COMPARE_MIN_TOKENS = 2;
 
@@ -4269,10 +4270,24 @@ function _updatePickerConfirmBtn() {
   btn.style.opacity = (n === 0 || !enough) ? '0.4' : '1';
 }
 
+function _filterPickerList(term) {
+  _pickerSearchTerm = term || '';
+  _renderPickerList();
+}
+
 function _renderPickerList() {
   const list = $('comparePickerList');
   if (!list) return;
-  list.innerHTML = _pickerItems.map(it => {
+  const term = _pickerSearchTerm.trim().toLowerCase();
+  const visible = term
+    ? _pickerItems.filter(it => (it.symbol || '').toLowerCase().includes(term) || (it.name || '').toLowerCase().includes(term))
+    : _pickerItems;
+  if (!visible.length) {
+    list.innerHTML = `<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">No tokens match "${_escapeHtml(_pickerSearchTerm.trim())}"</div>`;
+    _updatePickerConfirmBtn();
+    return;
+  }
+  list.innerHTML = visible.map(it => {
     const addr = it.address.toLowerCase();
     const checked = _pickerSelected.has(addr);
     return `
@@ -4319,6 +4334,9 @@ async function openComparePickerModal() {
   if (confirmBtn) confirmBtn.style.display = 'none';
   _pickerSelected = new Set();
   _pickerItems = [];
+  _pickerSearchTerm = '';
+  const searchInp = $('comparePickerSearch');
+  if (searchInp) searchInp.value = '';
   list.innerHTML = '<div style="text-align:center;padding:20px 0;color:#6b7280;font-size:12px">Loading watchlist…</div>';
 
   if (!_privyUser && !localStorage.getItem('bb_jwt')) {
