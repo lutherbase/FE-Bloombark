@@ -674,10 +674,16 @@ body {
 
 /* ─── Wallets Table ────────────────────────────────────────────────────────── */
 .wallets-table { overflow: hidden; }
-/* Header + body must share ONE horizontal scroll container so dragging
-   sideways moves both together — they used to be separate siblings each
-   left to their own overflow behavior, which let them drift out of sync. */
-.wallets-scroll { overflow-x: auto; }
+/* Header + body must share ONE scroll container for BOTH axes — horizontal
+   (wide columns on mobile) and vertical (many rows). Splitting vertical
+   scroll onto an inner element (tbody) doesn't work here: per the CSS
+   overflow spec, an element with overflow-y:auto silently gets overflow-x
+   forced to auto too — it can't stay horizontally "pass-through" while
+   scrolling vertically, so it becomes its OWN independent horizontal
+   scroller, out of sync with the header. Setting overflow-x:hidden instead
+   just clips the wide content rather than letting it scroll at all. The
+   only container that actually needs BOTH axes is this one. */
+.wallets-scroll { overflow: auto; max-height: 340px; }
 .wallets-thead {
   display: grid;
   grid-template-columns: 1.6fr 0.7fr 1fr 0.7fr 1fr 0.8fr;
@@ -685,13 +691,7 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .wallets-thead span { font-size: 9px; letter-spacing: 0.8px; color: var(--text-muted); font-family: var(--font); text-transform: uppercase; }
-/* overflow-x MUST be explicit here — per the CSS overflow spec, setting only
-   overflow-y to a non-visible value (auto) makes the browser silently compute
-   overflow-x as auto too, turning this into its OWN independent horizontal
-   scroll container separate from the shared .wallets-scroll wrapper above.
-   That's what let the header (no such rule) stay put while dragging over the
-   body scrolled only the body — this pins it back to one shared scroller. */
-.wallets-tbody { display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; overflow-x: hidden; }
+.wallets-tbody { display: flex; flex-direction: column; gap: 4px; }
 
 .wallet-row {
   display: grid;
@@ -1089,7 +1089,7 @@ input:checked + .toggle-slider::before { transform: translateX(18px); }
 .alloc-bar-fill { height:100%; border-radius:2px; transition:width 0.6s ease; }
 
 /* ─── Enhanced Wallet Table ────────────────────────────────────────────────── */
-.wallets-thead-v2 { display:grid; grid-template-columns:220px 80px 120px 100px 130px 60px; gap:8px; padding:6px 12px; font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.5px; border-bottom:1px solid var(--border-light); }
+.wallets-thead-v2 { display:grid; grid-template-columns:220px 80px 120px 100px 130px 60px; gap:8px; padding:6px 12px; font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:0.5px; border-bottom:1px solid var(--border-light); position:sticky; top:0; background:var(--bg-card); z-index:1; }
 .wallet-row-v2 { display:grid; grid-template-columns:220px 80px 120px 100px 130px 60px; gap:8px; padding:10px 12px; border-bottom:1px solid var(--border-light); align-items:start; transition:background 0.15s; }
 .wallet-row-v2:hover { background:rgba(255,255,255,0.02); }
 .wallet-col-addr { min-width:0; }
