@@ -685,7 +685,13 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .wallets-thead span { font-size: 9px; letter-spacing: 0.8px; color: var(--text-muted); font-family: var(--font); text-transform: uppercase; }
-.wallets-tbody { display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; }
+/* overflow-x MUST be explicit here — per the CSS overflow spec, setting only
+   overflow-y to a non-visible value (auto) makes the browser silently compute
+   overflow-x as auto too, turning this into its OWN independent horizontal
+   scroll container separate from the shared .wallets-scroll wrapper above.
+   That's what let the header (no such rule) stay put while dragging over the
+   body scrolled only the body — this pins it back to one shared scroller. */
+.wallets-tbody { display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; overflow-x: hidden; }
 
 .wallet-row {
   display: grid;
