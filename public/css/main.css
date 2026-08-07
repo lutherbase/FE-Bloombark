@@ -307,6 +307,8 @@ body {
 .connect-wallet-btn:hover { background: var(--accent-green); color: #000; }
 .connect-wallet-btn.connected { border-color: var(--accent-blue); color: var(--accent-blue); }
 .connect-wallet-btn.connected:hover { background: var(--accent-blue); color: #000; }
+.connect-wallet-btn.connecting { border-color: var(--accent-yellow, #E2B93B); color: var(--accent-yellow, #E2B93B); opacity: 1; cursor: default; }
+.connect-wallet-btn.connecting:hover { background: transparent; color: var(--accent-yellow, #E2B93B); }
 
 /* ─── Page Content ─────────────────────────────────────────────────────────── */
 .page-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 0; }

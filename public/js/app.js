@@ -4853,7 +4853,13 @@ async function privyConnectMM() {
     return;
   }
   const btn = document.getElementById('mmBtn');
-  if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; btn.querySelector('div div').textContent = 'Connecting…'; }
+  if (btn) {
+    btn.style.pointerEvents = 'none';
+    btn.style.borderColor = '#F5A623';
+    const label = btn.querySelector('div div');
+    label.textContent = 'Connecting…';
+    label.style.color = '#F5A623';
+  }
   try {
     if (!window.ethereum) throw new Error('MetaMask extension not found — install it first');
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -4869,7 +4875,13 @@ async function privyConnectMM() {
   } catch(e) {
     const msg = e.code === 4001 ? 'Signature rejected in MetaMask' : (e.message || 'Unknown error');
     showToast('Connection failed: ' + msg);
-    if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.querySelector('div div').textContent = 'MetaMask'; }
+    if (btn) {
+      btn.style.pointerEvents = '';
+      btn.style.borderColor = '';
+      const label = btn.querySelector('div div');
+      label.textContent = 'MetaMask';
+      label.style.color = '';
+    }
   }
 }
 
