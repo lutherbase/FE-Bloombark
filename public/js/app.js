@@ -4767,24 +4767,42 @@ async function toggleWatchlist() {
   }
 }
 
-async function _bbLogin(wallet, privyUser, method = 'metamask') {
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        wallet,
-        privyUserId: privyUser?.id || null,
-        meta: { connectedAt: Date.now(), method },
-      }),
-    });
-    const data = await res.json();
-    if (data.token) localStorage.setItem('bb_jwt', data.token);
-    return data;
-  } catch(e) {
-    console.warn('[bbLogin]', e.message);
-  }
+/* Proves the user actually controls the wallet before the backend issues a
+   session: fetch a one-time challenge, sign it, exchange it for a JWT. An
+   address on its own is public data and proves nothing, so the server rejects
+   a login without a valid signature.
+   Throws on failure (including the user rejecting the signature) so callers
+   don't show a connected state that the backend won't honour. */
+async function _bbLoginSigned(wallet, method = 'metamask') {
+  const nRes = await fetch(`${API_BASE}/auth/nonce`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ wallet }),
+  });
+  const challenge = await nRes.json();
+  if (!challenge?.nonce) throw new Error(challenge?.error || 'Could not start sign-in');
+
+  const signature = await window.ethereum.request({
+    method: 'personal_sign',
+    params: [challenge.message, wallet],
+  });
+
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      wallet,
+      signature,
+      nonce: challenge.nonce,
+      meta: { connectedAt: Date.now(), method },
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.token) throw new Error(data.error || 'Sign-in failed');
+  localStorage.setItem('bb_jwt', data.token);
+  return data;
 }
 
 async function _bbLogout() {
@@ -4842,13 +4860,14 @@ async function privyConnectMM() {
     const wallet = accounts?.[0];
     if (!wallet) throw new Error('No account selected');
     const user = { wallet: { address: wallet }, _displayAddress: wallet };
-    await _bbLogin(wallet, null, 'metamask');
+    if (btn) btn.querySelector('div div').textContent = 'Confirm signature…';
+    await _bbLoginSigned(wallet, 'metamask');
     localStorage.removeItem('bb_wallet_disconnected'); // user explicitly (re)connected
     _setWalletConnected(user);
     closeWalletModal();
     showToast('Wallet connected');
   } catch(e) {
-    const msg = e.code === 4001 ? 'Connection rejected in MetaMask' : (e.message || 'Unknown error');
+    const msg = e.code === 4001 ? 'Signature rejected in MetaMask' : (e.message || 'Unknown error');
     showToast('Connection failed: ' + msg);
     if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; btn.querySelector('div div').textContent = 'MetaMask'; }
   }
@@ -4864,16 +4883,24 @@ async function privyLogout() {
 
 // React to account switch / disconnect in MetaMask
 if (window.ethereum?.on) {
-  window.ethereum.on('accountsChanged', (accounts) => {
+  window.ethereum.on('accountsChanged', async (accounts) => {
     if (!accounts?.length) {
       localStorage.setItem('bb_wallet_disconnected', '1');
       _bbLogout(); _setWalletConnected(null); showToast('Wallet disconnected'); return;
     }
-    localStorage.removeItem('bb_wallet_disconnected');
     const wallet = accounts[0];
-    _bbLogin(wallet, null, 'metamask');
-    _setWalletConnected({ wallet: { address: wallet }, _displayAddress: wallet });
-    showToast('Switched to ' + wallet.slice(0,6) + '…' + wallet.slice(-4));
+    // The new account has to prove itself too — the old session belongs to a
+    // different address. Only mark connected once that actually succeeds.
+    await _bbLogout();
+    try {
+      await _bbLoginSigned(wallet, 'metamask');
+      localStorage.removeItem('bb_wallet_disconnected');
+      _setWalletConnected({ wallet: { address: wallet }, _displayAddress: wallet });
+      showToast('Switched to ' + wallet.slice(0,6) + '…' + wallet.slice(-4));
+    } catch (e) {
+      _setWalletConnected(null);
+      showToast(e.code === 4001 ? 'Signature rejected — not signed in' : 'Sign-in failed: ' + (e.message || 'Unknown error'));
+    }
   });
 }
 
@@ -4891,16 +4918,12 @@ if (window.ethereum?.on) {
       _setWalletConnected({ _displayAddress: displayAddr, _fromDb: true, id: bbUser.id });
       return;
     }
-    // 2. Silent reconnect if MetaMask is already authorized for this site
-    if (!window.ethereum) { _setWalletConnected(null); return; }
-    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-    const wallet = accounts?.[0];
-    if (wallet) {
-      await _bbLogin(wallet, null, 'metamask');
-      _setWalletConnected({ wallet: { address: wallet }, _displayAddress: wallet });
-    } else {
-      _setWalletConnected(null);
-    }
+    // 2. No valid session. There's deliberately no silent re-login here:
+    //    proving wallet ownership needs a signature, and a wallet popup firing
+    //    unprompted on page load is hostile. MetaMask still having this site
+    //    authorized isn't proof of anything on its own, so show the wallet as
+    //    disconnected and let the user click Connect when they want to sign.
+    _setWalletConnected(null);
   } catch(_) {
     _setWalletConnected(null);
   }
