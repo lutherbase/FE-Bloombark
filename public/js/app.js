@@ -2474,6 +2474,8 @@ function _dashRowHtml(t, i) {
         <span class="dash-vol-name">${t.name}</span>
         <span class="dash-vol-pair">
           <span class="dash-chain-badge" style="background:${chainColor}22;color:${chainColor}">${t.network}</span>
+          ${t.dex ? `<span class="dash-pool-badge" style="background:#4a90e218;color:#4A90E2;border:1px solid #4a90e240">${t.dex}</span>` : ''}
+          ${t.feeTier ? `<span class="dash-pool-badge" title="Pool fee tier — the same token often has several pools at different fees" style="background:#9b59b618;color:#9B59B6;border:1px solid #9b59b640">${t.feeTier}</span>` : ''}
         </span>
         ${caLine}
       </div>
