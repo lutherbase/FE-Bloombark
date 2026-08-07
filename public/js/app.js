@@ -376,6 +376,7 @@ const PAGE_ROUTES = {
   'dashboard':      '/marketoverview',
   'wallet-tracker': '/wallettracker',
   'narrative':      '/narrative',
+  'news':           '/news',
   'community':      '/community',
   'sniper':         '/sniper',
   'track-record':   '/track-record',
@@ -411,6 +412,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
     'smart-money':  ['SMART MONEY',     'Follow smart money wallets and their moves'],
     'insider-scan': ['INSIDER SCAN',    'Detect insider wallets, team allocation, hidden connections & suspicious activity'],
     'narrative':    ['NARRATIVE',       'Track trending narratives and market sectors'],
+    'news':         ['NEWS',            'Crypto headlines aggregated from major outlets'],
     'community':    ['BLOOMBARK COMMUNITY', 'Chat, shill, and connect with other traders'],
     'ai-trading':   ['AI TRADING AGENT','Automated trading signals powered by AI models'],
     'auto-research':['AUTO RESEARCH',   'Automated token research and report generation'],
@@ -469,6 +471,7 @@ function _activatePage(page, { navEl = null, pushUrl = true } = {}) {
   if (page === 'trending-bloombark') loadTrendingBloombark(true);
   if (page === 'landing') loadLandingCA();
   if (page === 'narrative') loadNarrative();
+  if (page === 'news') loadNews(true);
   if (page === 'community') initCommunity();
   if (page === 'trade') initTradePage();
 
@@ -725,6 +728,9 @@ function renderAll(d) {
   try { renderHolderStats(d); } catch(e) { console.warn('renderHolderStats:', e); }
   try { renderVolumeChart(d); } catch(e) { console.warn('renderVolumeChart:', e); }
   try { renderSocial(d); } catch(e) { console.warn('renderSocial:', e); }
+  // Fire-and-forget — coverage lookup hits external RSS and shouldn't hold up
+  // (or be able to break) the rest of the scan render.
+  try { loadTokenNews(d.address, d.symbol); } catch(e) { console.warn('loadTokenNews:', e); }
   resetPrediction();
 }
 
@@ -4897,6 +4903,123 @@ if (window.ethereum?.on) {
     _setWalletConnected(null);
   }
 })();
+
+/* ─── News ─────────────────────────────────────────────────────────────────── */
+const NEWS_SOURCE_COLOR = {
+  'CoinDesk': '#4A90E2', 'Cointelegraph': '#f5a623',
+  'Decrypt': '#9B59B6', 'The Block': '#27C97F',
+};
+
+function _newsAgo(ts) {
+  if (!ts) return '';
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function _newsCardHtml(n, i) {
+  const color = NEWS_SOURCE_COLOR[n.source] || '#8b92a8';
+  // Votes only exist on CryptoPanic-sourced items (when a token is configured).
+  const votes = n.votes && (n.votes.positive || n.votes.negative)
+    ? `<span style="font-size:10px;color:var(--accent-green);font-weight:700">▲${n.votes.positive}</span>
+       <span style="font-size:10px;color:var(--accent-red);font-weight:700">▼${n.votes.negative}</span>`
+    : '';
+  const thumb = n.thumbnail
+    ? `<img src="${_escapeHtml(n.thumbnail)}" alt="" loading="lazy" style="width:100%;height:140px;object-fit:cover;display:block" onerror="this.remove()">`
+    : '';
+  return `
+    <a href="${_escapeHtml(n.url)}" target="_blank" rel="noopener noreferrer" class="news-card tr-row"
+       style="animation-delay:${(i * 0.03).toFixed(2)}s;display:flex;flex-direction:column;background:#12141e;border:1px solid #1e2235;border-top:3px solid ${color};border-radius:12px;overflow:hidden;text-decoration:none">
+      ${thumb}
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:9px;font-weight:800;letter-spacing:.06em;color:${color};background:${color}18;border:1px solid ${color}40;border-radius:5px;padding:2px 7px">${_escapeHtml(n.source)}</span>
+          <span style="font-size:10px;color:#6b7280">${_newsAgo(n.publishedAt)}</span>
+          ${votes}
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#e2e8f0;line-height:1.45">${_escapeHtml(n.title)}</div>
+        ${n.summary ? `<div style="font-size:11px;color:#9ca3af;line-height:1.6">${_escapeHtml(n.summary)}</div>` : ''}
+      </div>
+    </a>`;
+}
+
+async function loadNews(showLoadingState, bypassCache) {
+  const el = $('newsList');
+  if (!el) return;
+  if (showLoadingState) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading news…</div>';
+  }
+  try {
+    const res = await fetch(`${API_BASE}/news${bypassCache ? '?refresh=1' : ''}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    const items = data.items || [];
+    if (!items.length) {
+      el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 0;color:#6b7280;font-size:13px">No headlines available right now.</div>';
+      return;
+    }
+    el.innerHTML = items.map(_newsCardHtml).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 0;color:var(--accent-red);font-size:13px">Failed to load news</div>';
+  }
+}
+
+/* Per-token coverage shown on the AI Analyzer page. Community mentions are the
+   primary signal — most Robinhood-chain tokens never reach mainstream crypto
+   media, so an empty headline list is the normal case, not an error. */
+async function loadTokenNews(address, symbol) {
+  const el = $('tokenNewsContent');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:16px 0;text-align:center;color:#6b7280;font-size:11px">Loading coverage…</div>';
+  try {
+    const qs = new URLSearchParams({ address: address || '', symbol: symbol || '' });
+    const res = await fetch(`${API_BASE}/news/token?${qs}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    const articles = data.articles || [];
+    const mentions = data.mentions || [];
+
+    if (!articles.length && !mentions.length) {
+      el.innerHTML = `<div style="padding:20px 0;text-align:center;color:#6b7280;font-size:11px">
+        No coverage yet — no headlines mention this ticker and it hasn't come up in Community.</div>`;
+      return;
+    }
+
+    let html = '';
+    if (mentions.length) {
+      html += `<div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#9B59B6;margin-bottom:8px">💬 COMMUNITY MENTIONS · ${mentions.length}</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:${articles.length ? '14px' : '0'}">`;
+      html += mentions.slice(0, 5).map(m => `
+        <div style="background:var(--bg-card);border:1px solid var(--border-light);border-left:3px solid #9B59B6;border-radius:8px;padding:8px 10px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+            <span style="font-size:10px;font-weight:700;color:#e2e8f0">${_escapeHtml(m.author)}</span>
+            <span style="font-size:9px;color:#6b7280">#${_escapeHtml(m.room)} · ${_newsAgo(m.ts)}</span>
+          </div>
+          <div style="font-size:11px;color:#9ca3af;line-height:1.5;word-break:break-word">${_escapeHtml(m.text)}</div>
+        </div>`).join('');
+      html += '</div>';
+    }
+    if (articles.length) {
+      html += `<div style="font-size:10px;font-weight:700;letter-spacing:.06em;color:#4A90E2;margin-bottom:8px">📰 HEADLINES · ${articles.length}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">`;
+      html += articles.map(a => {
+        const color = NEWS_SOURCE_COLOR[a.source] || '#8b92a8';
+        return `<a href="${_escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer"
+          style="display:block;background:var(--bg-card);border:1px solid var(--border-light);border-left:3px solid ${color};border-radius:8px;padding:8px 10px;text-decoration:none">
+          <div style="font-size:11px;font-weight:600;color:#e2e8f0;line-height:1.5;margin-bottom:3px">${_escapeHtml(a.title)}</div>
+          <div style="font-size:9px;color:#6b7280">${_escapeHtml(a.source)} · ${_newsAgo(a.publishedAt)}</div>
+        </a>`;
+      }).join('');
+      html += '</div>';
+    }
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div style="padding:16px 0;text-align:center;color:var(--accent-red);font-size:11px">Failed to load coverage</div>';
+  }
+}
 
 /* ─── Community Chat ────────────────────────────────────────────────────────── */
 const CHAT_ROOMS = {

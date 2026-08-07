@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bloombark Terminal Apps</title>
   <link rel="icon" type="image/png" href="/assets/brand/favicon.png?v=2">
-  <link rel="stylesheet" href="/css/main.css?v=41" />
+  <link rel="stylesheet" href="/css/main.css?v=42" />
   <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
@@ -60,6 +60,10 @@
         <a href="#" class="nav-item" data-page="narrative">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Narrative
+        </a>
+        <a href="#" class="nav-item" data-page="news">
+          <svg class="nav-icon" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0V9h4"/><path d="M18 14h-8M18 18h-8M18 6h-8v4h8z"/></svg>
+          News
         </a>
         <a href="#" class="nav-item" data-page="community">
           <svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -539,6 +543,18 @@
               </div>
             </div>
 
+            <div class="grid-row row-1col">
+              <div class="card token-news-card">
+                <div class="card-header">
+                  <h3>NEWS &amp; MENTIONS</h3>
+                  <span class="info-icon" title="Headlines that name this ticker, plus every time its contract address came up in Bloombark Community">ⓘ</span>
+                </div>
+                <div id="tokenNewsContent">
+                  <div style="padding:20px 0;text-align:center;color:var(--text-muted);font-size:11px">Scan a token to see its coverage</div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <!-- Empty state -->
@@ -963,6 +979,25 @@
             </div>
           </div>
         </div>
+        <div class="page ai-analyzer-page" id="page-news">
+          <div class="trend-banner" style="position:relative;overflow:hidden;background:linear-gradient(135deg,#151a2c,#12141e);border:1px solid #232a45;border-radius:16px;padding:22px 24px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <span class="trend-live-dot"></span>
+                  <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:var(--accent-green)">NEWS</div>
+                </div>
+                <div style="font-size:19px;font-weight:800;color:#e2e8f0;margin-bottom:4px">📰 What's moving the market</div>
+                <div style="font-size:13px;color:#9ca3af">Headlines aggregated from CoinDesk, Cointelegraph, Decrypt, and The Block — refreshed every 10 minutes.</div>
+              </div>
+              <button id="newsRefreshBtn" onclick="loadNews(true, true)" style="background:#1e2235;border:1px solid #2d3144;border-radius:8px;color:#e2e8f0;padding:8px 14px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">↻ Refresh</button>
+            </div>
+          </div>
+          <div id="newsList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">
+            <div style="grid-column:1/-1;text-align:center;padding:60px 0;color:#6b7280;font-size:13px">Loading news…</div>
+          </div>
+        </div>
+
         <!-- Community Chat Page -->
         <div class="page ai-analyzer-page" id="page-community" style="height:100%;padding:0">
           <div class="community-layout" style="display:flex;height:100%;overflow:hidden">
@@ -1740,6 +1775,6 @@
     <div style="padding-top:14px;padding-bottom:12px;text-align:center;font-size:10px;color:#4b5563">EVM wallets · MetaMask</div>
   </div>
 
-  <script src="/js/app.js?v=239"></script>
+  <script src="/js/app.js?v=240"></script>
 </body>
 </html>
